@@ -1,0 +1,189 @@
+{% extends "base.jinja" %}
+{% set active_page = "cloud_map" %}
+
+{% block title%}Global Map | Oasis Defender{%endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cloud.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<div class="wrapper" id="wrapperId">
+    <div class="content">
+        <div class="clouds"></div>
+        <div class="internet"></div>    
+    </div>
+</div>
+
+<div class="draggable" id="rulesWindow" style="left:20px;top:70px;">
+    <div class="dheader">Security rules</div>
+    <div class="dcontent d-none" style="width:600px;height:270px">
+        <div class="messages"></div>
+        <div class="btn-group" role="group" aria-label="Actions">
+            <button type="button" class="btn btn-danger" onclick="rulesDeleteSelected();">
+            Delete selected
+            </button>
+        </div>
+        <table class="table table-sm">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Security Group</th>
+                <th>Type</th>
+                <th>Proto</th>
+                <th>Address</th>                
+                <th>Port</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="networkAddressModal" tabindex="-1" role="dialog" aria-labelledby="networkAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="networkAddressModalLabel">Enter Network Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="networkAddressForm">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="networkAddress" placeholder="8.8.8.8/32" required>
+                        <div class="invalid-feedback">
+                            Please enter a valid network address with mask.
+                        </div>
+                    </div>
+                </form>                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitNetworkAddress">Add Network</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- The Modal -->
+<div class="modal fade" tabindex="-1" id="createSecurityRuleModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create security rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- The form goes here -->
+                <form id="create-rule-form">
+                    <!-- Source and destination title -->
+                    <div class="row fw-bold">
+                        <div class="col">
+                            Source
+                        </div>
+                        <div class="col text-end">
+                            Destination
+                        </div>
+                    </div>
+                    <!-- Inbound/outbound selection -->
+                    <div class="row">
+                        <div class="col" id="addOutboundForSourceContainer">
+                            <input class="form-check-input" type="checkbox" value="" id="addOutboundForSource"
+                                onchange="addOutboundForSourceChanged()">
+                            <label class="form-check-label" for="addOutboundForSource">
+                                Add outbound rule for source
+                            </label>
+                        </div>
+                        <div class="col text-end" id="addInboundForDestinationContainer">
+                            <label class="form-check-label" for="addInboundForDestination">
+                                Add inbound rule for destination
+                            </label>
+                            <input class="form-check-input" type="checkbox" value="" id="addInboundForDestination"
+                                onchange="addInboundForDestinationChanged()">
+                        </div>
+                    </div>
+                    <!-- Source and destination graphics -->
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="col-md-auto align-self-center" id="source-content"></div>
+                        <div class="col-md-auto align-self-center">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                        </div>
+                        <div class="col-md-auto align-self-center" id="destination-content"></div>
+                        <div class="col"></div>
+                    </div>
+                    <!-- Service selection -->
+                    <div class="row mt-3">
+                        <div class="col">
+                            <label for="service">Protocol</label>
+                            <select class="form-select" id="service" onchange="updateSecurityRuleVisibility()" data-live-search="true">
+                                <option value="custom">Custom</option>
+                                {% for service in services %}
+                                <option value="{{ service }}">{{ service }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Protocol selection -->
+                    <div class="row mt-3" id="protocol-row">
+                        <div class="col">
+                            <label for="protocol">Protocol</label>
+                            <select class="form-select" id="protocol" onchange="updateSecurityRuleVisibility()">
+                                <option value="TCP">TCP</option>
+                                <option value="UDP">UDP</option>
+                                <option value="ICMP">ICMP</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Port selection -->
+                    <div class="row mt-3" id="port-row">
+                        <div class="col">
+                            <label for="port">Port</label>
+                            <input type="text" class="form-control" id="port" placeholder="Any">
+                            <small class="form-text text-muted">Example: 80,443,1000-1100</small>
+                        </div>
+                    </div>
+                    <!-- Type and Code selection -->
+                    <div class="row mt-3" id="icmp-row">
+                        <div class="col">
+                            <label for="type">Type</label>
+                            <input type="text" class="form-control" id="type" placeholder="Any">
+                        </div>
+                        <div class="col">
+                            <label for="code">Code</label>
+                            <input type="text" class="form-control" id="code" placeholder="Any">
+                        </div>
+                    </div>
+                </form>                
+            </div>
+            <div class="modal-footer">                
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"">Cancel</button>
+                <button type=" button" class="btn btn-primary" onclick="createLink()">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/leader-line.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cloud_map.js') }}"></script>
+
+<script>
+    // Initial data
+    window.data = {
+        vpcs: {{ vpcs }},
+        internetNodes: {{ internetNodes }}
+    };
+
+    document.addEventListener("DOMContentLoaded", function (event) {
+        init();
+    });
+</script>
+
+{% endblock %}

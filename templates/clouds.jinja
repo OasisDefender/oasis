@@ -1,0 +1,172 @@
+{% extends "base.jinja" %}
+{% set active_page = "clouds" %}
+
+{% block title %}My Clouds | Oasis Defender{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% if clouds is defined and clouds|length > 0 %}
+  <p> </p>
+  <div class="btn-group" role="group" aria-label="Actions">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCloudModal">
+      Add Cloud
+    </button>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Cloud type</th>
+        <th>Additional information</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cloud in clouds %}
+      <tr>
+        <td>{{ cloud.name }}</td>
+        <td>{{ cloud.cloud_type }}</td>
+        <td>
+          {% if cloud.cloud_type=="AWS" %}
+          <b>aws_region:</b> {{ cloud.aws_region }} <br>
+          <b>aws_key:</b> {{ cloud.aws_key }}
+          {% else %}
+          <b>azure_subscription_id:</b> {{ cloud.azure_subscription_id }} <br>
+          <b>azure_tenant_id:</b> {{ cloud.azure_tenant_id }} <br>
+          <b>azure_client_id:</b> {{ cloud.azure_client_id }}
+          {% endif %}
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('clouds_sync') }}" target="dummyframe" style="display: inline-block;">
+            <input type="hidden" name="id" value="{{ cloud.id }}">
+            <button type="submit" class="btn btn-success">Sync</button>
+          </form>
+          <form method="POST" action="{{ url_for('clouds_delete') }}"  style="display: inline-block;">
+            <input type="hidden" name="id" value="{{ cloud.id }}">
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Add Cloud Modal -->
+</div>
+{% else %}
+<p>You haven't added any clouds yet. Please add at least one cloud.</p>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCloudModal">
+  Add Cloud
+</button>
+{% endif %}
+
+<div class="modal fade" id="addCloudModal" tabindex="-1" role="dialog" aria-labelledby="addCloudModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('clouds_add') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCloudModalLabel">Cloud account data</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="cloud_type">Cloud type:</label>
+            <select class="form-select" id="cloud_type" name="cloud_type" required>
+              <option value="AWS">AWS</option>
+              <option value="Azure">Azure</option>
+            </select>
+          </div>
+
+          <div class="form-group aws-field">
+            <label for="aws_region">Region:</label>
+            <input type="text" class="form-control" id="aws_region" name="aws_region" required>
+          </div>
+          <div class="form-group aws-field">
+            <label for="aws_key">Key:</label>
+            <input type="text" class="form-control" id="aws_key" name="aws_key" required>
+          </div>
+          <div class="form-group aws-field">
+            <label for="aws_secret_key">Secret key:</label>
+            <input type="text" class="form-control" id="aws_secret_key" name="aws_secret_key" required>
+          </div>
+
+          <div class="form-group azure-field">
+            <label for="azure_subscription_id">Subscription ID:</label>
+            <input type="text" class="form-control" id="azure_subscription_id" name="azure_subscription_id" required>
+          </div>
+          <div class="form-group azure-field">
+            <label for="azure_tenant_id">Tenant ID:</label>
+            <input type="text" class="form-control" id="azure_tenant_id" name="azure_tenant_id" required>
+          </div>
+          <div class="form-group azure-field">
+            <label for="azure_client_id">Client ID:</label>
+            <input type="text" class="form-control" id="azure_client_id" name="azure_client_id" required>
+          </div>
+          <div class="form-group azure-field">
+            <label for="azure_client_secret">Client Secret:</label>
+            <input type="text" class="form-control" id="azure_client_secret" name="azure_client_secret" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Cloud</button>
+        </div>
+    </div>
+  </div>
+
+</div>
+
+<iframe name="dummyframe" id="dummyframe" style="display: none;"></iframe>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function init() {
+    const cloud_type_el = document.getElementById("cloud_type");
+    const aws_fields = document.querySelectorAll(".aws-field");
+    const azure_fields = document.querySelectorAll(".azure-field");
+
+    function onCloudTypeChange() {
+        const clickedIndex = cloud_type_el.selectedIndex;
+        const newValue = cloud_type_el.options[clickedIndex].value;
+
+        if (newValue === "AWS") {
+            aws_fields.forEach(field => {
+                field.style.display = "block";
+                field.querySelector("input").setAttribute("required", true);
+            });
+
+            azure_fields.forEach(field => {
+                field.style.display = "none";
+                field.querySelector("input").removeAttribute("required");
+            });
+        } else if (newValue === "Azure") {
+            aws_fields.forEach(field => {
+                field.style.display = "none";
+                field.querySelector("input").removeAttribute("required");
+            });
+
+            azure_fields.forEach(field => {
+                field.style.display = "block";
+                field.querySelector("input").setAttribute("required", true);
+            });
+        }
+    }
+
+    cloud_type_el.addEventListener("change", function(event) {
+        onCloudTypeChange();
+    });
+    onCloudTypeChange();
+  }
+
+  document.addEventListener("DOMContentLoaded", function (event) {
+    init();
+  });
+</script>
+{% endblock %}

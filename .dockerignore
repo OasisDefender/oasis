@@ -1,0 +1,8 @@
+.*
+0*
+1*
+Dockerfile
+__pycache__/
+poc/
+db.sqlite3
+

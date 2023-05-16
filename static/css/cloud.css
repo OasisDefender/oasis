@@ -1,0 +1,229 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+html {
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+body {
+    display: flex;
+    flex-flow: column;
+}
+
+.wrapper {
+    position: relative;
+    bottom: 0;
+    background: #F5F5DC;
+    flex-grow : 1;
+
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;    
+}
+
+.content {
+    position: relative;
+    color: black;
+    z-index: 100;
+    height: 100%;
+
+    font-family: sans-serif;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.content p, .modal p {
+    margin-bottom: 0.1rem;    
+}
+
+.clouds {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.internet {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+    padding: 10px 0;
+    color: black;
+    text-shadow: 1px 1px 1px white;
+}
+
+.vpc {    
+    margin: 50px;
+
+    flex-direction: column;
+}
+
+.vpc-header, 
+.subnet-header, 
+.vm-header {    
+    background-color: transparent;
+    color: black;    
+    padding: 0 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.vpc-header p,
+.subnet-header p {
+    margin: 0 10px 0 0;
+}
+
+.vpc-header p:last-child,
+.subnet-header p:last-child {
+    margin: 0 0 0 0;
+}
+
+
+.vpc.selected .vpc-subnets {
+    border: 1px solid blue;
+}
+
+.subnet.selected .subnet-vms {
+    border: 1px dashed blue;
+}
+
+.vm.selected {
+    border: 1px solid blue;
+}
+
+.vpc.selected .vpc-header,
+.subnet.selected .subnet-header,
+.vm.selected .vm-header {
+    color: blue;
+}
+
+
+.vm.selected .vm-header {
+    background: white;
+}
+
+.vpc-subnets {
+    text-align:center;
+    border: 1px solid black;
+
+    min-width: 100px;
+    min-height: 100px;
+    
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.subnet-vms {
+    border: 1px dashed black;
+    background-color: transparent;
+    min-width: 100px;
+    min-height: 30px;
+}
+
+.subnet {
+    display: block;
+
+    margin: 10px;
+}
+
+.vm {
+    border: 1px solid black;
+    background: #7cb4f8c9;
+    display: inline-block;
+    
+    font-size: 12pt;
+    margin: 10px;    
+}
+
+/*
+.vm-info {        
+    display: flex;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+*/
+
+.vm-info p {
+    padding: 2px;
+    display: block;
+}
+
+.leader-line {
+    z-index: 150;
+}
+
+.leader-line:hover {
+    opacity: 0.1;
+    color: #000;
+}
+
+.modal .vpc, 
+.modal .subnet, 
+.modal .vm, 
+.modal .network {
+    max-width: 300px;
+} 
+
+.draggable {
+    position: fixed;
+
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 200;
+
+    display: flex;
+    flex-direction: column;
+
+}
+
+.draggable .dheader {
+    background-color: #7cb4f8;
+    color: black;
+    
+    padding: 5px 30px 5px 5px;
+    cursor: move;
+}
+
+.draggable .dcontent {
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+    margin: 5px;
+}
+
+.resize-handler {
+    width: 10px;
+    height: 10px;
+    background: #7cb4f8;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    cursor: nwse-resize;
+}
