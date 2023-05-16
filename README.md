@@ -8,6 +8,8 @@ $ pip3.10 install -r requirements.txt
 ## Generate Docker image
 ```console
 $ make
+$ ls oasis-*.tar 
+oasis-df25279.tar
 ```
 
 
