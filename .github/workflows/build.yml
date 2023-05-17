@@ -22,7 +22,7 @@ jobs:
           echo "Latest tag: $BUILD_TAG"
 
       - name: Build Oasis Docker image
-        run: docker build -t docker.pkg.github.com/oasisdefender/oasis:$BUILD_TAG .
+        run: docker build -t docker.pkg.github.com/oasisdefender/oasis/oasis:$BUILD_TAG .
 
       - name: Login to GitHub Packages
         uses: docker/login-action@v1
