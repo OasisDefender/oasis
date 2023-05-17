@@ -17,9 +17,9 @@ jobs:
 
       - name: Get latest TAG from Git
         run: |
-        git fetch --tags
-        export BUILD_TAG=$(git describe --always)
-        echo "Latest tag: $BUILD_TAG"
+          git fetch --tags
+          export BUILD_TAG=$(git describe --always)
+          echo "Latest tag: $BUILD_TAG"
 
       - name: Build Oasis Docker image
         run: docker build -t docker.pkg.github.com/OasisDefender/oasis:$BUILD_TAG .
