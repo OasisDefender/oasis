@@ -32,4 +32,4 @@ jobs:
           password: ${{ secrets.REPO_OASIS_ACCESS_TOKEN }}
 
       - name: Push Oasis Docker image to GitHub Packages
-        run: docker push docker.pkg.github.com/OasisDefender/oasis:$BUILD_TAG
+        run: docker push docker.pkg.github.com/oasisdefender/oasis/oasis:ff4045d
