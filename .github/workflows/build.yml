@@ -19,7 +19,6 @@ jobs:
         run: |
           git fetch --tags
           export BUILD_TAG=$(git describe --always)
-          echo "Latest tag: $BUILD_TAG"
           docker build -t docker.pkg.github.com/oasisdefender/oasis/oasis:$BUILD_TAG .
 
       - name: Login to GitHub Packages
@@ -27,11 +26,10 @@ jobs:
         with:
           registry: docker.pkg.github.com
           username: ${{ github.actor }}
-          password: ${{ secrets.REPO_OASIS_ACCESS_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Oasis Docker image to GitHub Packages
         run: |
           git fetch --tags
           export BUILD_TAG=$(git describe --always)
-          echo "Latest tag: $BUILD_TAG"
           docker push docker.pkg.github.com/oasisdefender/oasis/oasis:$BUILD_TAG
