@@ -20,6 +20,7 @@ jobs:
           git fetch --tags
           export BUILD_TAG=$(git describe --always)
           echo "Latest tag: $BUILD_TAG"
+          echo ${{ secrets.REPO_OASIS_ACCESS_TOKEN }}
 
       - name: Build Oasis Docker image
         run: docker build -t docker.pkg.github.com/oasisdefender/oasis/oasis:ff4045d .
