@@ -15,14 +15,12 @@ jobs:
       - name: Checkout oasis repo
         uses: actions/checkout@v2
 
-      - name: Get latest TAG from Git
+      - name: Build Oasis Docker image
         run: |
           git fetch --tags
           export BUILD_TAG=$(git describe --always)
           echo "Latest tag: $(BUILD_TAG)"
-
-      - name: Build Oasis Docker image
-        run: docker build -t docker.pkg.github.com/oasisdefender/oasis/oasis:$(BUILD_TAG) .
+          docker build -t docker.pkg.github.com/oasisdefender/oasis/oasis:$(BUILD_TAG) .
 
       - name: Login to GitHub Packages
         uses: docker/login-action@v1
