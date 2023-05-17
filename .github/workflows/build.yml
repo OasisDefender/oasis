@@ -1,0 +1,35 @@
+name: Build and Publish Oasis Docker Image
+
+#on:
+#  push:
+#    branches:
+#      - main
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout oasis repo
+        uses: actions/checkout@v2
+
+      - name: Get latest TAG from Git
+        run: |
+        git fetch --tags
+        export BUILD_TAG=$(git describe --always)
+        echo "Latest tag: $BUILD_TAG"
+
+      - name: Build Oasis Docker image
+        run: docker build -t docker.pkg.github.com/OasisDefender/oasis:$BUILD_TAG .
+
+      - name: Login to GitHub Packages
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: ${{ github.actor }}
+          password: ${{ secrets.REPO_OASIS_ACCESS_TOKEN }}
+
+      - name: Push Oasis Docker image to GitHub Packages
+        run: docker push docker.pkg.github.com/OasisDefender/oasis:$BUILD_TAG
