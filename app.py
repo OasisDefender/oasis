@@ -30,6 +30,8 @@ def clouds():
 
 @app.route('/clouds/add', methods=['POST'])
 def clouds_add():
+    retmsg = ""
+    retval = 200
     context = DB()
     cloud = Cloud(id=-1,
                   name=request.form['name'],
@@ -43,21 +45,27 @@ def clouds_add():
                   azure_client_secret=request.form['azure_client_secret'])
     context.add_cloud(cloud)
     if cloud.id > 0:
-        fw = None
+        save_cloud_id = cloud.id
+        fw            = None
         if cloud.cloud_type.upper() == 'AWS':
             fw = FW_AWS()
         if cloud.cloud_type.upper() == 'AZURE':
             fw = FW_Azure()
         if fw != None:
             if cloud.id == fw.connect(cloud.id):
-                #print(cloud.cloud_type.upper())
                 fw.get_topology(cloud.id)
             else:
-                retmsg = f"Cant connect to new cloud: {{cloud.name}} ({cloud.cloud_type})"
+                retmsg = f"Cant connect to cloud: '{cloud.name}' ({cloud.cloud_type}) - no valid credentials!"
                 retval = 500
+                context.delete_cloud(save_cloud_id)
         else:
             retmsg = f"Cloud Type: '{cloud.cloud_type}' - not supported!"
             retval = 500
+            context.delete_cloud(save_cloud_id)
+    else:
+        retmsg = f"DB error: cant insert new cloud!"
+        retval = 500
+    print(f"retmsg='{retmsg}' retval={retval}")
     return redirect(url_for('clouds'))
 
 
@@ -98,43 +106,9 @@ def get_vm_links(vm_id: int):
     l = Links(vm_id)
     l.get()
     lines = json.dumps(l, default=link_encoder, ensure_ascii=False)
-    #print(lines)
-    # from always
-    # "from": { "type": "vm", "id": vm_id },
-    '''
-    links = [
-        {            
-            "to": { "type": "vm", "id": 1},
-            "inbound": "TCP/22, HTTPS, HTTP",
-            "outbound": ""
-        },
-        {            
-            "to": { "type": "vm", "id": 2},
-            "inbound": "HTTPS, HTTP",
-            "outbound": "TCP/8080, UDP/10000-10100"
-        },
-        {
-            "to": { "type": "network", "address": "0.0.0.0/0"},
-            "inbound": "HTTPS, HTTP",
-            "outbound": "Any"
-        },
-        {
-            "to": { "type": "subnet", "id": 1},
-            "inbound": "Any",
-            "outbound": "Any"
-        },
-        {
-            "to": { "type": "vpc", "id": 1},
-            "inbound": "Any",
-            "outbound": "Any"
-        }
-    ]
-    '''
     r = VM_Rules(vm_id)
     rules = json.dumps(r.to_dict())
-    #print(rules)
     reply = f"{{\"links\": {lines}, \"rules\": {rules}}}"
-    #print(reply)
     return reply
 
 @app.route('/vm/<int:vm_id>/links/delete', methods=['POST'])

@@ -30,8 +30,8 @@ class DB:
         cursor.execute('''CREATE TABLE IF NOT EXISTS clouds
                                 (
                                     id   INTEGER PRIMARY KEY,
-                                    name TEXT,       -- Cloud name (show in gui)
-                                    cloud_type TEXT, -- AWS or AZURE
+                                    name TEXT UNIQUE, -- Cloud name (show in gui)
+                                    cloud_type TEXT,  -- AWS or AZURE
                                     aws_region TEXT,     -- AWS region
                                     aws_key TEXT,        -- AWS key
                                     aws_secret_key TEXT, -- AWS secret-key
@@ -40,7 +40,9 @@ class DB:
                                     azure_client_secret TEXT,  -- Azure client-secret
                                     azure_subscription_id TEXT -- Azure only subscription-id
                                 )''')
-        
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_aws_index ON clouds(aws_region, aws_key, aws_secret_key)")
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_azure_index ON clouds(azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)")
+
         cursor.execute('''CREATE TABLE IF NOT EXISTS vpcs(
             id      INTEGER PRIMARY KEY,
             name    TEXT,
@@ -115,14 +117,17 @@ class DB:
 
     def add_cloud(self, cloud: Cloud) -> int:
         cursor = self.__database.cursor()
-        cursor.execute("""
-            INSERT INTO clouds (name, cloud_type, aws_region, aws_key, aws_secret_key, azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (cloud.name, cloud.cloud_type, 
-              cloud.aws_region, cloud.aws_key, cloud.aws_secret_key, 
-              cloud.azure_tenant_id, cloud.azure_client_id, cloud.azure_client_secret, cloud.azure_subscription_id))
-        cloud.id = cursor.lastrowid
-        self.__database.commit()
+        try:
+            cursor.execute("""
+                INSERT INTO clouds (name, cloud_type, aws_region, aws_key, aws_secret_key, azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (cloud.name, cloud.cloud_type, 
+                cloud.aws_region, cloud.aws_key, cloud.aws_secret_key, 
+                cloud.azure_tenant_id, cloud.azure_client_id, cloud.azure_client_secret, cloud.azure_subscription_id))
+            cloud.id = cursor.lastrowid
+            self.__database.commit()
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
         return cloud.id
 
 

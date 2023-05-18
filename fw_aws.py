@@ -16,19 +16,23 @@ from types  import SimpleNamespace
 
 class FW_AWS:
     def __init__(self):
-        self.__cloud_id: str                  = ""
-        self.__session: boto3.session.Session = None
-        self.__db:      DB                    = DB()
+        self.__cloud_id: int                   = 0
+        self.__session:  boto3.session.Session = None
+        self.__db:       DB                    = DB()
 
 
-    def connect(self, cloud_id: str) -> str:
+    def connect(self, cloud_id: int) -> int:
         db = DB()
         creds = self.__db.get_aws_credentials(cloud_id)
         for cred in creds:
-            #print(f"{cred}")
             self.__session = boto3.Session(aws_access_key_id=cred[1], aws_secret_access_key=cred[2], region_name=cred[0])
             self.__cloud_id = cloud_id
             break
+        # Test connection
+        try:
+            client = self.__session.client('ec2')
+        except:
+            self.__cloud_id = 0 #"AWS: cant cinnect to cloud!"
         return self.__cloud_id
 
 

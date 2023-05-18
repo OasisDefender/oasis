@@ -48,17 +48,26 @@ class FW_Azure:
 
 
     
-    def connect(self, cloud_id: str) -> str:
+    def connect(self, cloud_id: int) -> int:
         db = DB()
         creds = self.__db.get_azure_credentials(cloud_id)
         for cred in creds:
-            #print(f"{cred}")
-            credential = ClientSecretCredential(cred[0], cred[1], cred[2])
+            credential             = ClientSecretCredential(cred[0], cred[1], cred[2])
             self.__resource_client = ResourceManagementClient(credential, cred[3])
             self.__compute_client  = ComputeManagementClient (credential, cred[3])
             self.__network_client  = NetworkManagementClient (credential, cred[3])
-            self.__cloud_id = cloud_id
+            self.__cloud_id        = cloud_id
             break
+
+        # Test connection
+        vpcs = self.__network_client.virtual_networks.list_all()
+        print(f"connect: {vpcs}")
+        try:
+            for vpc in vpcs:
+                break
+        except:
+            self.__cloud_id = 0
+
         return self.__cloud_id
 
 
@@ -67,6 +76,7 @@ class FW_Azure:
         # Load VPC's
         vpcs = self.__network_client.virtual_networks.list_all()
         for vpc in vpcs:
+            print(f"get_topology: {v}")
             v = VPC(vpc=None, name=vpc.name, network=vpc.address_space.address_prefixes[0], cloud_id=cloud_id, note=vpc.name)
             v.id = db.add_vpc(vpc=v.to_sql_values())
             # Load Subnet's
