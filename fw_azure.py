@@ -61,7 +61,6 @@ class FW_Azure:
 
         # Test connection
         vpcs = self.__network_client.virtual_networks.list_all()
-        print(f"connect: {vpcs}")
         try:
             for vpc in vpcs:
                 break
@@ -76,7 +75,6 @@ class FW_Azure:
         # Load VPC's
         vpcs = self.__network_client.virtual_networks.list_all()
         for vpc in vpcs:
-            print(f"get_topology: {v}")
             v = VPC(vpc=None, name=vpc.name, network=vpc.address_space.address_prefixes[0], cloud_id=cloud_id, note=vpc.name)
             v.id = db.add_vpc(vpc=v.to_sql_values())
             # Load Subnet's

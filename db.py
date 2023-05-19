@@ -101,6 +101,7 @@ class DB:
             name  TEXT,
             proto TEXT,
             port  TEXT)''')
+        self.__import_network_services()
 
         # Not used now
         #cursor.execute('''CREATE TABLE IF NOT EXISTS routes(
@@ -494,3 +495,34 @@ class DB:
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return [NetworkService(id=row[0], name=row[1], proto=row[2], port=row[3]) for row in cursor.fetchall()] 
+
+
+    def __import_network_services(self):
+        sql    = f"select count(*) from network_services"
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        row_count = cursor.fetchall()
+        if row_count[0][0] == 0:
+            filename:  str   = '/etc/services'
+            dict_data: dict = {}
+            with open(filename) as fhandle:
+                for line in fhandle:
+                    line = line.strip()
+                    if line == '':
+                        continue
+                    if line[0] == '#':
+                        continue
+                    line       = line.split('#')[0]
+                    line       = line.replace('\t', '*')
+                    line       = line.replace('**', '*')
+                    line_array = line.split('*')
+                    try:
+                        service = line_array[0]
+                        port    = line_array[1].split('/')[0]
+                        proto   = line_array[1].split('/')[1]
+                        sql = f"insert into network_services(name, proto, port) values('{service}', '{proto}', '{port}')"
+                        cursor.execute(sql)
+                    except IndexError:
+                        pass
+            self.__database.commit()
+        return

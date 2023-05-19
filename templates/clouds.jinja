@@ -38,11 +38,10 @@
           {% endif %}
         </td>
         <td>
-          <form method="POST" action="{{ url_for('clouds_sync') }}" target="dummyframe" style="display: inline-block;">
-            <input type="hidden" name="id" value="{{ cloud.id }}">
-            <button type="submit" class="btn btn-success">Sync</button>
-          </form>
-          <form method="POST" action="{{ url_for('clouds_delete') }}"  style="display: inline-block;">
+          <div style="display: inline-block;">            
+            <button type="submit" data-id="{{ cloud.id }}" onclick="cloudSync(this)" class="btn btn-success" style="width:100px;">Sync</button>
+          </div>
+          <fdiv method="POST" action="{{ url_for('clouds_delete') }}"  style="display: inline-block;">
             <input type="hidden" name="id" value="{{ cloud.id }}">
             <button type="submit" class="btn btn-danger">Delete</button>
           </form>
@@ -85,7 +84,35 @@
 
           <div class="form-group aws-field">
             <label for="aws_region">Region:</label>
-            <input type="text" class="form-control" id="aws_region" name="aws_region" required>
+            <select class="form-select" id="aws_region" name="aws_region" required>
+              <option value="af-south-1">af-south-1</option>
+              <option value="ap-east-1">ap-east-1</option>
+              <option value="ap-northeast-1">ap-northeast-1</option>
+              <option value="ap-northeast-2">ap-northeast-2</option>
+              <option value="ap-northeast-3">ap-northeast-3</option>
+              <option value="ap-south-1">ap-south-1</option>
+              <option value="ap-south-2">ap-south-2</option>
+              <option value="ap-southeast-1">ap-southeast-1</option>
+              <option value="ap-southeast-2">ap-southeast-2</option>
+              <option value="ap-southeast-3">ap-southeast-3</option>
+              <option value="ap-southeast-4">ap-southeast-4</option>
+              <option value="ca-central-1">ca-central-1</option>
+              <option value="eu-central-1">eu-central-1</option>
+              <option value="eu-central-2">eu-central-2</option>
+              <option value="eu-north-1">eu-north-1</option>
+              <option value="eu-south-1">eu-south-1</option>
+              <option value="eu-south-2">eu-south-2</option>
+              <option value="eu-west-1">eu-west-1</option>
+              <option value="eu-west-2">eu-west-2</option>
+              <option value="eu-west-3">eu-west-3</option>
+              <option value="me-central-1">me-central-1</option>
+              <option value="me-south-1">me-south-1</option>
+              <option value="sa-east-1">sa-east-1</option>
+              <option value="us-east-1">us-east-1</option>
+              <option value="us-east-2">us-east-2</option>
+              <option value="us-west-1">us-west-1</option>
+              <option value="us-west-2">us-west-2</option>
+            </select>            
           </div>
           <div class="form-group aws-field">
             <label for="aws_key">Key:</label>
@@ -139,22 +166,22 @@
         if (newValue === "AWS") {
             aws_fields.forEach(field => {
                 field.style.display = "block";
-                field.querySelector("input").setAttribute("required", true);
+                field.querySelector("input,select").setAttribute("required", true);
             });
 
             azure_fields.forEach(field => {
                 field.style.display = "none";
-                field.querySelector("input").removeAttribute("required");
+                field.querySelector("input,select").removeAttribute("required");
             });
         } else if (newValue === "Azure") {
             aws_fields.forEach(field => {
                 field.style.display = "none";
-                field.querySelector("input").removeAttribute("required");
+                field.querySelector("input,select").removeAttribute("required");
             });
 
             azure_fields.forEach(field => {
                 field.style.display = "block";
-                field.querySelector("input").setAttribute("required", true);
+                field.querySelector("input,select").setAttribute("required", true);
             });
         }
     }
@@ -168,5 +195,21 @@
   document.addEventListener("DOMContentLoaded", function (event) {
     init();
   });
+
+  async function cloudSync(button) {
+    button.disabled = true;
+    const id = button.dataset.id;
+    const text = button.innerHTML;
+    
+    button.innerHTML = "Syncing...";
+
+    const response = await fetch(`/cloud/${id}/sync`, {
+        method: "POST"
+    });
+    
+    // restore
+    button.disabled = false;
+    button.innerHTML = text;
+  }
 </script>
 {% endblock %}

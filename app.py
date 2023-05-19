@@ -76,9 +76,8 @@ def clouds_delete():
     context.delete_cloud(id)
     return redirect(url_for('clouds'))
 
-@app.route('/clouds/sync', methods=['POST'])
-def clouds_sync():
-    id      = request.form['id']
+@app.route('/cloud/<int:id>/sync', methods=['POST'])
+def clouds_sync(id: int):    
     fw      = None
     context = DB()
     retmsg  = ""
@@ -86,7 +85,7 @@ def clouds_sync():
     cloud: Cloud = None
 
     for cloud in context.get_clouds():
-        if f"{cloud.id}" == id:
+        if cloud.id == id:
             if cloud.cloud_type == 'AWS':
                 fw = FW_AWS()
                 break
