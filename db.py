@@ -30,8 +30,8 @@ class DB:
         cursor.execute('''CREATE TABLE IF NOT EXISTS clouds
                                 (
                                     id   INTEGER PRIMARY KEY,
-                                    name TEXT UNIQUE, -- Cloud name (show in gui)
-                                    cloud_type TEXT,  -- AWS or AZURE
+                                    name TEXT UNIQUE not null, -- Cloud name (show in gui)
+                                    cloud_type TEXT not null,  -- AWS or AZURE
                                     aws_region TEXT,     -- AWS region
                                     aws_key TEXT,        -- AWS key
                                     aws_secret_key TEXT, -- AWS secret-key
@@ -119,14 +119,24 @@ class DB:
     def add_cloud(self, cloud: Cloud) -> int:
         cursor = self.__database.cursor()
         try:
-            cursor.execute("""
-                INSERT INTO clouds (name, cloud_type, aws_region, aws_key, aws_secret_key, azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (cloud.name, cloud.cloud_type, 
-                cloud.aws_region, cloud.aws_key, cloud.aws_secret_key, 
-                cloud.azure_tenant_id, cloud.azure_client_id, cloud.azure_client_secret, cloud.azure_subscription_id))
-            cloud.id = cursor.lastrowid
-            self.__database.commit()
+            if cloud.cloud_type == 'AWS':
+                cursor.execute("""
+                    INSERT INTO clouds (name, cloud_type, aws_region, aws_key, aws_secret_key)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (cloud.name, cloud.cloud_type, 
+                    cloud.aws_region, cloud.aws_key, cloud.aws_secret_key))
+                cloud.id = cursor.lastrowid
+                self.__database.commit()
+            elif cloud.cloud_type == 'AZURE':
+                cursor.execute("""
+                    INSERT INTO clouds (name, cloud_type, azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (cloud.name, cloud.cloud_type, 
+                    cloud.azure_tenant_id, cloud.azure_client_id, cloud.azure_client_secret, cloud.azure_subscription_id))
+                cloud.id = cursor.lastrowid
+                self.__database.commit()
+            else:
+                print(f"Unsupported Cloud Type: '{cloud.cloud_type}'")
         except sqlite3.Error as e:
             print(f"DB error: {e}")
         return cloud.id

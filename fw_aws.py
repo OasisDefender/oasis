@@ -31,8 +31,11 @@ class FW_AWS:
         # Test connection
         try:
             client = self.__session.client('ec2')
+            response = client.describe_vpcs()
+            for row in response['Vpcs']:
+                break
         except:
-            self.__cloud_id = 0 #"AWS: cant cinnect to cloud!"
+            self.__cloud_id = 0 #"AWS: cant connect to cloud!"
         return self.__cloud_id
 
 

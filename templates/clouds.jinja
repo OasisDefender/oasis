@@ -41,10 +41,12 @@
           <div style="display: inline-block;">            
             <button type="submit" data-id="{{ cloud.id }}" onclick="cloudSync(this)" class="btn btn-success" style="width:100px;">Sync</button>
           </div>
-          <fdiv method="POST" action="{{ url_for('clouds_delete') }}"  style="display: inline-block;">
-            <input type="hidden" name="id" value="{{ cloud.id }}">
-            <button type="submit" class="btn btn-danger">Delete</button>
-          </form>
+          <div style="display: inline-block;">
+            <form method="POST" action="{{ url_for('clouds_delete') }}">
+              <input type="hidden" name="id" value="{{ cloud.id }}">
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </div>          
         </td>
       </tr>
       {% endfor %}
@@ -166,17 +168,17 @@
         if (newValue === "AWS") {
             aws_fields.forEach(field => {
                 field.style.display = "block";
-                field.querySelector("input,select").setAttribute("required", true);
+                field.querySelector("input,select").setAttribute("required", true);                
             });
 
             azure_fields.forEach(field => {
                 field.style.display = "none";
-                field.querySelector("input,select").removeAttribute("required");
+                field.querySelector("input,select").removeAttribute("required");                
             });
         } else if (newValue === "Azure") {
             aws_fields.forEach(field => {
                 field.style.display = "none";
-                field.querySelector("input,select").removeAttribute("required");
+                field.querySelector("input,select").removeAttribute("required");                
             });
 
             azure_fields.forEach(field => {
