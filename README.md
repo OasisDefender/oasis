@@ -35,4 +35,4 @@ $ mkdir -p /home/$USER/.db && docker run -d --name oasis --restart always -p 127
 
 
 ## Usage
-Open http://127.0.0.1:5000 in you internet-browser
+Open http://127.0.0.1:5000 in your Internet Browser
