@@ -2,5 +2,6 @@
 0*
 1*
 __pycache__/
+*.pyc
 poc/
 db.sqlite3
