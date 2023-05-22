@@ -5,6 +5,15 @@
 
 {% block content %}
 <div class="container">
+  {% if errorMsg %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Error:</strong> {{ errorMsg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <script>
+    window.history.replaceState(null, null, '/clouds');
+  </script>
+  {% endif %}
   {% if clouds is defined and clouds|length > 0 %}
   <p> </p>
   <div class="btn-group" role="group" aria-label="Actions">

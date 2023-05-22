@@ -23,15 +23,18 @@ def index():
 
 @app.route('/clouds', methods=['GET'])
 def clouds():
+    return clouds_with_error(msg=None)
+    
+@app.route('/clouds/e/<string:msg>', methods=['GET'])
+def clouds_with_error(msg: str):
     context = DB()
     clouds = context.get_clouds()
-    return render_template('clouds.jinja', clouds=clouds)
+    return render_template('clouds.jinja', clouds=clouds, errorMsg=msg)
 
 
 @app.route('/clouds/add', methods=['POST'])
 def clouds_add():
     retmsg = ""
-    retval = 200
     context = DB()
     cloud = Cloud(id=-1,
                   name=request.form['name'],
@@ -54,19 +57,18 @@ def clouds_add():
         if fw != None:
             if cloud.id == fw.connect(cloud.id):
                 fw.get_topology(cloud.id)
-            else:
-                retmsg = f"Cant connect to cloud: '{cloud.name}' ({cloud.cloud_type}) - no valid credentials!"
-                retval = 500
+            else:                                
                 context.delete_cloud(save_cloud_id)
-        else:
-            retmsg = f"Cloud Type: '{cloud.cloud_type}' - not supported!"
-            retval = 500
+                retmsg = f"Cant connect to cloud: '{cloud.name}' ({cloud.cloud_type}) - no valid credentials!"
+                return redirect(url_for('clouds_with_error', msg=retmsg))
+        else:                        
             context.delete_cloud(save_cloud_id)
+            retmsg = f"Cloud Type: '{cloud.cloud_type}' - not supported!"
+            return redirect(url_for('clouds_with_error', msg=retmsg))
     else:
-        retmsg = f"DB error: cant insert new cloud!"
-        retval = 500
-    print(f"retmsg='{retmsg}' retval={retval}")
-    return redirect(url_for('clouds'))
+        retmsg = f"DB error: cant insert new cloud! Already exists?"
+        return redirect(url_for('clouds_with_error', msg=retmsg))    
+    return redirect(url_for('clouds'))        
 
 
 @app.route('/clouds/delete', methods=['POST'])
