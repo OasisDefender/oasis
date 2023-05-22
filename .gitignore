@@ -1,0 +1,6 @@
+.github
+0*
+1*
+__pycache__/
+poc/
+db.sqlite3
