@@ -82,63 +82,60 @@ class FW_Azure:
                 s = Subnet(subnet=None, name=subnet.name, arn=subnet.id, network=subnet.address_prefix,
                                 azone='', note=subnet.name, vpc_id=vpc.name, cloud_id=cloud_id)
                 s.id = db.add_subnet(subnet=s.to_sql_values())
-            # Load VM's
-            vms = self.__compute_client.virtual_machines.list_all()
-            for vm in vms:
-                nic_id       = vm.network_profile.network_interfaces[0].id
-                if_id        = nic_id.split('/')[-1]
+        # Load VM's
+        vms = self.__compute_client.virtual_machines.list_all()
+        for vm in vms:
+            nic_id       = vm.network_profile.network_interfaces[0].id
+            if_id        = nic_id.split('/')[-1]
 
-                resource_group_name = vm.id.split('/')[4]
-                vm_info      = self.__compute_client.virtual_machines.instance_view(resource_group_name, vm.name)
-                state        = vm_info.statuses[-1].display_status
+            resource_group_name = vm.id.split('/')[4]
+            vm_info      = self.__compute_client.virtual_machines.instance_view(resource_group_name, vm.name)
+            state        = vm_info.statuses[-1].display_status
 
-                nic          = self.__network_client.network_interfaces.get(resource_group_name, if_id)
-                mac          = nic.mac_address
-                privip       = nic.ip_configurations[0].private_ip_address
+            nic          = self.__network_client.network_interfaces.get(resource_group_name, if_id)
+            mac          = nic.mac_address
+            privip       = nic.ip_configurations[0].private_ip_address
 
-                pubip        = ""
-                pubdn        = ""
-                if nic.ip_configurations[0].public_ip_address:
-                    public_ip_address = self.__network_client.public_ip_addresses.get(
-                            resource_group_name,
-                            nic.ip_configurations[0].public_ip_address.id.split('/')[-1]
-                        )
-                    pubip     = public_ip_address.ip_address
-                    if public_ip_address.dns_settings:
-                        pubdn = public_ip_address.dns_settings.fqdn
+            pubip        = ""
+            pubdn        = ""
+            if nic.ip_configurations[0].public_ip_address:
+                public_ip_address = self.__network_client.public_ip_addresses.get(
+                        resource_group_name,
+                        nic.ip_configurations[0].public_ip_address.id.split('/')[-1]
+                    )
+                pubip     = public_ip_address.ip_address
+                if public_ip_address.dns_settings:
+                    pubdn = public_ip_address.dns_settings.fqdn
 
-                subnet_id     = nic.ip_configurations[0].subnet.id.split('/')[-1]
+            subnet_id     = nic.ip_configurations[0].subnet.id.split('/')[-1]
+            vpc_id        = nic.ip_configurations[0].subnet.id.split('/')[-3]
 
-                v = VM(vm=None,
-                        type='VM',
-                        vpc_id=vpc.id.split('/')[-1],
-                        azone=vm.location,
-                        subnet_id=subnet_id,
-                        name=vm.id,
-                        privdn=vm.os_profile.computer_name,
-                        privip=privip,
-                        pubdn=pubdn,
-                        pubip=pubip,
-                        note=vm.name,
-                        os='Linux' if vm.os_profile.windows_configuration == "None" else 'Windows',
-                        state=state,
-                        mac=mac,
-                        if_id=if_id,
-                        cloud_id=cloud_id)
-                v.id = db.add_instance(instance=v.to_sql_values())
-                # Load Rule Group's
-                vm_resource_group_name = vm.id.split('/')[4]
-                vm_nic                 = self.__network_client.network_interfaces.get(
-                                            vm_resource_group_name,
-                                            vm.network_profile.network_interfaces[0].id.split('/')[-1])
-                if nic.network_security_group:
-                    rg = RuleGroup(id=None,
-                                   if_id=vm.network_profile.network_interfaces[0].id.split('/')[-1],
-                                   name=nic.network_security_group.id,
-                                   cloud_id=cloud_id)
-                    rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
-                    # Load rules for current rule group
-                    self.get_group_rules(cloud_id, nic.network_security_group.id)
+            v = VM(vm=None,
+                    type='VM',
+                    vpc_id=vpc_id, #vpc.id.split('/')[-1],
+                    azone=vm.location,
+                    subnet_id=subnet_id,
+                    name=vm.id,
+                    privdn=vm.os_profile.computer_name,
+                    privip=privip,
+                    pubdn=pubdn,
+                    pubip=pubip,
+                    note=vm.name,
+                    os='Linux' if vm.os_profile.windows_configuration == "None" else 'Windows',
+                    state=state,
+                    mac=mac,
+                    if_id=if_id,
+                    cloud_id=cloud_id)
+            v.id = db.add_instance(instance=v.to_sql_values())
+            # Load Rule Group's
+            if nic.network_security_group:
+                rg = RuleGroup(id=None,
+                                if_id=vm.network_profile.network_interfaces[0].id.split('/')[-1],
+                                name=nic.network_security_group.id,
+                                cloud_id=cloud_id)
+                rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
+                # Load rules for current rule group
+                self.get_group_rules(cloud_id, nic.network_security_group.id)
         return 0
 
 
