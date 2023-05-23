@@ -442,8 +442,10 @@ function recalculateLinks() {
             link.calculated.swap = center1.x > center2.x;
 
             // special cases
-            if (link.calculated.srcDstDist < 200) {
+            if (link.calculated.srcDstDist < 200) {                
                 link.calculated.dstAngle = link.calculated.srcAngle;
+                link.calculated.dstAngle += Math.PI / 4;
+                link.calculated.srcAngle += Math.PI / 2;
             }
             if (link.data.to.type == "network") {
                 link.calculated.dstAngle = 3 * Math.PI / 2;
