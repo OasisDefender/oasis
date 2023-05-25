@@ -27,4 +27,4 @@ jobs:
           git fetch --tags
           export BUILD_TAG=$(git describe --always)
           echo ${GITHUB_REF#refs/heads/}
-          docker buildx build --push --tag ghcr.io/oasisdefender/oasis:$BUILD_TAG .
+          docker buildx build --push --tag ghcr.io/oasisdefender/oasis:${GITHUB_REF#refs/heads/}-$BUILD_TAG .
