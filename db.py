@@ -177,6 +177,8 @@ class DB:
         self.__database.commit()
         return
 
+
+
     def delete_group_rules(self, cloud_id: str, group_id: str):
         cursor = self.__database.cursor()
         sql = f"DELETE FROM rules WHERE cloud_id = {cloud_id} and group_id = '{group_id}'"
@@ -501,7 +503,7 @@ class DB:
 
     def get_services_by_name(self, name) -> list[NetworkService]:
         sql    = f"select distinct id, name, proto, port from network_services where name='{name}' order by name"
-        print(f"{sql}")
+        #print(f"{sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return [NetworkService(id=row[0], name=row[1], proto=row[2], port=row[3]) for row in cursor.fetchall()] 
