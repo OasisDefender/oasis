@@ -1,9 +1,6 @@
 name: Build and Publish Oasis Docker Image
 
-#on:
-#  push:
-#    branches:
-#      - main
+# Developer run buil by hand
 on:
   workflow_dispatch:
 
