@@ -25,17 +25,17 @@ class Links:
             srvc = db.detect_service(rule[2], row_4, '')
             if srvc == '':
                 srvc = f"{rule[2]}/{row_4}"
-
+            
             if d is None:
                 d = Destination(rule, "network")
             else:
                 if d.address == rule[3]:
-                    # Inbound
+                    # Inbound                                
                     if rule[1] == "False":
                         d.inbound.append(srvc)
                     # Outbound
                     else:
-                        d.inbound.append(srvc)
+                        d.outbound.append(srvc)
                 else:
                     if d.is_empty() == 0:
                         self.dst.append(d)
@@ -123,7 +123,7 @@ class Links:
                 d = Destination(rule, "vm")
             else:
                 if d.address == rule[3]:
-                    #inbound
+                    #inbound                    
                     if rule[1] == "False":
                         d.inbound.append(srvc)
                     #outbound
