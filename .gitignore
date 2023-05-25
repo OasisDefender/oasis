@@ -5,3 +5,8 @@ __pycache__/
 *.pyc
 poc/
 db.sqlite3
+*bck
+.DS_Store
+._*
+*.mov
+
