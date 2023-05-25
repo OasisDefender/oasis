@@ -1,10 +1,10 @@
 name: Build and Publish Oasis Docker Image
 
-#on:
-#  push:
-#    branches:
-#      - main
 on:
+  push:
+    branches:
+      - main
+      - 0.0.1
   workflow_dispatch:
 
 jobs:
@@ -29,4 +29,5 @@ jobs:
         run: |
           git fetch --tags
           export BUILD_TAG=$(git describe --always)
-          docker buildx build --push --tag ghcr.io/oasisdefender/oasis:$BUILD_TAG .
+          echo ${GITHUB_REF#refs/heads/}
+          docker buildx build --push --tag ghcr.io/oasisdefender/oasis:${GITHUB_REF#refs/heads/}-$BUILD_TAG .
