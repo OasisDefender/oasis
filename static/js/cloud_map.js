@@ -120,6 +120,7 @@ function fillInternet(internetDiv, internetNodes) {
 
     const addDiv = document.createElement("div");
     addDiv.classList.add("network");
+    addDiv.id = "add-network";
     const addText = document.createElement("p");
     addText.innerHTML = '<i class="fa-solid fa-add"></i> Add target';
     addDiv.appendChild(addText);
@@ -1346,7 +1347,7 @@ function init() {
     }
 
     document
-        .querySelectorAll(".vm,.subnet,.vpc,.network")
+        .querySelectorAll(".vm,.subnet,.vpc,.network:not(#add-network)")
         .forEach(setDragEvents);
 
     // add network
