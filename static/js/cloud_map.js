@@ -1302,29 +1302,29 @@ function init() {
     }
 
     function setDragEvents(el) {
-        el.ondragstart = function (ev) {
-            //console.log("ondragstart", ev);
+        el.draggable = true;
+        el.addEventListener('dragstart', function(ev) {            
             ev.dataTransfer.setData(
                 "text/plain",
                 JSON.stringify(getNodeType(this))
             );
-            ev.dataTransfer.setDragImage(dragimg, 16, 16);
+            ev.dataTransfer.setDragImage(dragimg, 16, 16);   
+            ev.dataTransfer.effectAllowed = "all";
             ev.stopPropagation();
-        };
-        el.ondragend = function (ev) {
+        });
+        el.addEventListener('dragend', function(ev) {
+            ev.stopPropagation();            
+        });
+        el.addEventListener('dragenter', function (ev) {            
+            ev.preventDefault();            
+        });
+        el.addEventListener('dragover', function (ev) {            
+            ev.preventDefault();            
+        });
+        el.addEventListener('drop', function (ev) {
+            console.log("ondrop", ev);
             ev.stopPropagation();
-            //console.log("ondragend", ev);
-        };
-        el.ondragover = function (ev) {
-            ev.stopPropagation();
-            ev.dataTransfer.dropEffect = "link";
-            //console.log("ondragover", ev);
-            ev.preventDefault();
-        };
-        el.ondrop = function (ev) {
-            ev.stopPropagation();
-            ev.preventDefault();
-            //console.log("ondrop", ev);
+            ev.preventDefault();            
             const src = JSON.parse(ev.dataTransfer.getData("text/plain"));
             const dst = getNodeType(this);
             if (deepEqual(src, dst)) {
@@ -1342,8 +1342,7 @@ function init() {
             console.log("prepareCreateLink(", src, ",", dst, ")");
 
             prepareCreateLink(src, dst);
-        };
-        el.draggable = true;
+        });        
     }
 
     document
