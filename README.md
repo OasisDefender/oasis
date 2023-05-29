@@ -26,7 +26,7 @@ $ chmod 0700 /home/$USER/.db
 # Oasis is ready to use. Launch your browser and follow the link: http://127.0.0.1:5000
 ```
 
-## For alternative users
+## Manual installation
 ``` bash
 # Download software
 $ wget https://github.com/OasisDefender/oasis/archive/refs/heads/0.0.1.zip
