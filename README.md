@@ -37,7 +37,7 @@ $ unzip oasis-0.0.1.zip
 # Go to sources directory
 $ cd oasis-0.0.1
 
-# Install requrements
+# Install requirements
 $ pip3.10 install -r requirements.txt
 
 # Run oasis server
