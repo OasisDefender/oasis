@@ -61,7 +61,7 @@ Once properly installed, you will be presented with startup screen at http://127
 You can register your clouds (Amazon AWS and Microsoft Azure supported)
 
 <p align="center">
-<img alt="Oasis Defender cloud registration" src="screenshots/cloud_reg.gif?raw=true"/>
+<img alt="Oasis Defender cloud registration" src="screenshots/cloud_reg.gif"/>
 </p>
 
 ## Automatic Inventorization
@@ -69,17 +69,18 @@ You can register your clouds (Amazon AWS and Microsoft Azure supported)
 The resource information of the registered clouds (external network resources, virtual networks, virtual machines, existing filtering rules) will be collected.
 
 <p align="center">
-<img alt="Oasis Defender inventorization" src="screenshots/cloud-inv.png"/>
+<img alt="Oasis Defender inventorization" src="screenshots/cloud_inv.gif"/>
 </p>
 
 
-
-# Connections
+## Connections
 
 You can create a visual connections between resources in your clouds, including cross-cloud connections.
 
 <p align="center">
-<img alt="Oasis Defender Overview" src="screenshots/cloud-conn.png"/>
+<img alt="Oasis Defender Overview" src="screenshots/cloud_conn.gif"/>
 </p>
 
 
+# Contact Us
+[contact@oasisdefender.com](mailto:contact@oasisdefender.com)
