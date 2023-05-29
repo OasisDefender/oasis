@@ -61,7 +61,7 @@ Once properly installed, you will be presented with startup screen at http://127
 You can register your clouds (Amazon AWS and Microsoft Azure supported)
 
 <p align="center">
-<img alt="Oasis Defender cloud registration" src="screenshots/cloud-reg.gif"/>
+<img alt="Oasis Defender cloud registration" src="screenshots/cloud-reg.gif?raw=true"/>
 </p>
 
 ## Automatic Inventorization
