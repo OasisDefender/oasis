@@ -11,9 +11,6 @@
   </a>
 </div>
 
-<p align="center">
-<img alt="Oasis Defender" src="screenshots/overview.gif"/>
-</p>
 
 ## Overview
 
