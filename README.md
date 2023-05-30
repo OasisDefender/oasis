@@ -6,6 +6,9 @@
   <a href="https://twitter.com/OasisDefender">
     <img src="https://img.shields.io/badge/twitter-blue?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter:OasisDefender"/>
   </a>
+  <a href="https://www.linkedin.com/company/oasisdefender/">
+    <img src="https://img.shields.io/badge/linkedin-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="contact@oasisdefender.com"/>
+  </a>
   <a href="mailto:contact@oasisdefender.com">
     <img src="https://img.shields.io/badge/@contact_us-2A7B87?style=for-the-badge&logoColor=white" alt="contact@oasisdefender.com"/>
   </a>
