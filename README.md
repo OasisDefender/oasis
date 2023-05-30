@@ -1,4 +1,15 @@
 # Oasis Defender - AI-Driven Software for unified visualization and configuration of multi-cloud security
+<div id="badges" align="center">
+  <a href="https://oasisdefender.com">
+    <img src="https://img.shields.io/badge/oasisdefender.com-2A7B87?style=for-the-badge&logoColor=white" alt="oasisdefender.com"/>
+  </a>
+  <a href="https://twitter.com/OasisDefender">
+    <img src="https://img.shields.io/badge/twitter-blue?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter:OasisDefender"/>
+  </a>
+  <a href="mailto:contact@oasisdefender.com">
+    <img src="https://img.shields.io/badge/@contact_us-2A7B87?style=for-the-badge&logoColor=white" alt="contact@oasisdefender.com"/>
+  </a>
+</div>
 
 <p align="center">
 <img alt="Oasis Defender" src="screenshots/overview.gif"/>
@@ -51,10 +62,6 @@ $ python3.10 app.py
 
 Once properly installed, you will be presented with startup screen at http://127.0.0.1:5000.
 
-<p align="center">
-<img alt="Oasis Defender Startup Screen" src="screenshots/cloud_start.png"/>
-</p>
-
 
 ## Clouds Registration
 
@@ -80,7 +87,3 @@ You can create a visual connections between resources in your clouds, including 
 <p align="center">
 <img alt="Oasis Defender Overview" src="screenshots/cloud_conn.gif"/>
 </p>
-
-
-# Contact Us
-[contact@oasisdefender.com](mailto:contact@oasisdefender.com)
