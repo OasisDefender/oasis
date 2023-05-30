@@ -59,6 +59,10 @@ $ python3.10 app.py
 
 Once properly installed, you will be presented with startup screen at http://127.0.0.1:5000.
 
+<p align="center">
+<img alt="Oasis Defender Startup Screen" src="screenshots/cloud_start.png"/>
+</p>
+
 
 ## Clouds Registration
 
