@@ -1,4 +1,4 @@
-# Oasis Defender - AI-Driven Software for unified visualization and configuration of multi-cloud security
+# Oasis Defender
 <div id="badges" align="center">
   <a href="https://oasisdefender.com">
     <img src="https://img.shields.io/badge/oasisdefender.com-2A7B87?style=for-the-badge&logoColor=white" alt="oasisdefender.com"/>
@@ -14,7 +14,7 @@
 
 ## Overview
 
-Oasis Defender is a powerful tool to create unified cross-cloud security.
+Oasis Defender is an advanced solution for creating unified cross-cloud security environment.
 
 # Installation
 
@@ -72,7 +72,7 @@ You can register your clouds (Amazon AWS and Microsoft Azure supported)
 <img alt="Oasis Defender cloud registration" src="screenshots/cloud_reg.gif"/>
 </p>
 
-## Automatic Inventorization
+## Automatic Inventory
 
 The resource information of the registered clouds (external network resources, virtual networks, virtual machines, existing filtering rules) will be collected.
 
