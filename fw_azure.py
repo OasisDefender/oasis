@@ -196,6 +196,7 @@ class FW_Azure:
             rule_ports = '*'
 
         try:
+            security_rule_params = None
             if rule.egress == 'inbound':
                 if rule.proto.upper() == 'TCP' or rule.proto.upper() == 'UDP':
                     security_rule_params = SecurityRule(
