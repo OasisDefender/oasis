@@ -479,7 +479,7 @@ class DB:
 
     def detect_service(self, proto, port_from, port_to):
         ret: str = ''
-        sql: str = f"select name from network_services where proto='{proto.lower()}' and port='{port_from}'"
+        sql: str = f"select trim(name) as name from network_services where trim(proto)='{proto.lower().strip()}' and port='{port_from}'"
         if (port_from) == '*' or (port_from == '0'):
             pass
         else:
@@ -493,7 +493,7 @@ class DB:
         return ret
 
     def get_service_names(self) -> list[str]:
-        sql    = f"select distinct name from network_services order by name"
+        sql    = f"select distinct trim(name) as name from network_services where trim(proto) in ('tcp', 'udp', 'icmp')  order by name"
         #print(f"{sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)
@@ -502,11 +502,15 @@ class DB:
 
 
     def get_services_by_name(self, name) -> list[NetworkService]:
-        sql    = f"select distinct id, name, proto, port from network_services where name='{name}' order by name"
+        sql    = f"select distinct id, name, proto, port from network_services where trim(name)='{name.strip()}' order by name"
         #print(f"{sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)
-        return [NetworkService(id=row[0], name=row[1], proto=row[2], port=row[3]) for row in cursor.fetchall()] 
+        return [NetworkService(id=row[0],
+                               name  = row[1].replace('\t', ' ').strip(),
+                               proto = row[2].replace('\t', ' ').strip(),
+                               port  = row[3].replace('\t', ' ').strip())
+                               for row in cursor.fetchall()] 
 
 
     def __import_network_services(self):
@@ -526,12 +530,20 @@ class DB:
                         continue
                     line       = line.split('#')[0]
                     line       = line.replace('\t', '*')
-                    line       = line.replace('**', '*')
+                    line       = line.replace(' ', '*')
+                    
+                    new_line = ''
+                    while True:
+                        new_line = line.replace('**', '*')
+                        if new_line == line:
+                            break
+                        line = new_line
+                    
                     line_array = line.split('*')
                     try:
-                        service = line_array[0]
-                        port    = line_array[1].split('/')[0]
-                        proto   = line_array[1].split('/')[1]
+                        service = line_array[0].replace('\t', ' ').strip()
+                        port    = line_array[1].split('/')[0].replace('\t', ' ').strip()
+                        proto   = line_array[1].split('/')[1].replace('\t', ' ').strip()
                         sql = f"insert into network_services(name, proto, port) values('{service}', '{proto}', '{port}')"
                         cursor.execute(sql)
                     except IndexError:

@@ -204,8 +204,10 @@ class FW_AWS:
             print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Error message: {error.response['Error']['Message']}")
             return False
 
+        # Unsupported protocol
+        if not response:
+            return True
         
-
         #print(response)
         return type(response['Return'])
 
