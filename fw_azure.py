@@ -250,16 +250,18 @@ class FW_Azure:
                         description=security_rule_name,
                     )
 
-            result = self.__network_client.security_rules.begin_create_or_update(
-                resource_group_name,
-                nsg_name,
-                security_rule_name,
-                security_rule_params
-            )
-            result.wait()
-            if result.status() != 'Succeeded':
-                print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Error while add rule: {rule.to_dict()}")
-                return False
+            if security_rule_params:
+                result = self.__network_client.security_rules.begin_create_or_update(
+                    resource_group_name,
+                    nsg_name,
+                    security_rule_name,
+                    security_rule_params
+                )
+                result.wait()
+                security_rule_params = None
+                if result.status() != 'Succeeded':
+                    print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Error while add rule: {rule.to_dict()}")
+                    return False
 
 
         except azure.core.exceptions.ResourceExistsError:
