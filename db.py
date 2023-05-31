@@ -530,7 +530,15 @@ class DB:
                         continue
                     line       = line.split('#')[0]
                     line       = line.replace('\t', '*')
-                    line       = line.replace('**', '*')
+                    line       = line.replace(' ', '*')
+                    
+                    new_line = ''
+                    while True:
+                        new_line = line.replace('**', '*')
+                        if new_line == line:
+                            break
+                        line = new_line
+                    
                     line_array = line.split('*')
                     try:
                         service = line_array[0].replace('\t', ' ').strip()
