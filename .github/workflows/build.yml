@@ -1,10 +1,10 @@
 name: Build and Publish Oasis Docker Image
 
 on:
-  push:
-    branches:
-      - main
-      - 0.0.1
+#  push:
+#    branches:
+#      - main
+#      - 0.0.1
   workflow_dispatch:
 
 jobs:
