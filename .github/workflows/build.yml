@@ -33,5 +33,7 @@ jobs:
           git fetch --tags
           #export BUILD_TAG=$(git describe --always)
           #docker buildx build --push --tag ghcr.io/oasisdefender/oasis:${GITHUB_REF#refs/heads/}-$BUILD_TAG .
-          echo ${{ steps.get_version.outputs.VERSION }}
-          echo ghcr.io/oasisdefender/oasis-${GITHUB_REF#refs/tags/:latest} .
+          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+
+          #echo ${{ steps.get_version.outputs.VERSION }}
+          echo ghcr.io/oasisdefender/oasis-$LAST_TAG:latest .
