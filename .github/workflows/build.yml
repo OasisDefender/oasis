@@ -1,10 +1,9 @@
 name: Build and Publish Oasis Docker Image
 
 on:
-#  push:
-#    branches:
-#      - main
-#      - 0.0.1
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -25,8 +24,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get the oasis version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
       - name: Build and push Oasis Docker image
         run: |
-          git fetch --tags
-          export BUILD_TAG=$(git describe --always)
-          docker buildx build --push --tag ghcr.io/oasisdefender/oasis:${GITHUB_REF#refs/heads/}-$BUILD_TAG .
+          #git fetch --tags
+          #export BUILD_TAG=$(git describe --always)
+          #docker buildx build --push --tag ghcr.io/oasisdefender/oasis:${GITHUB_REF#refs/heads/}-$BUILD_TAG .
+          run: echo ${{ steps.get_version.outputs.VERSION }}
+
