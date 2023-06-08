@@ -25,11 +25,11 @@ Oasis Defender is an advanced solution for creating unified cross-cloud security
 
 ``` bash
 # Pull last docker image
-# See last version at https://github.com/OasisDefender/oasis/pkgs/container/oasis
-$ docker pull ghcr.io/oasisdefender/oasis:<tag>
+# See last version at https://github.com/OasisDefender/oasis/pkgs/container/oasis-main
+$ docker pull ghcr.io/oasisdefender/oasis-main:<tag>
 
 # Load docker image
-$ mkdir -p /home/$USER/.db && docker run -d --name oasis --restart always -p 127.0.0.1:5000:5000 -v /home/$USER/.db:/app/db --user $UID:$UID --hostname=$USER@oasis oasis
+$ mkdir -p /home/$USER/.db && docker run -d --name oasis --restart always -p 127.0.0.1:5000:5000 -v /home/$USER/.db:/app/db --user $UID:$UID --hostname=$USER@oasis oasis-main
 
 # Note: Database placed to directory - /home/$USER/.db. Database conteins autentification params for cloud connection. We recommend that you protect this directory from unauthorized users. For example:
 $ chmod 0700 /home/$USER/.db
