@@ -1,10 +1,9 @@
 name: Build and Publish Oasis Docker Image
 
 on:
-#  push:
-#    branches:
-#      - main
-#      - 0.0.1
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -14,6 +13,8 @@ jobs:
     steps:
       - name: Checkout oasis repo
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -28,5 +29,6 @@ jobs:
       - name: Build and push Oasis Docker image
         run: |
           git fetch --tags
-          export BUILD_TAG=$(git describe --always)
-          docker buildx build --push --tag ghcr.io/oasisdefender/oasis:${GITHUB_REF#refs/heads/}-$BUILD_TAG .
+          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          docker buildx build --push --tag ghcr.io/oasisdefender/oasis-${GITHUB_REF#refs/heads/}:$LAST_TAG .
+
