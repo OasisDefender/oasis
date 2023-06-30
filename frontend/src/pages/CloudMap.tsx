@@ -154,55 +154,58 @@ export function CloudMap() {
         );
     } else {
         content = (
-            <>
-                <ZoomSpace
-                    ref={spaceRef}
-                    onCreate={(viewPort) => {
-                        viewPort.camera.moveBy(
-                            -document.documentElement.clientWidth,
-                            -document.documentElement.clientHeight
-                        );
-                    }}
-                    onDecideHowToHandlePress={onDecideHowToHandlePress}
-                    onUpdated={(ViewPort) => {
-                        setZoomLevel(ViewPort.zoomFactor);
-                        updateXarrow();
-                    }}
-                >
-                    <div style={{ position: "absolute" }} ref={innerDivRef}>
-                        <MapGroup
-                            borderLineStyle="none"
-                            columnPolicy="squareRow"
-                            spacing="5rem"
-                            verticalSpacing="5rem"
+            <ZoomSpace
+                ref={spaceRef}
+                onCreate={(viewPort) => {
+                    viewPort.camera.moveBy(
+                        -document.documentElement.clientWidth,
+                        -document.documentElement.clientHeight
+                    );
+                }}
+                onDecideHowToHandlePress={onDecideHowToHandlePress}
+                onUpdated={(ViewPort) => {
+                    setZoomLevel(ViewPort.zoomFactor);
+                    updateXarrow();
+                }}
+            >
+                <div style={{ position: "absolute" }} ref={innerDivRef}>
+                    <MapGroup
+                        borderLineStyle="none"
+                        columnPolicy="squareRow"
+                        spacing="5rem"
+                        verticalSpacing="5rem"
+                    >
+                        {themap.vpcs.map((vpc) => (
+                            <MapVPC
+                                key={vpc.id}
+                                vpc={vpc}
+                                selection={selection}
+                            />
+                        ))}
+                    </MapGroup>
+                    <MapGroup borderLineStyle="none" columnPolicy="row">
+                        {themap.inodes.map((node) => (
+                            <MapNetwork
+                                key={node}
+                                node={node}
+                                selection={selection}
+                            />
+                        ))}
+                        <Button
+                            variant="subtle"
+                            color={dark ? "white" : "dark"}
+                            compact
+                            onClick={onAddTargetClick}
                         >
-                            {themap.vpcs.map((vpc) => (
-                                <MapVPC
-                                    key={vpc.id}
-                                    vpc={vpc}
-                                    selection={selection}
-                                />
-                            ))}
-                        </MapGroup>
-                        <MapGroup borderLineStyle="none" columnPolicy="row">
-                            {themap.inodes.map((node) => (
-                                <MapNetwork
-                                    key={node}
-                                    node={node}
-                                    selection={selection}
-                                />
-                            ))}
-                            <Button
-                                variant="subtle"
-                                color={dark ? "white" : "dark"}
-                                compact
-                                onClick={onAddTargetClick}
-                            >
-                                <IconPlus /> Add target
-                            </Button>
-                        </MapGroup>
-                    </div>
-
+                            <IconPlus /> Add target
+                        </Button>
+                    </MapGroup>
+                </div>
+                
+                
+            </ZoomSpace>            
+        );
+        /*
                     <Xwrapper>
                         <Xarrow
                             start={"map_vm5"}
@@ -213,9 +216,7 @@ export function CloudMap() {
                             _extendSVGcanvas={100}
                         />
                     </Xwrapper>
-                </ZoomSpace>
-            </>
-        );
+        */
     }
     return (
         <>
