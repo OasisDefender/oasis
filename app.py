@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
+from flask_cors import CORS
 
 import json
-import sys
 
 from cloud          import Cloud
 from db             import DB
@@ -14,7 +14,7 @@ from fw             import FW_Selected, FW_Selected_encoder
 from vm_rules       import VM_Rules
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route('/')
 def index():
@@ -30,7 +30,6 @@ def clouds_with_error(msg: str):
     context = DB()
     clouds = context.get_clouds()
     return render_template('clouds.jinja', clouds=clouds, errorMsg=msg)
-
 
 @app.route('/clouds/add', methods=['POST'])
 def clouds_add():
@@ -152,6 +151,116 @@ def add_rule():
     #print(data)
     return "success", 200
 
+# API
+
+@app.route('/api/clouds', methods=['GET'])
+def api_clouds_get():
+    context = DB()
+    clouds = context.get_clouds()
+    # ICloudView
+    return [ c.to_dict() for c in clouds ]
+
+@app.route('/api/cloud/<int:id>/sync', methods=['POST'])
+def api_cloud_sync(id: int):
+    fw      = None
+    context = DB()
+    retmsg  = ""
+    retval  = 200
+    cloud: Cloud = None
+
+    for cloud in context.get_clouds():
+        if cloud.id == id:
+            if cloud.cloud_type == 'AWS':
+                fw = FW_AWS()
+                break
+            if cloud.cloud_type == 'AZURE':
+                fw = FW_Azure()
+                break
+            retmsg = f"Cloud Type: '{cloud.cloud_type}' - not supported!"
+            retval = 500
+    if fw != None:
+        context.sync_cloud(cloud.id)
+        fw.connect(cloud.id)
+        fw.get_topology(cloud.id)
+    return retmsg, retval
+
+@app.route('/api/cloud/<int:id>', methods=['DELETE'])
+def api_cloud_delete(id: int):    
+    context = DB()
+    context.delete_cloud(id)
+    return "", 200
+
+@app.route('/api/cloud', methods=['POST'])
+def api_cloud_add():
+    context = DB()
+    reqCloud = request.get_json()
+    reqCloud["cloud_type"] = reqCloud["cloud_type"].upper()
+    
+    # Sanitize
+    cloud_type = reqCloud['cloud_type']
+    if cloud_type == "AWS":
+        cloud = Cloud(id=-1,
+                    name=reqCloud['name'],
+                    cloud_type=reqCloud['cloud_type'],
+                    aws_region=reqCloud['aws_region'],
+                    aws_key=reqCloud['aws_key'],
+                    aws_secret_key=reqCloud['aws_secret_key'],
+                    azure_subscription_id=None,
+                    azure_tenant_id=None,
+                    azure_client_id=None,
+                    azure_client_secret=None)
+    elif cloud_type == "AZURE":
+        cloud = Cloud(id=-1,
+                    name=reqCloud['name'],
+                    cloud_type=reqCloud['cloud_type'],
+                    aws_region=None,
+                    aws_key=None,
+                    aws_secret_key=None,
+                    azure_subscription_id=reqCloud['azure_subscription_id'],
+                    azure_tenant_id=reqCloud['azure_tenant_id'],
+                    azure_client_id=reqCloud['azure_client_id'],
+                    azure_client_secret=reqCloud['azure_client_secret'])
+    else:
+        return "Unsupported cloud type", 500
+    
+    # Add to DB
+    context.add_cloud(cloud)
+    if cloud.id <= 0:    
+        return "Can't insert new cloud! Already exists?", 500
+    
+    # Test cloud    
+    save_cloud_id = cloud.id
+    fw            = None
+    if cloud.cloud_type == 'AWS':
+        fw = FW_AWS()
+    if cloud.cloud_type == 'AZURE':
+        fw = FW_Azure()
+    if fw != None:
+        if cloud.id == fw.connect(cloud.id):
+            fw.get_topology(cloud.id)
+        else:                                
+            context.delete_cloud(save_cloud_id)
+            return f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials?", 500   
+    
+    return cloud.to_dict(), 200
+
+@app.route('/api/map')
+def api_cloud_map():
+    map = CloudMap()
+    map.get()
+    vpcs = cloud_map_encoder(map)
+
+    inodes = InternetNodes()
+    inodes.get()
+    internetNodes = internet_nodes_encoder(inodes) 
+
+    result = {
+        "vpcs": vpcs,
+        "inodes": internetNodes
+    }
+    
+    return json.dumps(result, ensure_ascii=False), 200
+    
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
