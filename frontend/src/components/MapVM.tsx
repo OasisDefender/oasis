@@ -35,7 +35,7 @@ export function MapVM({ vm, selection }: MapVMProps) {
     return (
         <Flex
             id={`map_vm${vm.id}`}
-            className="map-vm"            
+            className="map-vm"
             data-id={vm.id}
             bg={bgColor}
             gap="xs"

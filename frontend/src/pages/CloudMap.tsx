@@ -2,7 +2,6 @@ import React, { ReactNode, useEffect, useState } from "react";
 import {
     PressEventCoordinates,
     PressHandlingOptions,
-    ViewPort,
     Space as ZoomSpace,
 } from "react-zoomable-ui";
 
@@ -23,20 +22,42 @@ import { useDisclosure } from "@mantine/hooks";
 import { AddTargetForm } from "../components/AddTargetForm";
 import { MapSelection } from "../components/MapCommon";
 import { MapNetwork } from "../components/MapNetwork";
-import Xarrow, { Xwrapper, useXarrow } from "react-xarrows";
+import { MapLines } from "../components/MapLines";
+import { ILink } from "../core/models/ILinks";
+import { ShowModalError } from "../core/oasiserror";
+import { AxiosError } from "axios";
+import { useXarrow } from "react-xarrows";
 
 export function CloudMap() {
     const theme = useMantineTheme();
     const dark = theme.colorScheme === "dark";
     const spaceRef = React.useRef<ZoomSpace | null>(null);
     const innerDivRef = React.useRef<HTMLDivElement | null>(null);
-    const { loading, error, themap, addTarget } = useMap();
-    const [zoomLevel, setZoomLevel] = useState<number>(1);
+    const { loading, error, themap, addTarget, getLinksVM } = useMap();    
+    const [lines, setLines] = useState<ILink[]>([]);
+    const [zoomFactor, setZoomFactor] = useState(1);
+    const refreshLines = useXarrow();
 
     // Selection
     const [selection, setSelection] = useState<MapSelection | undefined>(
         undefined
     );
+    
+    useEffect(() => {
+        const fetchData = async () => {
+            // TODO: loading...
+            if (selection && selection.type === "vm") {
+                try {
+                    const res = await getLinksVM(Number(selection.key));
+                    console.log("res", res);
+                    setLines(res.links);
+                } catch (e: unknown) {                
+                    ShowModalError(`Error while getting links for VM`, e as AxiosError);
+                }
+            }
+        }        
+        fetchData();
+    }, [selection]);
 
     // Target add
     const [
@@ -76,7 +97,6 @@ export function CloudMap() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [themap?.vpcs]);
 
-    const updateXarrow = useXarrow();
 
     function onDecideHowToHandlePress(
         e: MouseEvent | TouchEvent,
@@ -110,6 +130,7 @@ export function CloudMap() {
                     };
                     return {
                         onTap() {
+                            setLines([]);
                             setSelection(selection);
                         },
                     };
@@ -118,6 +139,7 @@ export function CloudMap() {
         }
         return {
             onTap() {
+                setLines([]);
                 setSelection(undefined);
             },
         };
@@ -153,7 +175,7 @@ export function CloudMap() {
             </Alert>
         );
     } else {
-        content = (
+        content = (            
             <ZoomSpace
                 ref={spaceRef}
                 onCreate={(viewPort) => {
@@ -164,8 +186,8 @@ export function CloudMap() {
                 }}
                 onDecideHowToHandlePress={onDecideHowToHandlePress}
                 onUpdated={(ViewPort) => {
-                    setZoomLevel(ViewPort.zoomFactor);
-                    updateXarrow();
+                    setZoomFactor(ViewPort.zoomFactor);
+                    refreshLines();
                 }}
             >
                 <div style={{ position: "absolute" }} ref={innerDivRef}>
@@ -200,23 +222,10 @@ export function CloudMap() {
                             <IconPlus /> Add target
                         </Button>
                     </MapGroup>
-                </div>
-                
-                
+                    <MapLines from={selection} lines={lines} zoomFactor={zoomFactor}  />
+                </div>                 
             </ZoomSpace>            
         );
-        /*
-                    <Xwrapper>
-                        <Xarrow
-                            start={"map_vm5"}
-                            end={"map_vm7"}
-                            showHead={false}
-                            divContainerStyle={{ transform: `scale(${1/zoomLevel})` }}
-                            strokeWidth={4 * zoomLevel}
-                            _extendSVGcanvas={100}
-                        />
-                    </Xwrapper>
-        */
     }
     return (
         <>

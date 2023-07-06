@@ -32,6 +32,7 @@ export function MapSubnet({ subnet, selection }: MapSubnetProps) {
 
     return (
         <MapGroup
+            id={`map_subnet${subnet.id}`}
             className="map-subnet"
             data-id={subnet.id}
             groupTitle={

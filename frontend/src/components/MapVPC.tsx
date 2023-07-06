@@ -32,6 +32,7 @@ export function MapVPC({ vpc, selection }: MapVPCProps) {
     
     return (
         <MapGroup
+            id={`map_vpc${vpc.id}`}
             className="map-vpc"
             data-id={vpc.id}
             groupTitle={

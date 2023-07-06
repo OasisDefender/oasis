@@ -262,5 +262,15 @@ def api_cloud_map():
     return json.dumps(result, ensure_ascii=False), 200
     
 
+@app.route('/api/vm/<int:vm_id>/links')
+def api_get_vm_links(vm_id: int):
+    l = Links(vm_id)
+    l.get()
+    lines = json.dumps(l, default=link_encoder, ensure_ascii=False)
+    r = VM_Rules(vm_id)
+    rules = json.dumps(r.to_dict())
+    reply = f"{{\"links\": {lines}, \"rules\": {rules}}}"
+    return reply
+
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)

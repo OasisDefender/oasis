@@ -2,6 +2,8 @@ import { Center, useMantineTheme } from "@mantine/core";
 import { INode } from "../core/models/IMap";
 import { IconWorld } from "@tabler/icons-react";
 import { MapSelection } from "./MapCommon";
+import { useId } from '@mantine/hooks';
+
 
 interface MapNetworkProps {
     node: INode;
@@ -24,8 +26,11 @@ export function MapNetwork({ node, selection }: MapNetworkProps) {
         textColor = isSelected ? "blue" : undefined;
     }
 
+    const uuid = useId();
+
     return (
         <Center
+            id={uuid}
             className="map-network"
             data-id={node}
             key={node}

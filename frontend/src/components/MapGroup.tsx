@@ -10,6 +10,7 @@ import React, { CSSProperties } from "react";
 import { ReactNode } from "react";
 
 interface MapGroupProps {
+    id?: string;
     className?: string;
     groupTitle?: ReactNode;
     groupTitle2?: ReactNode;
@@ -24,6 +25,7 @@ interface MapGroupProps {
 }
 
 export function MapGroup({
+    id,
     className,
     groupTitle,
     groupTitle2,
@@ -85,7 +87,7 @@ export function MapGroup({
     }
 
     return (
-        <div style={containerStyle} className={className} {...props}>
+        <div id={id} style={containerStyle} className={className} {...props}>
             {(groupTitle || groupTitle2) && (
                 <Box style={{ display: "flex", color: textColor }}>
                     <div

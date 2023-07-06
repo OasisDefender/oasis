@@ -3,6 +3,7 @@ import { IMap } from "../models/IMap";
 import { api } from "../api";
 import { AxiosError } from "axios";
 import { OasisDecodeError } from "../oasiserror";
+import { ILinks } from "../models/ILinks";
 
 export function useMap() {
     const [loading, setLoading] = useState<boolean>(true);
@@ -29,9 +30,15 @@ export function useMap() {
         }
     }
 
+    async function getLinksVM(vmId: number) {
+        const response = await api.get<ILinks>(`/api/vm/${vmId}/links`);
+        return response.data;
+    }
+
     useEffect(() => {
         fetchMap();
     }, []);
 
-    return { loading, error, themap, addTarget };
+
+    return { loading, error, themap, addTarget, getLinksVM };
 }
