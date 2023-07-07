@@ -187,7 +187,7 @@ export function CloudMap() {
                 onDecideHowToHandlePress={onDecideHowToHandlePress}
                 onUpdated={(ViewPort) => {
                     setZoomFactor(ViewPort.zoomFactor);
-                    refreshLines();
+                    setTimeout(refreshLines, 0);
                 }}
             >
                 <div style={{ position: "absolute" }} ref={innerDivRef}>
