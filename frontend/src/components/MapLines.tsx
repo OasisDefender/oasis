@@ -1,8 +1,9 @@
 import Xarrow, { Xwrapper } from "react-xarrows";
 import { ILink } from "../core/models/ILinks";
 import { MapSelection } from "./MapCommon";
-import React from "react";
+import React, { useState } from "react";
 import { IconZoomMoney } from "@tabler/icons-react";
+import { Paper, Text } from "@mantine/core";
 
 interface MapLinesProps {
     from?: MapSelection;
@@ -18,21 +19,22 @@ type Point = {
 // Element info with zoom fix
 interface ElementInfo {
     elem: HTMLElement;
+    clientRect: DOMRect;
     width: number;
     height: number;
     centerX: number;
     centerY: number;
 }
 
-interface LineInfo {    
+interface LineInfo {
     src: ElementInfo;
     dst: ElementInfo;
 
     dstOffset: Point;
     srcOffset: Point;
 
-    srcText: string;
-    dstText: string;
+    srcText: string[];
+    dstText: string[];
 
     srcDstAngle: number;
     srcDstDist: number;
@@ -40,13 +42,13 @@ interface LineInfo {
     dstAngle: number;
 }
 
-
 function getElementInfo(element: HTMLElement, zoomFactor: number): ElementInfo {
     const rect = element.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     return {
         elem: element,
+        clientRect: rect,
         width: rect.width / zoomFactor,
         height: rect.height / zoomFactor,
         centerX: centerX / zoomFactor,
@@ -65,7 +67,10 @@ function calculateAngle(element1: ElementInfo, element2: ElementInfo): number {
     return radians;
 }
 
-function calculateDistance(element1: ElementInfo, element2: ElementInfo): number {
+function calculateDistance(
+    element1: ElementInfo,
+    element2: ElementInfo
+): number {
     let y = element2.centerX - element1.centerX;
     let x = element2.centerY - element1.centerY;
 
@@ -76,12 +81,10 @@ function findIntersection(alpha: number, element: ElementInfo): Point {
     var rayDirX = Math.cos(alpha);
     var rayDirY = Math.sin(alpha);
 
-    const rect = element.elem.getBoundingClientRect();
-
-    var x1 = -rect.width / 2,
-        y1 = -rect.height / 2;
-    var x2 = rect.width / 2,
-        y2 = rect.height / 2;
+    var x1 = -element.clientRect.width / 2,
+        y1 = -element.clientRect.height / 2;
+    var x2 = element.clientRect.width / 2,
+        y2 = element.clientRect.height / 2;
 
     var intersection = null;
 
@@ -116,6 +119,9 @@ function findIntersection(alpha: number, element: ElementInfo): Point {
 }
 
 export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [hoverIndex, setHoverIndex] = useState(-1);
+
     if (!from || !lines.length) {
         return null;
     }
@@ -160,20 +166,20 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
             let info: LineInfo = {
                 src: srcInfo,
                 dst: dstInfo,
-                srcText: line.outbound,
-                dstText: line.inbound,
+                srcText: line.inbound ? line.inbound.split(",") : [],
+                dstText: line.outbound ? line.outbound.split(",") : [],
                 srcDstAngle: calculateAngle(srcInfo, dstInfo),
                 srcDstDist: calculateDistance(srcInfo, dstInfo),
                 srcAngle: 0,
                 dstAngle: 0,
                 dstOffset: {
                     x: 0,
-                    y: 0
+                    y: 0,
                 },
                 srcOffset: {
                     x: 0,
-                    y: 0
-                }
+                    y: 0,
+                },
             };
             info.srcAngle = info.srcDstAngle;
 
@@ -181,12 +187,10 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
             if (info.srcDstDist < 200) {
                 info.dstAngle = info.srcAngle + Math.PI / 4;
                 info.srcAngle += Math.PI / 2;
-            }
-            else {
+            } else {
                 if (line.to.type === "network") {
                     info.dstAngle = (3 * Math.PI) / 2;
-                }
-                else {
+                } else {
                     info.dstAngle = info.srcAngle + Math.PI;
                 }
             }
@@ -239,14 +243,8 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
 
     lineInfo.forEach((l) => {
         // Find the intersection points
-        const intersectionSrc = findIntersection(
-            l.srcAngle,
-            l.src
-        );
-        const intersectionDst = findIntersection(
-            l.dstAngle,
-            l.dst
-        );
+        const intersectionSrc = findIntersection(l.srcAngle, l.src);
+        const intersectionDst = findIntersection(l.dstAngle, l.dst);
 
         // Compute offsets
         l.srcOffset = {
@@ -259,33 +257,81 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
         };
     });
 
+    let info: LineInfo | undefined = undefined;
+    let srcPaperStyle: React.CSSProperties | undefined = undefined;
+    let dstPaperStyle: React.CSSProperties | undefined = undefined;
+
+    if (hoverIndex >= 0 && lineInfo.length > hoverIndex) {
+        info = lineInfo[hoverIndex];
+    }
+
+    if (info) {
+        srcPaperStyle = {
+            position: "absolute",            
+            left: info.src.elem.offsetLeft + info.src.width / 2 + info.srcOffset.x / zoomFactor,
+            top: info.src.elem.offsetTop + info.src.height / 2 + info.srcOffset.y / zoomFactor,
+            pointerEvents: "none"
+        };
+        dstPaperStyle = {
+            position: "absolute",
+            left: info.dst.elem.offsetLeft + info.dst.width / 2 + info.dstOffset.x / zoomFactor,
+            top: info.dst.elem.offsetTop + info.dst.height / 2 + info.dstOffset.y / zoomFactor,
+            pointerEvents: "none"
+        };
+        if (info.src.centerX <= info.dst.centerX) {
+            srcPaperStyle.transform = "translateX(-100%) translateX(-5px) translateY(-50%)";
+            dstPaperStyle.transform = "translateX(5px) translateY(-50%)";
+        }
+        else {
+            srcPaperStyle.transform = "translateX(5px) translateY(-50%)";
+            dstPaperStyle.transform = "translateX(-100%) translateX(-5px) translateY(-50%)";
+        }
+    }
+
     return (
-        <Xwrapper>
-            {lineInfo.map((l) => (
-                <Xarrow
-                    start={l.src.elem.id}
-                    end={l.dst.elem.id}
-                    startAnchor={{
-                        position: "middle",
-                        offset: l.srcOffset,
-                    }}
-                    endAnchor={{
-                        position: "middle",
-                        offset: l.dstOffset,
-                    }}
-                    showHead={false}
-                    showTail={false}
-                    strokeWidth={4 * zoomFactor}
-                    divContainerStyle={{
-                        transform: `scale(${1 / zoomFactor})`,
-                    }}
-                    passProps={{ style: { cursor: "pointer" } }}
-                    _cpx1Offset={100 * Math.cos(l.srcAngle) * zoomFactor}
-                    _cpy1Offset={100 * Math.sin(l.srcAngle) * zoomFactor}
-                    _cpx2Offset={75 * Math.cos(l.dstAngle) * zoomFactor}
-                    _cpy2Offset={75 * Math.sin(l.dstAngle) * zoomFactor}
-                />
-            ))}
-        </Xwrapper>
+        <>
+            <Xwrapper>
+                {lineInfo.map((l, index) => (
+                    <Xarrow
+                        key={index}
+                        color={hoverIndex === index ? "purple" : "cornflowerblue"}
+                        start={l.src.elem.id}
+                        end={l.dst.elem.id}
+                        startAnchor={{
+                            position: "middle",
+                            offset: l.srcOffset,
+                        }}
+                        endAnchor={{
+                            position: "middle",
+                            offset: l.dstOffset,
+                        }}
+                        showHead={false}
+                        showTail={false}
+                        strokeWidth={4 * zoomFactor}
+                        divContainerStyle={{
+                            transform: `scale(${1 / zoomFactor})`,
+                        }}
+                        arrowBodyProps={{
+                            className: "arrow-body",
+                            onMouseEnter: (e) => {
+                                setHoverIndex(index);
+                            },
+                            onMouseLeave: (e) => {
+                                if (hoverIndex === index) {
+                                    setHoverIndex(-1);
+                                }
+                            }
+                        }}
+                        passProps={{ style: { cursor: "pointer" } }}
+                        _cpx1Offset={100 * Math.cos(l.srcAngle) * zoomFactor}
+                        _cpy1Offset={100 * Math.sin(l.srcAngle) * zoomFactor}
+                        _cpx2Offset={100 * Math.cos(l.dstAngle) * zoomFactor}
+                        _cpy2Offset={100 * Math.sin(l.dstAngle) * zoomFactor}
+                    />
+                ))}
+            </Xwrapper>
+            {info && info.srcText.length > 0 && (<Paper style={srcPaperStyle} p="xs" shadow="xs"> {info.srcText.map((s) => (<Text>{s}</Text>))} </Paper>)}
+            {info && info.dstText.length > 0 && (<Paper style={dstPaperStyle} p="xs" shadow="xs"> {info.dstText.map((s) => (<Text>{s}</Text>))} </Paper>)}
+        </>
     );
 }

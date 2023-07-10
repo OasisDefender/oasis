@@ -103,7 +103,7 @@ export function CloudMap() {
         coordinates: PressEventCoordinates
     ): PressHandlingOptions | undefined {
         if (e.target && e.target instanceof Element) {
-            if (e.target.closest("button")) {
+            if (e.target.closest("button") || e.target.closest(".arrow-body")) {
                 return { ignorePressEntirely: true };
             }
             const item = e.target.closest(
