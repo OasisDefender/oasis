@@ -10,6 +10,7 @@ import {
     Alert,
     Button,
     Loader,
+    LoadingOverlay,
     Modal,
     px,
     useMantineTheme,
@@ -33,8 +34,10 @@ export function CloudMap() {
     const dark = theme.colorScheme === "dark";
     const spaceRef = React.useRef<ZoomSpace | null>(null);
     const innerDivRef = React.useRef<HTMLDivElement | null>(null);
-    const { loading, error, themap, addTarget, getLinksVM } = useMap();    
+    const { loading: mapLoading, error, themap, addTarget, getLinksVM } = useMap();
+    const [loading, setLoading] = useState(false);
     const [lines, setLines] = useState<ILink[]>([]);
+    const [selectedLineIndex, setSelectedLineIndex] = useState<number>(-1);
     const [zoomFactor, setZoomFactor] = useState(1);
     const refreshLines = useXarrow();
 
@@ -44,9 +47,9 @@ export function CloudMap() {
     );
     
     useEffect(() => {
-        const fetchData = async () => {
-            // TODO: loading...
+        const fetchData = async () => {            
             if (selection && selection.type === "vm") {
+                setLoading(true);
                 try {
                     const res = await getLinksVM(Number(selection.key));
                     console.log("res", res);
@@ -54,6 +57,7 @@ export function CloudMap() {
                 } catch (e: unknown) {                
                     ShowModalError(`Error while getting links for VM`, e as AxiosError);
                 }
+                setLoading(false);
             }
         }        
         fetchData();
@@ -103,9 +107,19 @@ export function CloudMap() {
         coordinates: PressEventCoordinates
     ): PressHandlingOptions | undefined {
         if (e.target && e.target instanceof Element) {
-            if (e.target.closest("button") || e.target.closest(".arrow-body")) {
+            if (e.target.closest("button")) {
                 return { ignorePressEntirely: true };
             }
+
+            const arrow = e.target.closest(".map-arrow");
+            if (arrow) {
+                return {
+                    onTap() {
+                        setSelectedLineIndex(Number(arrow.getAttribute("data")));
+                    },
+                };
+            }
+
             const item = e.target.closest(
                 ".map-vpc, .map-subnet, .map-vm, .map-network"
             );
@@ -130,7 +144,8 @@ export function CloudMap() {
                     };
                     return {
                         onTap() {
-                            setLines([]);
+                            setSelectedLineIndex(-1);
+                            setLines([]);                            
                             setSelection(selection);
                         },
                     };
@@ -139,6 +154,7 @@ export function CloudMap() {
         }
         return {
             onTap() {
+                setSelectedLineIndex(-1);
                 setLines([]);
                 setSelection(undefined);
             },
@@ -146,7 +162,7 @@ export function CloudMap() {
     }
 
     let content: ReactNode | null = null;
-    if (loading) {
+    if (mapLoading) {
         content = (
             <Loader
                 sx={{
@@ -222,7 +238,7 @@ export function CloudMap() {
                             <IconPlus /> Add target
                         </Button>
                     </MapGroup>
-                    <MapLines from={selection} lines={lines} zoomFactor={zoomFactor}  />
+                    <MapLines from={selection} lines={lines} zoomFactor={zoomFactor} selectedIndex={selectedLineIndex} />
                 </div>                 
             </ZoomSpace>            
         );
@@ -250,6 +266,7 @@ export function CloudMap() {
                     makeAddTarget={addTargetAndClose}
                 />
             </Modal>
+            <LoadingOverlay visible={loading} transitionDuration={500} />
         </>
     );
 }

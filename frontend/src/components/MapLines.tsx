@@ -9,6 +9,7 @@ interface MapLinesProps {
     from?: MapSelection;
     lines: ILink[];
     zoomFactor: number;
+    selectedIndex: number;
 }
 
 type Point = {
@@ -118,8 +119,12 @@ function findIntersection(alpha: number, element: ElementInfo): Point {
     return { x: 0, y: 0 };
 }
 
-export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
-    const [selectedIndex, setSelectedIndex] = useState(-1);
+export function MapLines({
+    from,
+    lines,
+    selectedIndex,
+    zoomFactor,
+}: MapLinesProps) {
     const [hoverIndex, setHoverIndex] = useState(-1);
 
     if (!from || !lines.length) {
@@ -235,11 +240,11 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
             lineInfo[i].srcAngle -= 2 * Math.PI;
         }
         i = i + 1;
-        if (i == lineInfo.length) {
+        if (i === lineInfo.length) {
             i = 0;
         }
         iteration = iteration + 1;
-    } while (i != maxGapPos);
+    } while (i !== maxGapPos);
 
     lineInfo.forEach((l) => {
         // Find the intersection points
@@ -264,27 +269,45 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
     if (hoverIndex >= 0 && lineInfo.length > hoverIndex) {
         info = lineInfo[hoverIndex];
     }
+    else {
+        if (selectedIndex >= 0 && lineInfo.length > selectedIndex) {
+            info = lineInfo[selectedIndex];
+        }
+    }
 
     if (info) {
         srcPaperStyle = {
-            position: "absolute",            
-            left: info.src.elem.offsetLeft + info.src.width / 2 + info.srcOffset.x / zoomFactor,
-            top: info.src.elem.offsetTop + info.src.height / 2 + info.srcOffset.y / zoomFactor,
-            pointerEvents: "none"
+            position: "absolute",
+            left:
+                info.src.elem.offsetLeft +
+                info.src.width / 2 +
+                info.srcOffset.x / zoomFactor,
+            top:
+                info.src.elem.offsetTop +
+                info.src.height / 2 +
+                info.srcOffset.y / zoomFactor,
+            pointerEvents: "none",
         };
         dstPaperStyle = {
             position: "absolute",
-            left: info.dst.elem.offsetLeft + info.dst.width / 2 + info.dstOffset.x / zoomFactor,
-            top: info.dst.elem.offsetTop + info.dst.height / 2 + info.dstOffset.y / zoomFactor,
-            pointerEvents: "none"
+            left:
+                info.dst.elem.offsetLeft +
+                info.dst.width / 2 +
+                info.dstOffset.x / zoomFactor,
+            top:
+                info.dst.elem.offsetTop +
+                info.dst.height / 2 +
+                info.dstOffset.y / zoomFactor,
+            pointerEvents: "none",
         };
         if (info.src.centerX <= info.dst.centerX) {
-            srcPaperStyle.transform = "translateX(-100%) translateX(-5px) translateY(-50%)";
+            srcPaperStyle.transform =
+                "translateX(-100%) translateX(-5px) translateY(-50%)";
             dstPaperStyle.transform = "translateX(5px) translateY(-50%)";
-        }
-        else {
+        } else {
             srcPaperStyle.transform = "translateX(5px) translateY(-50%)";
-            dstPaperStyle.transform = "translateX(-100%) translateX(-5px) translateY(-50%)";
+            dstPaperStyle.transform =
+                "translateX(-100%) translateX(-5px) translateY(-50%)";
         }
     }
 
@@ -294,7 +317,13 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
                 {lineInfo.map((l, index) => (
                     <Xarrow
                         key={index}
-                        color={hoverIndex === index ? "purple" : "cornflowerblue"}
+                        color={
+                            selectedIndex === index
+                                ? "cornflowerblue"
+                                : hoverIndex === index
+                                ? "orange"
+                                : "gray"
+                        }
                         start={l.src.elem.id}
                         end={l.dst.elem.id}
                         startAnchor={{
@@ -311,8 +340,11 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
                         divContainerStyle={{
                             transform: `scale(${1 / zoomFactor})`,
                         }}
+                        divContainerProps={{
+                            data: index.toString(),
+                            className: "map-arrow",
+                        }}
                         arrowBodyProps={{
-                            className: "arrow-body",
                             onMouseEnter: (e) => {
                                 setHoverIndex(index);
                             },
@@ -320,7 +352,7 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
                                 if (hoverIndex === index) {
                                     setHoverIndex(-1);
                                 }
-                            }
+                            },
                         }}
                         passProps={{ style: { cursor: "pointer" } }}
                         _cpx1Offset={100 * Math.cos(l.srcAngle) * zoomFactor}
@@ -330,8 +362,20 @@ export function MapLines({ from, lines, zoomFactor }: MapLinesProps) {
                     />
                 ))}
             </Xwrapper>
-            {info && info.srcText.length > 0 && (<Paper style={srcPaperStyle} p="xs" shadow="xs"> {info.srcText.map((s) => (<Text>{s}</Text>))} </Paper>)}
-            {info && info.dstText.length > 0 && (<Paper style={dstPaperStyle} p="xs" shadow="xs"> {info.dstText.map((s) => (<Text>{s}</Text>))} </Paper>)}
+            {info && info.srcText.length > 0 && (
+                <Paper style={srcPaperStyle} p="xs" shadow="xs">
+                    {info.srcText.map((s) => (
+                        <Text>{s}</Text>
+                    ))}
+                </Paper>
+            )}
+            {info && info.dstText.length > 0 && (
+                <Paper style={dstPaperStyle} p="xs" shadow="xs">
+                    {info.dstText.map((s) => (
+                        <Text>{s}</Text>
+                    ))}
+                </Paper>
+            )}
         </>
     );
 }
