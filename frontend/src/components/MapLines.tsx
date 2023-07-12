@@ -4,6 +4,7 @@ import { MapSelection } from "./MapCommon";
 import React, { useState } from "react";
 import { IconZoomMoney } from "@tabler/icons-react";
 import { Paper, Text } from "@mantine/core";
+import { useDebouncedValue } from "@mantine/hooks";
 
 interface MapLinesProps {
     from?: MapSelection;
@@ -126,6 +127,7 @@ export function MapLines({
     zoomFactor,
 }: MapLinesProps) {
     const [hoverIndex, setHoverIndex] = useState(-1);
+    const [debouncedHoverIndex] = useDebouncedValue(hoverIndex, 300);
 
     if (!from || !lines.length) {
         return null;
@@ -263,13 +265,18 @@ export function MapLines({
     });
 
     let info: LineInfo | undefined = undefined;
+    let infoType: "hover" | "selected" = "selected";
     let srcPaperStyle: React.CSSProperties | undefined = undefined;
     let dstPaperStyle: React.CSSProperties | undefined = undefined;
 
-    if (hoverIndex >= 0 && lineInfo.length > hoverIndex) {
-        info = lineInfo[hoverIndex];
-    }
-    else {
+    if (
+        debouncedHoverIndex >= 0 &&
+        lineInfo.length > debouncedHoverIndex &&
+        selectedIndex !== debouncedHoverIndex
+    ) {
+        info = lineInfo[debouncedHoverIndex];
+        infoType = "hover";
+    } else {
         if (selectedIndex >= 0 && lineInfo.length > selectedIndex) {
             info = lineInfo[selectedIndex];
         }
@@ -286,7 +293,8 @@ export function MapLines({
                 info.src.elem.offsetTop +
                 info.src.height / 2 +
                 info.srcOffset.y / zoomFactor,
-            pointerEvents: "none",
+            pointerEvents: infoType === "hover" ? "none" : undefined,
+            borderColor: infoType === "selected" ? "cornflowerblue" : "orange",
         };
         dstPaperStyle = {
             position: "absolute",
@@ -298,7 +306,8 @@ export function MapLines({
                 info.dst.elem.offsetTop +
                 info.dst.height / 2 +
                 info.dstOffset.y / zoomFactor,
-            pointerEvents: "none",
+            pointerEvents: infoType === "hover" ? "none" : undefined,
+            borderColor: infoType === "selected" ? "cornflowerblue" : "orange",
         };
         if (info.src.centerX <= info.dst.centerX) {
             srcPaperStyle.transform =
@@ -320,7 +329,7 @@ export function MapLines({
                         color={
                             selectedIndex === index
                                 ? "cornflowerblue"
-                                : hoverIndex === index
+                                : debouncedHoverIndex === index
                                 ? "orange"
                                 : "gray"
                         }
@@ -363,14 +372,14 @@ export function MapLines({
                 ))}
             </Xwrapper>
             {info && info.srcText.length > 0 && (
-                <Paper style={srcPaperStyle} p="xs" shadow="xs">
+                <Paper style={srcPaperStyle} p="xs" withBorder>
                     {info.srcText.map((s) => (
                         <Text>{s}</Text>
                     ))}
                 </Paper>
             )}
             {info && info.dstText.length > 0 && (
-                <Paper style={dstPaperStyle} p="xs" shadow="xs">
+                <Paper style={dstPaperStyle} p="xs" withBorder>
                     {info.dstText.map((s) => (
                         <Text>{s}</Text>
                     ))}

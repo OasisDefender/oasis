@@ -154,9 +154,13 @@ export function CloudMap() {
         }
         return {
             onTap() {
-                setSelectedLineIndex(-1);
-                setLines([]);
-                setSelection(undefined);
+                if (selectedLineIndex >= 0) {
+                    setSelectedLineIndex(-1);
+                }
+                else {
+                    setLines([]);
+                    setSelection(undefined);
+                }
             },
         };
     }
