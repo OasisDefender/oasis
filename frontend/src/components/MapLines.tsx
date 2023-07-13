@@ -2,7 +2,6 @@ import Xarrow, { Xwrapper } from "react-xarrows";
 import { ILink } from "../core/models/ILinks";
 import { MapSelection } from "./MapCommon";
 import React, { useState } from "react";
-import { IconZoomMoney } from "@tabler/icons-react";
 import { Paper, Text } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 
@@ -376,7 +375,7 @@ export function MapLines({
                     {info.srcText.map((s) => (
                         <Text>{s}</Text>
                     ))}
-                </Paper>
+                </Paper>                
             )}
             {info && info.dstText.length > 0 && (
                 <Paper style={dstPaperStyle} p="xs" withBorder>
