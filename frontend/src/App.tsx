@@ -13,6 +13,7 @@ import { HeaderResponsive as Header } from "./components/Header";
 import { Clouds } from "./pages/Clouds";
 import { CloudMap } from "./pages/CloudMap";
 import { ModalsProvider } from "@mantine/modals";
+import { PolicyMap } from "./pages/PolicyMap";
 
 function App() {
     const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
@@ -28,6 +29,10 @@ function App() {
             link: "/map",
             label: "Cloud Map",
         },
+        {
+            link: "/policy",
+            label: "Policy Map",
+        },
     ];
 
     return (
@@ -39,6 +44,7 @@ function App() {
                     <Routes>
                         <Route path="/clouds" element={<Clouds />} />
                         <Route path="/map" element={<CloudMap />} />
+                        <Route path="/policy" element={<PolicyMap />} />
                         <Route
                             path="/"
                             element={<Navigate replace to="/clouds" />}

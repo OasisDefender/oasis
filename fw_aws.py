@@ -80,7 +80,7 @@ class FW_AWS:
                         privip=null_empty_str(instance['PrivateIpAddress']),
                         pubdn=null_empty_str(instance['PublicDnsName']),
                         pubip=null_empty_str(pubip),
-                        note=instance['Tags'][0]['Value'],
+                        note=instance['Tags'][0]['Value'] if 'Tags' in instance and len(instance['Tags']) > 0 else "(noname)",
                         os=instance['PlatformDetails'],
                         state=unify_state(instance['State']['Name']),
                         mac=instance['NetworkInterfaces'][0]['MacAddress'].lower().replace('-', ':'),

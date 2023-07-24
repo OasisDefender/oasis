@@ -34,4 +34,3 @@ class Cloud:
               'azure_subscription_id': self.azure_subscription_id
             }
 
-

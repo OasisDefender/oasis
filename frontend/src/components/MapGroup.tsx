@@ -1,12 +1,13 @@
 import {
     Box,
+    Button,
     Flex,
     MantineNumberSize,
     rem,
     useMantineTheme,
 } from "@mantine/core";
 import { DataType } from "csstype";
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, useState } from "react";
 import { ReactNode } from "react";
 
 interface MapGroupProps {
