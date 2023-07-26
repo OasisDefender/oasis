@@ -11,6 +11,7 @@ from vm         import VM
 from rule_group import RuleGroup
 from rule       import Rule
 from fw_common  import get_tag_value, unify_state, null_empty_str, make_ports_string
+from s3_bucket  import S3_Bucket
 
 from types  import SimpleNamespace
 
@@ -253,6 +254,16 @@ class FW_AWS:
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, rds_sg['VpcSecurityGroupId'])
+
+            # Load S3 Buckets
+            #s3 = boto3.resource('s3')
+            s3_client = self.__session.resource('s3')
+            for bucket in s3_client.buckets.all():
+                print(f"bucket: {bucket}")
+                bucket = S3_Bucket(id    = None,
+                                name     = bucket.name,
+                                cloud_id = cloud_id)
+                bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
 
 
 
