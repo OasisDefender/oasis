@@ -563,7 +563,6 @@ class DB:
     def add_s3_bucket(self, bucket: dict) -> int:
         sql    = f"INSERT INTO s3_buckets(name, cloud_id) \
                    VALUES ('{bucket['name']}', {bucket['cloud_id']})"
-        print(f"{sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)
         self.__database.commit()

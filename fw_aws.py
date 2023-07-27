@@ -72,6 +72,12 @@ class FW_AWS:
                     pubip = instance["PublicIpAddress"]
                 except KeyError:
                     pubip = None
+                #print(f"instance: {instance}")
+                
+                # Dont load terminated VM
+                if instance['State']['Name'] == 'terminated':
+                    continue
+
                 vm = VM(vm=None, type='VM',
                         vpc_id=instance['VpcId'],
                         azone=instance['Placement']['AvailabilityZone'],
@@ -259,7 +265,6 @@ class FW_AWS:
             #s3 = boto3.resource('s3')
             s3_client = self.__session.resource('s3')
             for bucket in s3_client.buckets.all():
-                print(f"bucket: {bucket}")
                 bucket = S3_Bucket(id    = None,
                                 name     = bucket.name,
                                 cloud_id = cloud_id)
@@ -272,31 +277,88 @@ class FW_AWS:
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
-        db = DB()
+        db     = DB()
+        naddr  = None
+        ref_sg = None
+        prefix_list_id  = None
+
         client = self.__session.client('ec2')
-        response = client.describe_security_group_rules()
+        response = client.describe_security_group_rules(Filters=[{'Name': 'group-id', 'Values': [group_id]}])
         for rule in response['SecurityGroupRules']:
-            if rule['GroupId'] == group_id:
-                try:
-                    naddr = rule["CidrIpv4"]
-                except KeyError:
-                    naddr = ""
-                if naddr == "":
-                    naddr = "0.0.0.0/0"
-                if naddr.split('/')[-1] == '32':
-                    naddr = naddr.split('/')[0]
-                r = Rule(id=None,
-                        group_id=rule['GroupId'],
-                        rule_id=rule['SecurityGroupRuleId'],
-                        egress=rule['IsEgress'],
-                        proto=rule['IpProtocol'].upper().replace('-1', 'ANY'),
-                        port_from=rule['FromPort'],
-                        port_to=rule['ToPort'],
-                        naddr=naddr,
-                        cloud_id=cloud_id,
-                        ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
-                r.id = db.add_rule(rule=r.to_sql_values())
-                #print(r.to_gui_dict())
+            # Rule with reference to prefix list
+            try:
+                prefix_list_id = rule["PrefixListId"]
+                prefix_list = client.get_managed_prefix_list_entries(PrefixListId = prefix_list_id)
+                for prefix in prefix_list['Entries']:
+                    naddr = prefix['Cidr']
+                    if naddr.split('/')[-1] == '32':
+                        naddr = naddr.split('/')[0]
+                    r = Rule(id=None,
+                            group_id=rule['GroupId'],
+                            rule_id=rule['SecurityGroupRuleId'],
+                            egress=rule['IsEgress'],
+                            proto=rule['IpProtocol'].upper().replace('-1', 'ANY'),
+                            port_from=rule['FromPort'],
+                            port_to=rule['ToPort'],
+                            naddr=naddr,
+                            cloud_id=cloud_id,
+                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+                    #print(r.to_sql_values())
+                    r.id = db.add_rule(rule=r.to_sql_values())
+                continue
+            except KeyError:
+                pass
+
+            # Rule with reference to other SG
+            try:
+                ref_sg = rule["ReferencedGroupInfo"]
+                reference_naddrs = client.describe_security_group_rules(Filters=[{'Name': 'group-id', 'Values': [ref_sg['GroupId']]}])
+                for ref_naddr in reference_naddrs['SecurityGroupRules']:
+                    try:
+                        naddr = ref_naddr["CidrIpv4"]
+                    except KeyError:
+                        naddr = ""
+                    if naddr == "":
+                        naddr = "0.0.0.0/0"
+                    if naddr.split('/')[-1] == '32':
+                        naddr = naddr.split('/')[0]
+                    r = Rule(id       = None,
+                            group_id  = rule['GroupId'],
+                            rule_id   = rule['SecurityGroupRuleId'],
+                            egress    = rule['IsEgress'],
+                            proto     = rule['IpProtocol'].upper().replace('-1', 'ANY'),
+                            port_from = rule['FromPort'],
+                            port_to   = rule['ToPort'],
+                            naddr     = naddr,
+                            cloud_id  = cloud_id,
+                            ports     = make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+                    r.id = db.add_rule(rule=r.to_sql_values())
+                continue
+            except KeyError:
+                pass
+
+            # Classic rule with ip/mask and port(s)
+            try:
+                naddr = rule["CidrIpv4"]
+            except KeyError:
+                naddr = ""
+            if naddr == "":
+                naddr = "0.0.0.0/0"
+            if naddr.split('/')[-1] == '32':
+                naddr = naddr.split('/')[0]
+            r = Rule(id=None,
+                    group_id=rule['GroupId'],
+                    rule_id=rule['SecurityGroupRuleId'],
+                    egress=rule['IsEgress'],
+                    proto=rule['IpProtocol'].upper().replace('-1', 'ANY'),
+                    port_from=rule['FromPort'],
+                    port_to=rule['ToPort'],
+                    naddr=naddr,
+                    cloud_id=cloud_id,
+                    ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+            r.id = db.add_rule(rule=r.to_sql_values())
+            #print(r.to_gui_dict())
+
 
 
 
