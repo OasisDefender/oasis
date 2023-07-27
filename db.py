@@ -103,6 +103,11 @@ class DB:
             port  TEXT)''')
         self.__import_network_services()
 
+        cursor.execute('''CREATE TABLE IF NOT EXISTS s3_buckets(
+            id        INTEGER PRIMARY KEY,
+            name      TEXT,
+            cloud_id  REFERENCES clouds(id))''')
+
         # Not used now
         #cursor.execute('''CREATE TABLE IF NOT EXISTS routes(
         #    id        INTEGER PRIMARY KEY,
@@ -145,16 +150,17 @@ class DB:
 
     def delete_cloud(self, cloud_id):
         cursor = self.__database.cursor()
-        sql = f"DELETE FROM rules WHERE cloud_id = {cloud_id}"
-        cursor.execute(sql)
-        sql = f"DELETE FROM rule_groups WHERE cloud_id = {cloud_id}"
-        cursor.execute(sql)
-        sql = f"DELETE FROM subnets WHERE cloud_id = {cloud_id}"
-        cursor.execute(sql)
-        sql = f"DELETE FROM nodes WHERE cloud_id = {cloud_id}"
-        cursor.execute(sql)
-        sql = f"DELETE FROM vpcs WHERE cloud_id = {cloud_id}"
-        cursor.execute(sql)
+        #sql = f"DELETE FROM rules WHERE cloud_id = {cloud_id}"
+        #cursor.execute(sql)
+        #sql = f"DELETE FROM rule_groups WHERE cloud_id = {cloud_id}"
+        #cursor.execute(sql)
+        #sql = f"DELETE FROM subnets WHERE cloud_id = {cloud_id}"
+        #cursor.execute(sql)
+        #sql = f"DELETE FROM nodes WHERE cloud_id = {cloud_id}"
+        #cursor.execute(sql)
+        #sql = f"DELETE FROM vpcs WHERE cloud_id = {cloud_id}"
+        #cursor.execute(sql)
+        self.sync_cloud(cloud_id)
         sql = f"DELETE FROM clouds WHERE id = {cloud_id}"
         cursor.execute(sql)
         self.__database.commit()
@@ -173,6 +179,8 @@ class DB:
         sql = f"DELETE FROM nodes WHERE cloud_id = {cloud_id}"
         cursor.execute(sql)
         sql = f"DELETE FROM vpcs WHERE cloud_id = {cloud_id}"
+        cursor.execute(sql)
+        sql = f"DELETE FROM s3_buckets WHERE cloud_id = {cloud_id}"
         cursor.execute(sql)
         self.__database.commit()
         return
@@ -550,3 +558,12 @@ class DB:
                         pass
             self.__database.commit()
         return
+
+
+    def add_s3_bucket(self, bucket: dict) -> int:
+        sql    = f"INSERT INTO s3_buckets(name, cloud_id) \
+                   VALUES ('{bucket['name']}', {bucket['cloud_id']})"
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        self.__database.commit()
+        return cursor.lastrowid
