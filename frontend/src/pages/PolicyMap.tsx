@@ -1,31 +1,39 @@
 import React, { useState } from "react";
 import UniversalMap from "../components/UniversalMap/UniversalMap";
-import { ItemStyles, ChildrenInfo, findItemById, LayoutStyle } from "../components/UniversalMap/UniversalMapData";
+import {
+    ItemStyles,
+    ChildrenInfo,
+    findItemById,
+    LayoutStyle,
+} from "../components/UniversalMap/UniversalMapData";
 
-
-
+import { HEADER_HEIGHT } from "../components/Header";
+import { useMantineTheme } from "@mantine/core";
 
 export function PolicyMap() {
+    const theme = useMantineTheme();
+    const dark = theme.colorScheme === "dark";
+    
     const styles: ItemStyles = {
-        "Cloud": {
+        Cloud: {
             header: {
-                icon: "IconCloud"
-            },            
+                icon: "IconCloud",
+            },
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
-                    padding: "1rem"
+                    padding: "1rem",
                 },
             },
         },
-        "VPC": {
+        VPC: {
             header: {
-                icon: "IconCloudFilled"
+                icon: "IconCloudFilled",
             },
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
-                    padding: "1rem"
+                    padding: "1rem",
                 },
             },
         },
@@ -33,26 +41,26 @@ export function PolicyMap() {
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
-                    padding: "1rem"
+                    padding: "1rem",
                 },
             },
         },
-        "Subnet": {
+        Subnet: {
             header: {
-                icon: "IconGridDots"
+                icon: "IconGridDots",
             },
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
-                    padding: "1rem"
+                    padding: "1rem",
                 },
             },
         },
-        "VM": {
+        VM: {
             header: {
-                icon: "IconBox"
-            }
-        }
+                icon: "IconBox",
+            },
+        },
     };
 
     const initData: ChildrenInfo = {
@@ -61,18 +69,18 @@ export function PolicyMap() {
             {
                 id: "cloud-101",
                 type: "Cloud",
-                label: "Cloud Service 1",                
+                label: "Cloud Service 1",
                 info: [
                     {
                         icon: "IconWorld",
-                        tooltip: "This is Cloud Service 1"
+                        tooltip: "This is Cloud Service 1",
                     },
                 ],
                 children: [
                     {
                         id: "vpc-201",
                         type: "VPC",
-                        label: "VPC 1",                        
+                        label: "VPC 1",
                         info: [
                             {
                                 icon: "IconWorld",
@@ -88,7 +96,7 @@ export function PolicyMap() {
                             {
                                 id: "availability-zone-301",
                                 type: "Availability Zone",
-                                label: "Availability Zone A",                                
+                                label: "Availability Zone A",
                                 info: [
                                     {
                                         icon: "IconWorld",
@@ -100,7 +108,7 @@ export function PolicyMap() {
                                     {
                                         id: "subnet-401",
                                         type: "Subnet",
-                                        label: "Subnet 1",                                        
+                                        label: "Subnet 1",
                                         info: [
                                             {
                                                 icon: "IconWorld",
@@ -122,7 +130,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-501",
                                                 type: "VM",
-                                                label: "Virtual Machine 1",                                                
+                                                label: "Virtual Machine 1",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -143,7 +151,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-502",
                                                 type: "VM",
-                                                label: "Virtual Machine 2",                                                
+                                                label: "Virtual Machine 2",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -159,7 +167,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-601",
                                                 type: "VM",
-                                                label: "Virtual Machine 1.1",                                            
+                                                label: "Virtual Machine 1.1",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -180,7 +188,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-602",
                                                 type: "VM",
-                                                label: "Virtual Machine 1.2",                                            
+                                                label: "Virtual Machine 1.2",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -192,13 +200,12 @@ export function PolicyMap() {
                                                         tooltip: "vCPU: 4",
                                                     },
                                                 ],
-                                            }
+                                            },
                                         ],
-                                        
                                     },
                                     {
                                         id: "subnet-402",
-                                        type: "Subnet",                                        
+                                        type: "Subnet",
                                         label: "Subnet 402",
                                         info: [
                                             {
@@ -220,7 +227,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-503",
                                                 type: "VM",
-                                                label: "Virtual Machine 3",                                                
+                                                label: "Virtual Machine 3",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -256,7 +263,7 @@ export function PolicyMap() {
                             {
                                 id: "availability-zone-302",
                                 type: "Availability Zone",
-                                label: "Availability Zone B",                                
+                                label: "Availability Zone B",
                                 info: [
                                     {
                                         icon: "IconWorld",
@@ -268,7 +275,7 @@ export function PolicyMap() {
                                     {
                                         id: "subnet-403",
                                         type: "Subnet",
-                                        label: "Subnet 3",                                        
+                                        label: "Subnet 3",
                                         info: [
                                             {
                                                 icon: "IconWorld",
@@ -285,7 +292,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-505",
                                                 type: "VM",
-                                                label: "Virtual Machine 5",                                                
+                                                label: "Virtual Machine 5",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -301,7 +308,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-506",
                                                 type: "VM",
-                                                label: "Virtual Machine 6",                                                
+                                                label: "Virtual Machine 6",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -323,7 +330,7 @@ export function PolicyMap() {
                     {
                         id: "vpc-202",
                         type: "VPC",
-                        label: "VPC 2",                        
+                        label: "VPC 2",
                         info: [
                             {
                                 icon: "IconWorld",
@@ -339,7 +346,7 @@ export function PolicyMap() {
                             {
                                 id: "availability-zone-303",
                                 type: "Availability Zone",
-                                label: "Availability Zone C",                                
+                                label: "Availability Zone C",
                                 info: [
                                     {
                                         icon: "IconWorld",
@@ -351,7 +358,7 @@ export function PolicyMap() {
                                     {
                                         id: "subnet-404",
                                         type: "Subnet",
-                                        label: "Subnet 4",                                        
+                                        label: "Subnet 4",
                                         info: [
                                             {
                                                 icon: "IconWorld",
@@ -373,7 +380,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-507",
                                                 type: "VM",
-                                                label: "Virtual Machine 7",                                                
+                                                label: "Virtual Machine 7",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -394,7 +401,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-508",
                                                 type: "VM",
-                                                label: "Virtual Machine 8",                                                
+                                                label: "Virtual Machine 8",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -418,7 +425,7 @@ export function PolicyMap() {
             {
                 id: "cloud-102",
                 type: "Cloud",
-                label: "Cloud Service 2",                
+                label: "Cloud Service 2",
                 info: [
                     {
                         icon: "IconWorld",
@@ -429,7 +436,7 @@ export function PolicyMap() {
                     {
                         id: "vpc-203",
                         type: "VPC",
-                        label: "VPC 3",                        
+                        label: "VPC 3",
                         info: [
                             {
                                 icon: "IconWorld",
@@ -445,7 +452,7 @@ export function PolicyMap() {
                             {
                                 id: "availability-zone-304",
                                 type: "Availability Zone",
-                                label: "Availability Zone A",                                
+                                label: "Availability Zone A",
                                 info: [
                                     {
                                         icon: "IconWorld",
@@ -457,7 +464,7 @@ export function PolicyMap() {
                                     {
                                         id: "subnet-405",
                                         type: "Subnet",
-                                        label: "Subnet 5",                                        
+                                        label: "Subnet 5",
                                         info: [
                                             {
                                                 icon: "IconWorld",
@@ -479,7 +486,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-509",
                                                 type: "VM",
-                                                label: "Virtual Machine 9",                                                
+                                                label: "Virtual Machine 9",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -500,7 +507,7 @@ export function PolicyMap() {
                                             {
                                                 id: "vm-510",
                                                 type: "VM",
-                                                label: "Virtual Machine 10",                                                
+                                                label: "Virtual Machine 10",
                                                 info: [
                                                     {
                                                         icon: "IconWorld",
@@ -522,31 +529,45 @@ export function PolicyMap() {
                 ],
             },
         ],
-    };    
-    
+    };
+
     const [data, setData] = useState(initData);
-    
-    const toogleChildrens = function(id: string) {
+
+    const toogleChildrens = function (id: string) {
         setData((oldData) => {
             const newData = JSON.parse(JSON.stringify(oldData));
             const item = findItemById(newData, id);
             if (item) {
                 if (item.childrenCollapsed ?? false) {
                     item.childrenCollapsed = false;
-                }
-                else {
+                } else {
                     item.childrenCollapsed = true;
                 }
-            } 
+            }
             return newData;
         });
-        
-    }
-    
-    const style : LayoutStyle = {
-        horizontalGap: "5rem",
-        verticalGap: "5rem"
     };
 
-    return <UniversalMap styles={styles} style={style} data={data} toogleChildrens={toogleChildrens} />;
+    const style: LayoutStyle = {
+        horizontalGap: "5rem",
+        verticalGap: "5rem",
+    };
+
+    return (
+        <div
+            style={{
+                width: "100vw",
+                height: `calc(100vh - ${HEADER_HEIGHT})`,
+                position: "relative",
+                backgroundColor: dark ? theme.colors.gray[8] : "#F5F5DC",
+            }}
+        >
+            <UniversalMap
+                styles={styles}
+                style={style}
+                data={data}
+                toogleChildrens={toogleChildrens}
+            />
+        </div>
+    );
 }
