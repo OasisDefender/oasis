@@ -274,8 +274,8 @@ def api_get_vm_links(vm_id: int):
     return reply
 
 
-@app.route('/api/s3', methods=['GET'])
-def api_buckets_list():
+@app.route('/api/storages', methods=['GET'])
+def api_storages_list():
     clouds : list[S3_Cloud] = []
     db = DB()
     for row in db.get_clouds_short():
