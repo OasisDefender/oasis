@@ -13,6 +13,7 @@ import { useMantineTheme } from "@mantine/core";
 export function PolicyMap() {
     const theme = useMantineTheme();
     const isDark = theme.colorScheme === "dark";
+    const [selected, setSelected] = useState<string | undefined>(undefined);
     
     const styles: ItemStyles = {
         Cloud: {
@@ -24,12 +25,20 @@ export function PolicyMap() {
             header: {
                 icon: "IconCloud",
             },
+            headerSelected: {
+                textColor: isDark ? theme.colors.blue[6] : "blue"
+            },
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
                     padding: "1rem",
                 },
             },
+            layoutSelected: {
+                childrenContainerStyle: {
+                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
+                }
+            }
         },
         VPC: {
             item: {
@@ -40,12 +49,20 @@ export function PolicyMap() {
             header: {
                 icon: "IconCloudFilled",
             },
+            headerSelected: {
+                textColor: isDark ? theme.colors.blue[6] : "blue"
+            },  
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
                     padding: "1rem",
                 },
             },
+            layoutSelected: {
+                childrenContainerStyle: {
+                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
+                }
+            }
         },
         "Availability Zone": {
             item: {
@@ -53,12 +70,20 @@ export function PolicyMap() {
                     margin: "0.5rem"
                 }
             },
+            headerSelected: {
+                textColor: isDark ? theme.colors.blue[6] : "blue"
+            },
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
                     padding: "1rem",
                 },
             },
+            layoutSelected: {
+                childrenContainerStyle: {
+                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
+                }
+            }
         },
         Subnet: {
             item: {
@@ -69,12 +94,20 @@ export function PolicyMap() {
             header: {
                 icon: "IconGridDots",
             },
+            headerSelected: {
+                textColor: isDark ? theme.colors.blue[6] : "blue"
+            },          
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
                     padding: "1rem",
                 },
             },
+            layoutSelected: {
+                childrenContainerStyle: {
+                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
+                }
+            }
         },
         VM: {
             item: {
@@ -84,9 +117,17 @@ export function PolicyMap() {
                     background: isDark ? theme.colors.dark[6] : theme.colors.blue[3]
                 }
             },
+            itemSelected: {
+                style: {                    
+                    background: isDark ? theme.colors.gray[0] : "white"
+                }
+            },
             header: {
                 icon: "VM",
             },
+            headerSelected: {
+                textColor: isDark ? theme.colors.blue[6] : "blue"
+            },  
         },
     };
 
@@ -593,7 +634,9 @@ export function PolicyMap() {
                 styles={styles}
                 style={style}
                 data={data}
+                selectedID={selected}
                 toogleChildrens={toogleChildrens}
+                select={setSelected}
             />
         </div>
     );

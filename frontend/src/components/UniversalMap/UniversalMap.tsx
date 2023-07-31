@@ -41,7 +41,8 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
             if (item) {                
                 const id = item.id;
                 return {
-                    onTap() {                    
+                    onTap() {
+                        console.log("select", id);
                         select?.(id);
                     },
                 };
@@ -49,6 +50,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
         }
         return {
             onTap() {
+                console.log("select", "undefined");
                 select?.(undefined);
             },
         };
@@ -65,6 +67,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                     styles={styles}
                     style={style}            
                     toogleChildrens={toogleChildrens}
+                    selectedID={selectedID}
                 />
             </div>
         </ZoomSpace>

@@ -1,9 +1,12 @@
 import { Box, Tooltip, UnstyledButton } from "@mantine/core";
 import {
     ChildItem,
+    HeaderStyle,
+    ItemStyle,
     ItemStyles,
     LayoutStyle,
     TypedStyle,
+    mergeObjects,
 } from "./UniversalMapData";
 import UniversalMapContainer from "./UniversalMapContainer";
 import UniversalIcon from "./UniversalIcon";
@@ -27,16 +30,26 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     selectedID,
     toogleChildrens,
 }) => {
+    console.log(data.id, selectedID, data.id === selectedID);
     const isSelected = data.id === selectedID;
 
     let style: TypedStyle | undefined;
+
     let layoutStyle: LayoutStyle | undefined;
+    let itemStyle: ItemStyle | undefined;
+    let headerStyle: HeaderStyle | undefined;
     if (data.type) {
         style = styles?.[data.type];
         if (style) {
             layoutStyle = isSelected
-                ? { ...style.layout, ...style.layoutSelected }
+                ? mergeObjects(style.layout, style.layoutSelected)
                 : style.layout;
+            itemStyle = isSelected
+                ? mergeObjects(style.item, style.itemSelected)
+                : style.item;
+            headerStyle = isSelected
+                ? mergeObjects(style.header, style.headerSelected)
+                : style.header;
         }
     }
 
@@ -44,13 +57,14 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     const childrenShow = childrenExist && !(data.childrenCollapsed ?? false);
 
     return (
-        <div className="um-item" id={data.id} style={style?.item?.style}>
+        <div className="um-item" id={data.id} style={itemStyle?.style}>
             <div
                 className="um-header"
                 style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    color: headerStyle?.textColor
                 }}
             >
                 <div
@@ -59,12 +73,20 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                         alignItems: "center",
                     }}
                 >
-                    {style?.header?.icon && <UniversalIcon name={style?.header?.icon} color={style?.header?.iconColor}/>}
-                    <Box maw={style?.header?.maxLabelWidth ?? "10rem"} sx={{
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden"
-                    }}>
+                    {headerStyle?.icon && (
+                        <UniversalIcon
+                            name={headerStyle?.icon}
+                            color={headerStyle?.iconColor}
+                        />
+                    )}
+                    <Box
+                        maw={headerStyle?.maxLabelWidth ?? "10rem"}
+                        sx={{
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                        }}
+                    >
                         {data.label}
                     </Box>
                 </div>
@@ -84,10 +106,17 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                                     withArrow
                                     withinPortal
                                 >
-                                    <UniversalIcon name={item.icon} color={item.iconColor} />
+                                    <UniversalIcon
+                                        name={item.icon}
+                                        color={item.iconColor}
+                                    />
                                 </Tooltip>
                             ) : (
-                                <UniversalIcon name={item.icon} color={item.iconColor} key={index} />
+                                <UniversalIcon
+                                    name={item.icon}
+                                    color={item.iconColor}
+                                    key={index}
+                                />
                             );
                         })}
                     {childrenExist && toogleChildrens && (
@@ -96,19 +125,20 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                             onClick={() => toogleChildrens(data.id)}
                         >
                             {data.childrenCollapsed ?? false ? (
-                                <IconSquarePlus />
+                                <IconSquarePlus color={headerStyle?.textColor}/>
                             ) : (
-                                <IconSquareMinus />
+                                <IconSquareMinus color={headerStyle?.textColor}/>
                             )}
                         </UnstyledButton>
                     )}
                 </div>
-            </div> 
+            </div>
             {childrenShow && (
                 <UniversalMapContainer
                     data={data}
                     style={layoutStyle}
                     styles={styles}
+                    selectedID={selectedID}
                     toogleChildrens={toogleChildrens}
                 />
             )}

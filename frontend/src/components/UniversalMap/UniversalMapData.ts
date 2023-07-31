@@ -6,25 +6,24 @@ import { CSSProperties } from "react";
 export type ItemStyle = {
     style?: CSSProperties;
     childrenContainerStyle?: CSSProperties;
-}
+};
 
 export type LayoutStyle = {
     verticalGap?: SystemProp<SpacingValue>;
     horizontalGap?: SystemProp<SpacingValue>;
     childrenContainerStyle?: CSSProperties;
-}
+};
 
 export type HeaderStyle = {
     icon?: string;
-    iconColor?: string;  
-    maxLabelWidth?: SystemProp<CSSProperties['maxWidth']>;
-}
-
-
+    iconColor?: string;
+    textColor?: string;
+    maxLabelWidth?: SystemProp<CSSProperties["maxWidth"]>;
+};
 
 export type TypedStyle = {
-    item?: ItemStyle; 
-    itemSelected?: ItemStyle;    
+    item?: ItemStyle;
+    itemSelected?: ItemStyle;
     layout?: LayoutStyle;
     layoutSelected?: LayoutStyle;
     header?: HeaderStyle;
@@ -35,10 +34,7 @@ export type ItemStyles = { [styleName: string]: TypedStyle };
 
 // Data
 
-export type Layout =
-    | "row"
-    | "column"
-    | "grid";
+export type Layout = "row" | "column" | "grid";
 
 export type ChildrenInfo = {
     children?: ChildItem[];
@@ -79,9 +75,12 @@ export function findItemById(data: ChildrenInfo, id: string): ChildItem | null {
     }
     traverse(data.children);
     return result;
-};
+}
 
-export function findItemAndParentsById(data: ChildrenInfo, id: string): {elem: ChildItem | null, parents: ChildItem[] } {
+export function findItemAndParentsById(
+    data: ChildrenInfo,
+    id: string
+): { elem: ChildItem | null; parents: ChildItem[] } {
     const parents: ChildItem[] = [];
     let result: ChildItem | null = null;
 
@@ -101,6 +100,39 @@ export function findItemAndParentsById(data: ChildrenInfo, id: string): {elem: C
         }
     }
     traverse(data.children, parents);
-    return {elem: result, parents: [...parents]};
-};
+    return { elem: result, parents: [...parents] };
+}
 
+export function mergeObjects(obj1: any, obj2: any): any {
+    if (
+        typeof obj1 !== "object" ||
+        typeof obj2 !== "object" ||
+        obj1 === null ||
+        obj2 === null
+    ) {
+        return obj2 === undefined ? obj1 : obj2;
+    }
+
+    const mergedObj: any = { ...obj1 };
+
+    for (const key in obj2) {
+        if (obj2.hasOwnProperty(key)) {
+            mergedObj[key] = mergeObjects(obj1[key], obj2[key]);
+        }
+    }
+
+    return mergedObj;
+}
+
+export function mergeObjectsRecursively(objects: any[]): any {
+    if (objects.length === 0) {
+        return {};
+    }
+
+    const mergedObject = objects.reduce(
+        (acc, obj) => mergeObjects(acc, obj),
+        {}
+    );
+
+    return mergedObject;
+}
