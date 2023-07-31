@@ -5,7 +5,7 @@ import {
     LayoutStyle,
     TypedStyle,
 } from "./UniversalMapData";
-import UniversalMap from "./UniversalMap";
+import UniversalMapContainer from "./UniversalMapContainer";
 import UniversalIcon from "./UniversalIcon";
 import {
     IconMinus,
@@ -42,7 +42,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     const childrenShow = childrenExist && !(data.childrenCollapsed ?? false);
 
     return (
-        <div className="um-item" id={data.id}>
+        <div className="um-item" id={data.id} style={style?.itemStyle}>
             <div
                 className="um-header"
                 style={{
@@ -97,7 +97,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                 </div>
             </div> 
             {childrenShow && (
-                <UniversalMap
+                <UniversalMapContainer
                     data={data}
                     style={layoutStyle}
                     styles={styles}

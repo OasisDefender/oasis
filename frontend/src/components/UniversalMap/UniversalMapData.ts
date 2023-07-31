@@ -15,7 +15,7 @@ export type LayoutStyle = {
 
 export type HeaderStyle = {
     icon?: string;
-    iconColor?: string;
+    iconColor?: string;    
 }
 
 
@@ -23,6 +23,7 @@ export type HeaderStyle = {
 export type TypedStyle = {
     item?: ItemStyle; 
     itemSelected?: ItemStyle;
+    itemStyle?: CSSProperties;
     layout?: LayoutStyle;
     layoutSelected?: LayoutStyle;
     header?: HeaderStyle;
