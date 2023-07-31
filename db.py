@@ -218,6 +218,11 @@ class DB:
                   azure_subscription_id=r[9]) for r in rows
         ]
 
+    def get_clouds_short(self) -> list[Cloud]:
+        cursor = self.__database.cursor()
+        cursor.execute("""SELECT id, name, cloud_type FROM clouds ORDER by name""")
+        return cursor.fetchall()
+
 
     def get_vms_info(self, subnet_id: str) -> list[str]:
         sql    = f"SELECT id, type, vpc_id, azone, subnet_id, name, privdn, privip, pubdn, pubip, note, os, state, mac, if_id, cloud_id FROM nodes WHERE type = 'VM' and subnet_id = '{subnet_id}' order by note"
@@ -567,3 +572,10 @@ class DB:
         cursor.execute(sql)
         self.__database.commit()
         return cursor.lastrowid
+
+
+    def get_s3_buckets(self, cloud_id: int) -> str:
+        sql    = f"select id, name, cloud_id from s3_buckets where cloud_id = {cloud_id} order by name"
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        return cursor.fetchall()
