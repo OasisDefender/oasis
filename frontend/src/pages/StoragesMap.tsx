@@ -33,7 +33,14 @@ export function StoragesMap() {
                 },
             },
         },
-        Bucket: {            
+        Bucket: {
+            item: {
+                style: {
+                    border: "1px solid gray",
+                    padding: "0.2rem",
+                    background: isDark ? theme.colors.dark[6] : theme.colors.blue[3]
+                }
+            },
             header: {
                 maxLabelWidth: "100rem"
             },

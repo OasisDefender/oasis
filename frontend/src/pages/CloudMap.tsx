@@ -270,7 +270,7 @@ export function CloudMap() {
                     makeAddTarget={addTargetAndClose}
                 />
             </Modal>
-            <LoadingOverlay visible={loading} transitionDuration={500} />
+            <LoadingOverlay visible={loading} transitionDuration={500} style={{pointerEvents: "none"}} />
         </>
     );
 }
