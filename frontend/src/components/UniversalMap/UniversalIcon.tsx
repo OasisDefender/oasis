@@ -1,5 +1,4 @@
 import React, { forwardRef } from "react";
-import { Badge } from "@mantine/core";
 import * as TablerIcons from "@tabler/icons-react";
 
 interface UniversalIconProps {
@@ -14,8 +13,15 @@ const UniversalIcon = forwardRef<HTMLDivElement, UniversalIconProps>(
       const IconComponent = TablerIcons[name];    
       return <IconComponent color={color} ref={ref} />;
     }
-
-    return <Badge color={color} radius="xs" variant="outline" ref={ref}>{name}</Badge>;
+    return <div style={{
+      border: `2px solid ${color ?? ""}`,
+      color: color ?? undefined,
+      lineHeight: 1,
+      padding: "2px",
+      margin: "2px",
+      fontWeight: 600,
+      borderRadius: "20%"
+    }}>{name}</div>    
   }
 );
 

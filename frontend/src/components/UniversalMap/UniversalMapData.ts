@@ -4,6 +4,7 @@ import { SystemProp, SpacingValue } from "@mantine/core";
 import { CSSProperties } from "react";
 
 export type ItemStyle = {
+    style?: CSSProperties;
     childrenContainerStyle?: CSSProperties;
 }
 
@@ -15,15 +16,15 @@ export type LayoutStyle = {
 
 export type HeaderStyle = {
     icon?: string;
-    iconColor?: string;    
+    iconColor?: string;  
+    maxLabelWidth?: SystemProp<CSSProperties['maxWidth']>;
 }
 
 
 
 export type TypedStyle = {
     item?: ItemStyle; 
-    itemSelected?: ItemStyle;
-    itemStyle?: CSSProperties;
+    itemSelected?: ItemStyle;    
     layout?: LayoutStyle;
     layoutSelected?: LayoutStyle;
     header?: HeaderStyle;

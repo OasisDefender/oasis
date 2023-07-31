@@ -14,6 +14,7 @@ import { Clouds } from "./pages/Clouds";
 import { CloudMap } from "./pages/CloudMap";
 import { ModalsProvider } from "@mantine/modals";
 import { PolicyMap } from "./pages/PolicyMap";
+import { StoragesMap } from "./pages/StoragesMap";
 
 function App() {
     const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
@@ -30,6 +31,10 @@ function App() {
             label: "Cloud Map",
         },
         {
+            link: "/storages",
+            label: "Storages",
+        },
+        {
             link: "/policy",
             label: "Policy Map",
         },
@@ -44,6 +49,7 @@ function App() {
                     <Routes>
                         <Route path="/clouds" element={<Clouds />} />
                         <Route path="/map" element={<CloudMap />} />
+                        <Route path="/storages" element={<StoragesMap />} />
                         <Route path="/policy" element={<PolicyMap />} />
                         <Route
                             path="/"

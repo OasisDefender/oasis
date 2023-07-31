@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_cors import CORS
 
 import json
@@ -286,7 +286,7 @@ def api_storages_list():
         'childrenLayout': "column",
         'children': [c.to_typescript_values() for c in clouds]
     }
-    return f"{retval}", 200
+    return jsonify(retval)
 
 
 if __name__ == '__main__':

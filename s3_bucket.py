@@ -21,7 +21,7 @@ class S3_Bucket:
             'label' : self.name,
             'info'  : [
                 {
-                    'icon': "IconWorld",
+                    'icon': "IconInfoCircle",
                     'tooltip': self.name,
                 },
             ],
@@ -50,7 +50,7 @@ class S3_Cloud:
             'label' : self.name,
             'info'  : [
                 {
-                    'icon': "IconWorld",
+                    'icon': "IconInfoCircle",
                     'tooltip': self.type,
                 },
             ],

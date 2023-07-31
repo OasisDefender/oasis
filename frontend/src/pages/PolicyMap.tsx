@@ -12,10 +12,15 @@ import { useMantineTheme } from "@mantine/core";
 
 export function PolicyMap() {
     const theme = useMantineTheme();
-    const dark = theme.colorScheme === "dark";
+    const isDark = theme.colorScheme === "dark";
     
     const styles: ItemStyles = {
         Cloud: {
+            item: {
+                style: {
+                    margin: "2rem"
+                }
+            },
             header: {
                 icon: "IconCloud",
             },
@@ -27,6 +32,11 @@ export function PolicyMap() {
             },
         },
         VPC: {
+            item: {
+                style: {
+                    margin: "0.5rem"
+                }
+            },
             header: {
                 icon: "IconCloudFilled",
             },
@@ -38,6 +48,11 @@ export function PolicyMap() {
             },
         },
         "Availability Zone": {
+            item: {
+                style: {
+                    margin: "0.5rem"
+                }
+            },
             layout: {
                 childrenContainerStyle: {
                     border: "1px solid gray",
@@ -46,6 +61,11 @@ export function PolicyMap() {
             },
         },
         Subnet: {
+            item: {
+                style: {
+                    margin: "0.5rem"
+                }
+            },
             header: {
                 icon: "IconGridDots",
             },
@@ -57,8 +77,15 @@ export function PolicyMap() {
             },
         },
         VM: {
+            item: {
+                style: {
+                    border: "1px solid gray",
+                    padding: "0.2rem",
+                    background: isDark ? theme.colors.dark[6] : theme.colors.blue[3]
+                }
+            },
             header: {
-                icon: "IconBox",
+                icon: "VM",
             },
         },
     };
@@ -559,7 +586,7 @@ export function PolicyMap() {
                 width: "100vw",
                 height: `calc(100vh - ${HEADER_HEIGHT})`,
                 position: "relative",
-                backgroundColor: dark ? theme.colors.gray[8] : "#F5F5DC",
+                backgroundColor: isDark ? theme.colors.gray[8] : "#F5F5DC",
             }}
         >
             <UniversalMap

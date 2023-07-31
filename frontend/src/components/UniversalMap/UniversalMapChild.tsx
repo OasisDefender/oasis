@@ -1,4 +1,4 @@
-import { Tooltip, UnstyledButton } from "@mantine/core";
+import { Box, Tooltip, UnstyledButton } from "@mantine/core";
 import {
     ChildItem,
     ItemStyles,
@@ -17,15 +17,17 @@ import { transitions } from "@mantine/core/lib/Transition/transitions";
 interface UniversalMapChildProps {
     data: ChildItem;
     styles?: ItemStyles;
+    selectedID?: string;
     toogleChildrens?: (id: string) => void;
 }
 
 const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     data,
     styles,
+    selectedID,
     toogleChildrens,
 }) => {
-    const isSelected = false; // TODO: do
+    const isSelected = data.id === selectedID;
 
     let style: TypedStyle | undefined;
     let layoutStyle: LayoutStyle | undefined;
@@ -42,7 +44,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     const childrenShow = childrenExist && !(data.childrenCollapsed ?? false);
 
     return (
-        <div className="um-item" id={data.id} style={style?.itemStyle}>
+        <div className="um-item" id={data.id} style={style?.item?.style}>
             <div
                 className="um-header"
                 style={{
@@ -58,7 +60,13 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                     }}
                 >
                     {style?.header?.icon && <UniversalIcon name={style?.header?.icon} color={style?.header?.iconColor}/>}
-                    {data.label}
+                    <Box maw={style?.header?.maxLabelWidth ?? "10rem"} sx={{
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden"
+                    }}>
+                        {data.label}
+                    </Box>
                 </div>
                 <div
                     style={{
