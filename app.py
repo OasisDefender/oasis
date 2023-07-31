@@ -242,9 +242,9 @@ def api_cloud_add():
             context.delete_cloud(save_cloud_id)
             return f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials?", 500   
     
-    return cloud.to_dict(), 200
+    return cloud.to_dict(), 200  
 
-@app.route('/api/map')
+@app.route('/api/map', methods=['GET'])
 def api_cloud_map():
     map = CloudMap()
     map.get()
