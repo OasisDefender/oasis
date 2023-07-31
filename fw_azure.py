@@ -136,6 +136,89 @@ class FW_Azure:
                 rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                 # Load rules for current rule group
                 self.get_group_rules(cloud_id, nic.network_security_group.id)
+        
+        # Load AIGs, Use nodes table for store
+        resources = self.__resource_client.resource_groups.list()
+        for resource in resources:
+            igws = self.__network_client.virtual_network_gateways.list(resource.name)
+            for igw in igws:
+                igw_object  = self.__network_client.virtual_network_gateways.get(resource.name, igw.name)
+                subnet_id   = igw_object.ip_configurations[0].subnet.id
+                vpc       = self.__network_client.virtual_networks.get(resource.name, subnet_id.split('/')[-3])
+                vpc_id    = vpc.name
+                i = VM(vm=None, type='IGW',
+                    vpc_id=vpc_id,
+                    azone=igw_object.location,
+                    subnet_id='',
+                    name=igw.id,
+                    privdn='',
+                    privip='',
+                    pubdn='',
+                    pubip='',
+                    note=igw.name,
+                    os='',
+                    state=igw_object.provisioning_state,
+                    mac='',
+                    if_id='',
+                    cloud_id=cloud_id)
+                i.id = db.add_instance(instance=i.to_sql_values())
+
+        # Load NATs. Use nodes table for store
+        nats = self.__network_client.nat_gateways.list_all()
+        for nat in nats:
+            nat_gateway_id_parts = nat.id.split("/")
+            resource_group_name = nat_gateway_id_parts[nat_gateway_id_parts.index("resourceGroups") + 1]
+            try:
+                for subnet in nat.subnets:
+                    subnet_id = subnet.id
+                    subnet_id_parts  = subnet_id.split('/')
+                    subnet_vnet_name = subnet_id_parts[-3]
+                    vpc              = self.__network_client.virtual_networks.get(resource_group_name, subnet_vnet_name)
+                    vpc_id           = vpc.name
+                    subnet_id_parts      = subnet_id.split("/")
+                    virtual_network_name = subnet_id_parts[subnet_id_parts.index("virtualNetworks") + 1]
+                    subnet_name          = subnet_id_parts[subnet_id_parts.index("subnets") + 1]
+                    subnet = self.__network_client.subnets.get(resource_group_name, virtual_network_name, subnet_name)
+                    privip = subnet.address_prefix
+                    break
+            except:
+                print(f"NAT: {nat.name} - not bound to any Subnet")
+            for pubip in nat.public_ip_addresses:
+                public_ip_id_parts = pubip.id.split("/")
+                public_ip_name     = public_ip_id_parts[public_ip_id_parts.index("publicIPAddresses") + 1]
+                pubip_object       = self.__network_client.public_ip_addresses.get(resource_group_name, public_ip_name)
+                if pubip_object.ip_address:
+                    pubip = pubip_object.ip_address
+                else:
+                    if pubip_object.public_ip_prefix:
+                        pubip = pubip_object.public_ip_prefix
+                break
+            i = VM(vm=None, type='NAT',
+                vpc_id=vpc_id,
+                azone=nat.location,
+                subnet_id=subnet_id.split('/')[-1],
+                name=nat.id,
+                privdn='',
+                privip=privip,
+                pubdn='',
+                pubip=pubip,
+                note=nat.name,
+                os='',
+                state=nat.provisioning_state,
+                mac='',
+                if_id='',
+                cloud_id=cloud_id)
+            i.id = db.add_instance(instance=i.to_sql_values())
+
+        # Load ELBs. Use nodes table for store
+
+        # Load RDSs. Use nodes table for store
+
+        # Load S3 Buckets
+
+
+        
+
         return 0
 
 

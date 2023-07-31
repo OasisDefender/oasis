@@ -21,8 +21,8 @@ class DB:
         self.create_database_schema()
 
 
-    def __del__(self):
-        self.__database.close()
+    #def __del__(self):
+    #    self.__database.close()
 
 
     def create_database_schema(self):
