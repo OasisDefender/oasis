@@ -220,25 +220,8 @@ class DB:
 
     def get_clouds_short(self) -> list[Cloud]:
         cursor = self.__database.cursor()
-        cursor.execute("""
-            SELECT id, name, cloud_type,
-                   aws_region, aws_key, aws_secret_key, 
-                   azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id
-            FROM clouds ORDER by name
-        """)
-        rows = cursor.fetchall()
-        return [
-            Cloud(id=r[0], 
-                  name=r[1], 
-                  cloud_type=r[2], 
-                  aws_region=r[3], 
-                  aws_key=r[4], 
-                  aws_secret_key=r[5],
-                  azure_tenant_id=r[6],
-                  azure_client_id=r[7],
-                  azure_client_secret=r[8],
-                  azure_subscription_id=r[9]) for r in rows
-        ]
+        cursor.execute("""SELECT id, name, cloud_type FROM clouds ORDER by name""")
+        return cursor.fetchall()
 
 
     def get_vms_info(self, subnet_id: str) -> list[str]:
@@ -590,10 +573,9 @@ class DB:
         self.__database.commit()
         return cursor.lastrowid
 
+
     def get_s3_buckets(self, cloud_id: int) -> str:
-        result = ""
         sql    = f"select id, name, cloud_id from s3_buckets where cloud_id = {cloud_id} order by name"
-        print(f"get_s3_buckets SQL: {sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return cursor.fetchall()

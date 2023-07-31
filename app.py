@@ -12,6 +12,7 @@ from fw_aws         import FW_AWS
 from fw_azure       import FW_Azure
 from fw             import FW_Selected, FW_Selected_encoder
 from vm_rules       import VM_Rules
+from s3_bucket      import S3_Bucket, S3_Cloud
 
 app = Flask(__name__)
 CORS(app)
@@ -271,6 +272,22 @@ def api_get_vm_links(vm_id: int):
     rules = json.dumps(r.to_dict())
     reply = f"{{\"links\": {lines}, \"rules\": {rules}}}"
     return reply
+
+
+@app.route('/api/s3', methods=['GET'])
+def api_buckets_list():
+    clouds : list[S3_Cloud] = []
+    db = DB()
+    for row in db.get_clouds_short():
+        c = S3_Cloud(id=row[0], name=row[1], type=row[2])
+        c.get_buckets()
+        clouds.append(c)
+    retval = {
+        'childrenLayout': "column",
+        'children': [c.to_typescript_values() for c in clouds]
+    }
+    return f"{retval}", 200
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
