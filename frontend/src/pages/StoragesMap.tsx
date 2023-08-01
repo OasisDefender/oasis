@@ -1,14 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import UniversalMap from "../components/UniversalMap/UniversalMap";
 import {
     ItemStyles,
-    ChildrenInfo,
     findItemById,
     LayoutStyle,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
-import { Alert, Loader, Text, useMantineTheme } from "@mantine/core";
+import { Alert, Loader, useMantineTheme } from "@mantine/core";
 import { useStorages } from "../core/hooks/storages";
 import { IconAlertTriangle } from "@tabler/icons-react";
 

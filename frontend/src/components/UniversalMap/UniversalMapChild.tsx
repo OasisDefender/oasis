@@ -11,11 +11,9 @@ import {
 import UniversalMapContainer from "./UniversalMapContainer";
 import UniversalIcon from "./UniversalIcon";
 import {
-    IconMinus,
     IconSquareMinus,
     IconSquarePlus,
 } from "@tabler/icons-react";
-import { transitions } from "@mantine/core/lib/Transition/transitions";
 
 interface UniversalMapChildProps {
     data: ChildItem;
