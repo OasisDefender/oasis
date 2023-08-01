@@ -5,6 +5,7 @@ from azure.identity            import *
 from azure.mgmt.resource       import ResourceManagementClient
 from azure.mgmt.compute        import ComputeManagementClient
 from azure.mgmt.network        import NetworkManagementClient
+from azure.mgmt.sql            import SqlManagementClient
 from azure.mgmt.network.models import SecurityRule
 from azure.core.exceptions     import *
 
@@ -22,8 +23,9 @@ class FW_Azure:
         self.__db              = DB()
 
         self.__resource_client = None
-        self.__compute_client = None
-        self.__network_client = None
+        self.__compute_client  = None
+        self.__network_client  = None
+        self.__sql_client      = None
 
 
     def __get_unique_priority(self, resource_group_name, nsg_name) -> int:
@@ -56,6 +58,7 @@ class FW_Azure:
             self.__resource_client = ResourceManagementClient(credential, cred[3])
             self.__compute_client  = ComputeManagementClient (credential, cred[3])
             self.__network_client  = NetworkManagementClient (credential, cred[3])
+            self.__sql_client      = SqlManagementClient(credential, cred[3], api_version='2023-07-01-preview')
             self.__cloud_id        = cloud_id
             break
 
@@ -211,13 +214,126 @@ class FW_Azure:
             i.id = db.add_instance(instance=i.to_sql_values())
 
         # Load ELBs. Use nodes table for store
+        elbs = self.__network_client.load_balancers.list_all()
+        for elb in elbs:
+            public_ip:str = ''
+            for frontend_ip_configuration in elb.frontend_ip_configurations:
+                ip_name   = frontend_ip_configuration.public_ip_address.id.split('/')[-1]
+                ip_resg   = frontend_ip_configuration.public_ip_address.id.split('/')[4]
+                public_ip = self.__network_client.public_ip_addresses.get(ip_resg, ip_name)
+                break
+            for backend_address_pool in elb.backend_address_pools:
+                for load_balancer_backend_address in backend_address_pool.load_balancer_backend_addresses:
+                    b_nface_name   = load_balancer_backend_address.network_interface_ip_configuration.id.split('/')[-1]
+                    b_nface_resg   = load_balancer_backend_address.network_interface_ip_configuration.id.split('/')[4]
+                    n_face         = self.__network_client.network_interfaces.get(b_nface_resg, b_nface_name)
+                    subnet         = n_face.ip_configurations[0].subnet.id.split('/')[-1]
+                    vpc            = n_face.ip_configurations[0].subnet.id.split('/')[-3]
+                    i = VM(vm=None, type='ELB',
+                            vpc_id    = vpc,
+                            azone     = elb.location,
+                            subnet_id = subnet,
+                            name      = elb.id.split('/')[-1],
+                            privdn    = '',
+                            privip    = n_face.ip_configurations[0].private_ip_address,
+                            pubdn     = '',
+                            pubip     = public_ip.ip_address,
+                            note      = elb.type,
+                            os        = '',
+                            state     = elb.provisioning_state,
+                            mac       = '',
+                            if_id     = n_face.name,
+                            cloud_id  = cloud_id)
+                    i.id = db.add_instance(instance=i.to_sql_values())
 
         # Load RDSs. Use nodes table for store
+        resources = self.__resource_client.resource_groups.list()
+        for resource in resources:
+            rdses = self.__sql_client.servers.list_by_resource_group(resource.name)
+            for rds in rdses:
+                if rds.private_endpoint_connections == []:
+                    if rds.public_network_access == False:
+                        i = VM(vm=None,
+                                type      = 'RDS',
+                                vpc_id    = '',
+                                azone     = rds.location,
+                                subnet_id = '',
+                                name      = rds.id.split('/')[-1],
+                                privdn    = rds.fully_qualified_domain_name,
+                                privip    = '',
+                                pubdn     = '',
+                                pubip     = '',
+                                note      = rds.name,
+                                os        = f"{rds.type}: {rds.version}",
+                                state     = rds.state,
+                                mac       = '',
+                                if_id     = '',
+                                cloud_id  = cloud_id)
+                    else:
+                        i = VM(vm=None,
+                                type      = 'RDS',
+                                vpc_id    = '',
+                                azone     = rds.location,
+                                subnet_id = '',
+                                name      = rds.id.split('/')[-1],
+                                privdn    = '',
+                                privip    = '',
+                                pubdn     = rds.fully_qualified_domain_name,
+                                pubip     = '',
+                                note      = rds.name,
+                                os        = f"{rds.type}: {rds.version}",
+                                state     = rds.state,
+                                mac       = '',
+                                if_id     = '',
+                                cloud_id  = cloud_id)
+                    i.id = db.add_instance(instance=i.to_sql_values())
+                else:
+                    for ep_conn in rds.private_endpoint_connections:
+                        i:VM        = None
+                        p_ep_name   = ep_conn.properties.private_endpoint.id.split('/')[-1]
+                        p_ep_resg   = ep_conn.properties.private_endpoint.id.split('/')[4]
+                        endpoint    = self.__network_client.private_endpoints.get(p_ep_resg, p_ep_name)
+                        if_name:str = ''
+                        for iface in endpoint.network_interfaces:
+                            if_name = iface.id.split('/')[-1]
+                            break
+                        if rds.public_network_access == False:
+                            i = VM(vm=None,
+                                    type      = 'RDS',
+                                    vpc_id    = endpoint.subnet.id.split('/')[8],
+                                    azone     = rds.location,
+                                    subnet_id = endpoint.subnet.id.split('/')[-1],
+                                    name      = rds.id.split('/')[-1],
+                                    privdn    = rds.fully_qualified_domain_name,
+                                    privip    = '',
+                                    pubdn     = '',
+                                    pubip     = '',
+                                    note      = rds.name,
+                                    os        = f"{rds.type}: {rds.version}",
+                                    state     = rds.state,
+                                    mac       = '',
+                                    if_id     = if_name,
+                                    cloud_id  = cloud_id)
+                        else:
+                            i = VM(vm=None,
+                                    type      = 'RDS',
+                                    vpc_id    = endpoint.subnet.id.split('/')[8],
+                                    azone     = rds.location,
+                                    subnet_id = endpoint.subnet.id.split('/')[-1],
+                                    name      = rds.id.split('/')[-1],
+                                    privdn    = '',
+                                    privip    = '',
+                                    pubdn     = rds.fully_qualified_domain_name,
+                                    pubip     = '',
+                                    note      = rds.name,
+                                    os        = f"{rds.type}: {rds.version}",
+                                    state     = rds.state,
+                                    mac       = '',
+                                    if_id     = if_name,
+                                    cloud_id  = cloud_id)
+                        i.id = db.add_instance(instance=i.to_sql_values())
 
-        # Load S3 Buckets
-
-
-        
+        # TODO: Load Amazon Blob Storage
 
         return 0
 
