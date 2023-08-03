@@ -94,10 +94,11 @@ class FW_AWS:
                         if_id=instance['NetworkInterfaces'][0]['NetworkInterfaceId'], cloud_id=cloud_id)
                 vm.id = db.add_instance(instance=vm.to_sql_values())
                 for fw in instance["NetworkInterfaces"][0]["Groups"]:
-                    rg = RuleGroup(id=None,
-                                   if_id=instance['NetworkInterfaces'][0]['NetworkInterfaceId'],
-                                   name=fw['GroupId'],
-                                   cloud_id=cloud_id)
+                    rg = RuleGroup(id       = None,
+                                   if_id    = instance['NetworkInterfaces'][0]['NetworkInterfaceId'],
+                                   name     = fw['GroupId'],
+                                   type     = 'NSG',
+                                   cloud_id = cloud_id)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, fw['GroupId'])
@@ -205,6 +206,7 @@ class FW_AWS:
                     rg = RuleGroup(id       = None,
                                    if_id    = elb_if_id,
                                    name     = lb_sg,
+                                   type     = 'NSG',
                                    cloud_id = cloud_id)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
@@ -256,6 +258,7 @@ class FW_AWS:
                     rg = RuleGroup(id       = None,
                                    if_id    = rds_if_id,
                                    name     = rds_sg['VpcSecurityGroupId'],
+                                   type     = 'NSG',
                                    cloud_id = cloud_id)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
