@@ -1,6 +1,7 @@
 import { Box, Tooltip, UnstyledButton } from "@mantine/core";
 import {
     ChildItem,
+    DEFAULT_COLLAPSED,
     HeaderStyle,
     ItemStyle,
     ItemStyles,
@@ -19,16 +20,15 @@ interface UniversalMapChildProps {
     data: ChildItem;
     styles?: ItemStyles;
     selectedID?: string;
-    toogleChildrens?: (id: string) => void;
+    toogleChildren?: (id: string) => void;
 }
 
 const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     data,
     styles,
     selectedID,
-    toogleChildrens,
+    toogleChildren,
 }) => {
-    console.log(data.id, selectedID, data.id === selectedID);
     const isSelected = data.id === selectedID;
 
     let style: TypedStyle | undefined;
@@ -52,7 +52,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     }
 
     const childrenExist = data.children && data.children.length > 0;
-    const childrenShow = childrenExist && !(data.childrenCollapsed ?? false);
+    const childrenShow = childrenExist && !(data.childrenCollapsed ?? DEFAULT_COLLAPSED);
 
     return (
         <div className="um-item" id={data.id} style={itemStyle?.style}>
@@ -117,12 +117,12 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                                 />
                             );
                         })}
-                    {childrenExist && toogleChildrens && (
+                    {childrenExist && toogleChildren && (
                         <UnstyledButton
                             lh={0}
-                            onClick={() => toogleChildrens(data.id)}
+                            className="toogle-children"
                         >
-                            {data.childrenCollapsed ?? false ? (
+                            {data.childrenCollapsed ?? DEFAULT_COLLAPSED ? (
                                 <IconSquarePlus color={headerStyle?.textColor}/>
                             ) : (
                                 <IconSquareMinus color={headerStyle?.textColor}/>
@@ -137,7 +137,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                     style={layoutStyle}
                     styles={styles}
                     selectedID={selectedID}
-                    toogleChildrens={toogleChildrens}
+                    toogleChildren={toogleChildren}
                 />
             )}
         </div>

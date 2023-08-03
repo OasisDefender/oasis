@@ -13,7 +13,7 @@ interface UniversalMapContainerProps {
     style?: LayoutStyle;
     styles?: { [styleName: string]: TypedStyle };
     selectedID?: string;
-    toogleChildrens?: (id: string) => void;
+    toogleChildren?: (id: string) => void;
 }
 
 const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
@@ -21,7 +21,7 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
     style,
     styles,
     selectedID,
-    toogleChildrens,
+    toogleChildren,
 }) => {
     if (!data.children || !data.children.length) {
         return null;
@@ -37,7 +37,7 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
             data={child}
             styles={styles}
             selectedID={selectedID}
-            toogleChildrens={toogleChildrens}
+            toogleChildren={toogleChildren}
         />
     );
 

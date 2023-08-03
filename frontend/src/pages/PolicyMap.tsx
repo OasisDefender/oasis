@@ -5,6 +5,8 @@ import {
     ChildrenInfo,
     findItemById,
     LayoutStyle,
+    DEFAULT_COLLAPSED,
+    LineInfo,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
@@ -599,14 +601,31 @@ export function PolicyMap() {
         ],
     };
 
+    const initLines: LineInfo = {
+        items: [
+            {
+                src: "vm-509",
+                dst: "vm-510",
+                srcTooltip: "Label srcTooltip",
+                dstTooltip: "Label dstTooltip",
+            },
+            {
+                src: "availability-zone-301",
+                dst: "vm-601",
+                srcTooltip: "Label srcTooltip",
+                dstTooltip: "Label dstTooltip",
+            }
+        ]
+    };
+
     const [data, setData] = useState(initData);
 
-    const toogleChildrens = function (id: string) {
+    const toogleChildren = function (id: string) {
         setData((oldData) => {
             const newData = JSON.parse(JSON.stringify(oldData));
             const item = findItemById(newData, id);
             if (item) {
-                if (item.childrenCollapsed ?? false) {
+                if (item.childrenCollapsed ?? DEFAULT_COLLAPSED) {
                     item.childrenCollapsed = false;
                 } else {
                     item.childrenCollapsed = true;
@@ -621,6 +640,8 @@ export function PolicyMap() {
         verticalGap: "5rem",
     };
 
+    const [lines, setLines] = useState(initLines);
+
     return (
         <div
             style={{
@@ -628,14 +649,16 @@ export function PolicyMap() {
                 height: `calc(100vh - ${HEADER_HEIGHT})`,
                 position: "relative",
                 backgroundColor: isDark ? theme.colors.gray[8] : "#F5F5DC",
+                overflow: "hidden"
             }}
         >
             <UniversalMap
                 styles={styles}
                 style={style}
                 data={data}
+                lines={lines}
                 selectedID={selected}
-                toogleChildrens={toogleChildrens}
+                toogleChildren={toogleChildren}
                 select={setSelected}
             />
         </div>

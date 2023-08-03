@@ -49,11 +49,26 @@ export type ChildItem = ChildrenInfo & {
     childrenCollapsed?: boolean;
 };
 
+export const DEFAULT_COLLAPSED : boolean = false;
+
 export type InfoItem = {
     icon: string;
     iconColor?: string;
     tooltip?: string;
 };
+
+// Lines
+export type LineItem = {
+    src: string;
+    dst: string;
+    srcTooltip?: string;
+    dstTooltip?: string;
+};
+
+export type LineInfo = {
+    items: LineItem[];
+};
+
 
 // Functions
 

@@ -11,3 +11,4 @@ db.sqlite3
 *.mov
 .*.swp
 
+frontend/package-lock.json

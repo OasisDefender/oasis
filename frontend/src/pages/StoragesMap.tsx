@@ -4,6 +4,7 @@ import {
     ItemStyles,
     findItemById,
     LayoutStyle,
+    DEFAULT_COLLAPSED,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
@@ -48,12 +49,12 @@ export function StoragesMap() {
 
     const {loading, error, data, setData} = useStorages();
 
-    const toogleChildrens = function (id: string) {
+    const toogleChildren = function (id: string) {
         setData((oldData) => {
             const newData = JSON.parse(JSON.stringify(oldData));
             const item = findItemById(newData, id);
             if (item) {
-                if (item.childrenCollapsed ?? false) {
+                if (item.childrenCollapsed ?? DEFAULT_COLLAPSED) {
                     item.childrenCollapsed = false;
                 } else {
                     item.childrenCollapsed = true;
@@ -103,7 +104,7 @@ export function StoragesMap() {
                     styles={styles}
                     style={style}
                     data={data}
-                    toogleChildrens={toogleChildrens}
+                    toogleChildren={toogleChildren}
                 />
             )}
         </div>
