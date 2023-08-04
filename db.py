@@ -575,8 +575,17 @@ class DB:
         return cursor.lastrowid
 
 
-    def get_s3_buckets(self, cloud_id: int) -> str:
+    def get_s3_buckets(self, cloud_id: int) -> list[str]:
         sql    = f"select id, name, cloud_id from s3_buckets where cloud_id = {cloud_id} order by name"
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return cursor.fetchall()
+
+
+    def get_asg_nodes(self, asg_id: str, cloud_id: int) -> list[str]:
+        sql = f"select distinct n.privip from nodes n, rule_groups g where n.cloud_id={cloud_id} and n.type='VM' and g.type='ASG' and g.name='{asg_id}' and n.privip is not null and n.privip != '' and n.if_id=g.if_id union select distinct n.pubip from nodes n, rule_groups g where n.cloud_id={cloud_id} and n.type='VM' and g.type='ASG' and g.name='{asg_id}' and n.pubip is not null and n.pubip !='' and n.if_id = g.if_id"
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        return cursor.fetchall()
+
+

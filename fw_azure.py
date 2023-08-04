@@ -381,33 +381,64 @@ class FW_Azure:
             try:
                 for rule in rules:
                     if rule.direction == 'Inbound': # Inbound rules
-                        r = Rule(id=None,
-                                group_id=group_id,
-                                rule_id=rule.id,
-                                egress='False',
-                                proto=rule.protocol.upper().replace("-1", "ANY"),
-                                port_from=rule.destination_port_range,
-                                port_to='',
-                                naddr=rule.source_address_prefix.replace("*", "0.0.0.0/0"),
-                                cloud_id=cloud_id,
-                                ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol)
-                            )
+                        if rule.source_application_security_groups == None:
+                            r = Rule(id=None,
+                                        group_id=group_id,
+                                        rule_id=rule.id,
+                                        egress='False',
+                                        proto=rule.protocol.upper().replace("-1", "ANY"),
+                                        port_from=rule.destination_port_range,
+                                        port_to='',
+                                        naddr=rule.source_address_prefix.replace("*", "0.0.0.0/0"),
+                                        cloud_id=cloud_id,
+                                        ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                            r.id = db.add_rule(rule=r.to_sql_values())
+                        else:
+                            for asg in rule.source_application_security_groups:
+                                asg_ips = db.get_asg_nodes(asg.id, cloud_id)
+                                for ip in asg_ips:
+                                    r = Rule(id=None,
+                                            group_id=group_id,
+                                            rule_id=rule.id,
+                                            egress='False',
+                                            proto=rule.protocol.upper().replace("-1", "ANY"),
+                                            port_from=rule.destination_port_range,
+                                            port_to='',
+                                            naddr=ip[0], #.replace("*", "0.0.0.0/0"),
+                                            cloud_id=cloud_id,
+                                            ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                                    r.id = db.add_rule(rule=r.to_sql_values())
                     else:                           # Outbound rules
-                        r = Rule(id=None,
-                                group_id=group_id,
-                                rule_id=rule.id,
-                                egress='True',
-                                proto=rule.protocol.upper().replace("-1", "ANY"),
-                                port_from=rule.destination_port_range,
-                                port_to='',
-                                naddr=rule.destination_address_prefix.replace("*", "0.0.0.0/0"),
-                                cloud_id=cloud_id,
-                                ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol)
-                            )
-                    r.id = db.add_rule(rule=r.to_sql_values())
-                    #print(r.to_gui_dict())
-            except:
-                pass #print(f"no rules in {resource_group_name}/{group_id.split('/')[-1]}")
+                        if rule.destination_application_security_groups == None:
+                            r = Rule(id=None,
+                                    group_id=group_id,
+                                    rule_id=rule.id,
+                                    egress='True',
+                                    proto=rule.protocol.upper().replace("-1", "ANY"),
+                                    port_from=rule.destination_port_range,
+                                    port_to='',
+                                    naddr=rule.destination_address_prefix.replace("*", "0.0.0.0/0"),
+                                    cloud_id=cloud_id,
+                                    ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                            r.id = db.add_rule(rule=r.to_sql_values())
+                        else:
+                            for asg in rule.destination_application_security_groups:
+                                asg_ips = db.get_asg_nodes(asg.id, cloud_id)
+                                for ip in asg_ips:
+                                    r = Rule(id=None,
+                                            group_id=group_id,
+                                            rule_id=rule.id,
+                                            egress='True',
+                                            proto=rule.protocol.upper().replace("-1", "ANY"),
+                                            port_from=rule.destination_port_range,
+                                            port_to='',
+                                            naddr=ip[0], #.replace("*", "0.0.0.0/0"),
+                                            cloud_id=cloud_id,
+                                            ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                                    r.id = db.add_rule(rule=r.to_sql_values())
+
+            except ResourceNotFoundError:
+                pass #print(f"INFO: No rules in: {resource_group_name}/{group_id.split('/')[-1]}")
 
 
 
