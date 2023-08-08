@@ -400,50 +400,64 @@ class FW_Azure:
                                         port_to='',
                                         naddr=rule.source_address_prefix.replace("*", "0.0.0.0/0"),
                                         cloud_id=cloud_id,
-                                        ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                                        ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                        action=rule.access.lower(),
+                                        priority=rule.priority)
                             r.id = db.add_rule(rule=r.to_sql_values())
                         else:
                             for asg in rule.source_application_security_groups:
                                 asg_ips = db.get_asg_nodes(asg.id, cloud_id)
                                 for ip in asg_ips:
                                     r = Rule(id=None,
-                                            group_id=group_id,
-                                            rule_id=rule.id,
-                                            egress='False',
-                                            proto=rule.protocol.upper().replace("-1", "ANY"),
-                                            port_from=rule.destination_port_range,
-                                            port_to='',
-                                            naddr=ip[0], #.replace("*", "0.0.0.0/0"),
-                                            cloud_id=cloud_id,
-                                            ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                                             group_id=group_id,
+                                             rule_id=rule.id,
+                                             egress='False',
+                                             proto=rule.protocol.upper().replace("-1", "ANY"),
+                                             port_from=rule.destination_port_range,
+                                             port_to='',
+                                             # .replace("*", "0.0.0.0/0"),
+                                             naddr=ip[0],
+                                             cloud_id=cloud_id,
+                                             ports=make_ports_string(
+                                                 rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                             action=rule.access.lower(),
+                                             priority=rule.priority)
                                     r.id = db.add_rule(rule=r.to_sql_values())
                     else:                           # Outbound rules
                         if rule.destination_application_security_groups == None:
                             r = Rule(id=None,
-                                    group_id=group_id,
-                                    rule_id=rule.id,
-                                    egress='True',
-                                    proto=rule.protocol.upper().replace("-1", "ANY"),
-                                    port_from=rule.destination_port_range,
-                                    port_to='',
-                                    naddr=rule.destination_address_prefix.replace("*", "0.0.0.0/0"),
-                                    cloud_id=cloud_id,
-                                    ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                                     group_id=group_id,
+                                     rule_id=rule.id,
+                                     egress='True',
+                                     proto=rule.protocol.upper().replace("-1", "ANY"),
+                                     port_from=rule.destination_port_range,
+                                     port_to='',
+                                     naddr=rule.destination_address_prefix.replace(
+                                         "*", "0.0.0.0/0"),
+                                     cloud_id=cloud_id,
+                                     ports=make_ports_string(
+                                         rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                     action=rule.access.lower(),
+                                     priority=rule.priority)
                             r.id = db.add_rule(rule=r.to_sql_values())
                         else:
                             for asg in rule.destination_application_security_groups:
                                 asg_ips = db.get_asg_nodes(asg.id, cloud_id)
                                 for ip in asg_ips:
                                     r = Rule(id=None,
-                                            group_id=group_id,
-                                            rule_id=rule.id,
-                                            egress='True',
-                                            proto=rule.protocol.upper().replace("-1", "ANY"),
-                                            port_from=rule.destination_port_range,
-                                            port_to='',
-                                            naddr=ip[0], #.replace("*", "0.0.0.0/0"),
-                                            cloud_id=cloud_id,
-                                            ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol))
+                                             group_id=group_id,
+                                             rule_id=rule.id,
+                                             egress='True',
+                                             proto=rule.protocol.upper().replace("-1", "ANY"),
+                                             port_from=rule.destination_port_range,
+                                             port_to='',
+                                             # .replace("*", "0.0.0.0/0"),
+                                             naddr=ip[0],
+                                             cloud_id=cloud_id,
+                                             ports=make_ports_string(
+                                                 rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                             action=rule.access.lower(),
+                                             priority=rule.priority)
                                     r.id = db.add_rule(rule=r.to_sql_values())
 
             except ResourceNotFoundError:
