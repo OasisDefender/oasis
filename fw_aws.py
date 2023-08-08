@@ -296,6 +296,7 @@ class FW_AWS:
 
         client = self.__session.client('ec2')
         response = client.describe_security_group_rules(Filters=[{'Name': 'group-id', 'Values': [group_id]}])
+        priority : int = 0
         for rule in response['SecurityGroupRules']:
             # Rule with reference to prefix list
             try:
@@ -305,6 +306,7 @@ class FW_AWS:
                     naddr = prefix['Cidr']
                     if naddr.split('/')[-1] == '32':
                         naddr = naddr.split('/')[0]
+                    priority = priority + 1
                     r = Rule(id=None,
                             group_id=rule['GroupId'],
                             rule_id=rule['SecurityGroupRuleId'],
@@ -314,9 +316,11 @@ class FW_AWS:
                             port_to=rule['ToPort'],
                             naddr=naddr,
                             cloud_id=cloud_id,
-                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
-                    #print(r.to_sql_values())
+                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
+                            action='allow',
+                            priority=priority)
                     r.id = db.add_rule(rule=r.to_sql_values())
+                    #print(r.to_sql_values())
                 continue
             except KeyError:
                 pass
@@ -334,6 +338,7 @@ class FW_AWS:
                         naddr = "0.0.0.0/0"
                     if naddr.split('/')[-1] == '32':
                         naddr = naddr.split('/')[0]
+                    priority = priority + 1
                     r = Rule(id       = None,
                             group_id  = rule['GroupId'],
                             rule_id   = rule['SecurityGroupRuleId'],
@@ -343,8 +348,11 @@ class FW_AWS:
                             port_to   = rule['ToPort'],
                             naddr     = naddr,
                             cloud_id  = cloud_id,
-                            ports     = make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
+                            action='allow',
+                            priority=priority)
                     r.id = db.add_rule(rule=r.to_sql_values())
+                    #print(r.to_sql_values())
                 continue
             except KeyError:
                 pass
@@ -358,6 +366,7 @@ class FW_AWS:
                 naddr = "0.0.0.0/0"
             if naddr.split('/')[-1] == '32':
                 naddr = naddr.split('/')[0]
+            priority = priority + 1
             r = Rule(id=None,
                     group_id=rule['GroupId'],
                     rule_id=rule['SecurityGroupRuleId'],
@@ -367,9 +376,11 @@ class FW_AWS:
                     port_to=rule['ToPort'],
                     naddr=naddr,
                     cloud_id=cloud_id,
-                    ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+                    ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
+                    action='allow',
+                    priority=priority)
             r.id = db.add_rule(rule=r.to_sql_values())
-            #print(r.to_gui_dict())
+            #print(r.to_sql_values())
 
 
 
