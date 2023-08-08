@@ -4,7 +4,7 @@ from db import DB
 
 class Rule:
     def __init__(self, id: int, group_id: str, rule_id: str, egress: str, proto: str,
-                 port_from: str, port_to: str, naddr: str, cloud_id: int, ports: str):
+                 port_from: str, port_to: str, naddr: str, cloud_id: int, ports: str, action='allow', priority=0):
         self.id        : int = id
         self.group_id  : str = group_id
         self.rule_id   : str = rule_id
@@ -15,6 +15,8 @@ class Rule:
         self.naddr     : str = None
         self.cloud_id  : int = cloud_id
         self.ports     : str = ports
+        self.action    : str = action
+        self.priority  : int = priority
 
         ip = naddr.split('/')
         if len(ip) == 1:
@@ -61,7 +63,9 @@ class Rule:
             'port_to'   : self.port_to,
             'naddr'     : self.naddr,
             'cloud_id'  : self.cloud_id,
-            'ports'     : self.ports
+            'ports'     : self.ports,
+            'action'    : self.action,
+            'priority'  : self.priority
         }
 
 

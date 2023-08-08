@@ -96,7 +96,9 @@ class DB:
             port_to   TEXT,
             naddr     TEXT,
             cloud_id  REFERENCES clouds(id),
-            ports     TEXT)''')
+            ports     TEXT,
+            action    TEXT,
+            priority  INTEGER)''')
 
         cursor.execute('''CREATE TABLE IF NOT EXISTS network_services(
             id    INTEGER PRIMARY KEY,
@@ -473,10 +475,10 @@ class DB:
 
 
     def add_rule(self, rule: dict) -> int:
-        sql    = f"INSERT INTO rules (group_id, rule_id, egress, proto, port_from, port_to, naddr, cloud_id, ports)\
+        sql    = f"INSERT INTO rules (group_id, rule_id, egress, proto, port_from, port_to, naddr, cloud_id, ports, action, priority)\
                    VALUES ('{rule['group_id']}', '{rule['rule_id']}', '{rule['egress']}',\
                            '{rule['proto']}', '{rule['port_from']}', '{rule['port_to']}',\
-                           '{rule['naddr']}', {rule['cloud_id']}, '{rule['ports']}')"
+                           '{rule['naddr']}', {rule['cloud_id']}, '{rule['ports']}', '{rule['action']}', {rule['priority']})"
         #print(f"{sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)
