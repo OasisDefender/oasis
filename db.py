@@ -79,11 +79,12 @@ class DB:
             cloud_id REFERENCES clouds(id))''')
         
         cursor.execute('''CREATE TABLE IF NOT EXISTS rule_groups(
-            id    INTEGER PRIMARY KEY,
-            if_id REFERENCES nodes(if_id),
-            name  TEXT,
-            type  TEXT,
-            cloud_id REFERENCES clouds(id))''')
+            id        INTEGER PRIMARY KEY,
+            if_id     REFERENCES nodes(if_id),
+            subnet_id REFERENCES subnets(name),
+            name      TEXT,
+            type      TEXT,
+            cloud_id  REFERENCES clouds(id))''')
 
         cursor.execute('''CREATE TABLE IF NOT EXISTS rules(
             id        INTEGER PRIMARY KEY,
@@ -462,8 +463,8 @@ class DB:
 
 
     def add_rule_group(self, rule_group: dict) -> int:
-        sql    = f"INSERT INTO rule_groups (if_id, name, type, cloud_id) \
-                   VALUES ('{rule_group['if_id']}', '{rule_group['name']}', '{rule_group['type']}', {rule_group['cloud_id']})"
+        sql    = f"INSERT INTO rule_groups (if_id, name, type, cloud_id, subnet_id) \
+                   VALUES ('{rule_group['if_id']}', '{rule_group['name']}', '{rule_group['type']}', {rule_group['cloud_id']}, '{rule_group['subnet_id']}')"
         #print(f"{sql}")
         cursor = self.__database.cursor()
         cursor.execute(sql)

@@ -73,22 +73,21 @@ class FW_Azure:
         return self.__cloud_id
 
 
-    def get_app_security_groups(self, cloud_id: int):
-        db = DB()
-        g:RuleGroup = None
-
-        resources = self.__resource_client.resource_groups.list()
-        for resource in resources:
-            asgs = self.__network_client.application_security_groups.list(resource.name)
-            for asg in asgs:
-                print(f"res: {resource.name}, asg {asg}")
-                g = RuleGroup(id=None,
-                              if_id='',
-                              name=asg.id.split('/')[-1],
-                              type='ASG',
-                              cloud_id=cloud_id)
-                g.id = db.add_rule_group(rule_group=g.to_sql_values())
-        return
+    #def get_app_security_groups(self, cloud_id: int):
+    #    db = DB()
+    #    g:RuleGroup = None
+    #    resources = self.__resource_client.resource_groups.list()
+    #    for resource in resources:
+    #        asgs = self.__network_client.application_security_groups.list(resource.name)
+    #        for asg in asgs:
+    #            print(f"res: {resource.name}, asg {asg}")
+    #            g = RuleGroup(id=None,
+    #                          if_id='',
+    #                          name=asg.id.split('/')[-1],
+    #                          type='ASG',
+    #                          cloud_id=cloud_id)
+    #            g.id = db.add_rule_group(rule_group=g.to_sql_values())
+    #    return
 
 
     def get_topology(self, cloud_id: int):
@@ -104,6 +103,16 @@ class FW_Azure:
                 s = Subnet(subnet=None, name=subnet.name, arn=subnet.id, network=subnet.address_prefix,
                                 azone='', note=subnet.name, vpc_id=vpc.name, cloud_id=cloud_id)
                 s.id = db.add_subnet(subnet=s.to_sql_values())
+                # Load subnet security group
+                if subnet.network_security_group:
+                    subnet_rg = RuleGroup(id=None,
+                                    subnet_id=subnet.name,
+                                    name=subnet.network_security_group.id,
+                                    type='NSG',
+                                    cloud_id=cloud_id)
+                    subnet_rg.id = db.add_rule_group(rule_group=subnet_rg.to_sql_values())
+                    # Load rules for current rule group
+                    self.get_group_rules(cloud_id, subnet.network_security_group.id)
 
         # Load VM's
         vms = self.__compute_client.virtual_machines.list_all()
