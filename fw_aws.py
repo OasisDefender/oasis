@@ -64,6 +64,18 @@ class FW_AWS:
                             vpc_id=row['VpcId'], cloud_id=cloud_id)
             subnet.id = db.add_subnet(subnet=subnet.to_sql_values())
 
+            acl_response = client.describe_network_acls(Filters=[{'Name': 'association.subnet-id', 'Values': [row['SubnetId']]}])
+            for acl in acl_response['NetworkAcls']:
+                subnet_rg = RuleGroup(id = None,
+                                subnet_id=subnet.name,
+                                name     = acl['NetworkAclId'],
+                                type     = 'NSG',
+                                cloud_id = cloud_id)
+                subnet_rg.id = db.add_rule_group(rule_group=subnet_rg.to_sql_values())
+                # Load rules for current rule group
+                self.get_network_acl_rules(cloud_id, acl['NetworkAclId'])
+            
+
         response = client.describe_instances()
         for res in response['Reservations']:
             for instance in res['Instances']:
@@ -94,10 +106,11 @@ class FW_AWS:
                         if_id=instance['NetworkInterfaces'][0]['NetworkInterfaceId'], cloud_id=cloud_id)
                 vm.id = db.add_instance(instance=vm.to_sql_values())
                 for fw in instance["NetworkInterfaces"][0]["Groups"]:
-                    rg = RuleGroup(id=None,
-                                   if_id=instance['NetworkInterfaces'][0]['NetworkInterfaceId'],
-                                   name=fw['GroupId'],
-                                   cloud_id=cloud_id)
+                    rg = RuleGroup(id       = None,
+                                   if_id    = instance['NetworkInterfaces'][0]['NetworkInterfaceId'],
+                                   name     = fw['GroupId'],
+                                   type     = 'NSG',
+                                   cloud_id = cloud_id)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, fw['GroupId'])
@@ -205,6 +218,7 @@ class FW_AWS:
                     rg = RuleGroup(id       = None,
                                    if_id    = elb_if_id,
                                    name     = lb_sg,
+                                   type     = 'NSG',
                                    cloud_id = cloud_id)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
@@ -256,6 +270,7 @@ class FW_AWS:
                     rg = RuleGroup(id       = None,
                                    if_id    = rds_if_id,
                                    name     = rds_sg['VpcSecurityGroupId'],
+                                   type     = 'NSG',
                                    cloud_id = cloud_id)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
@@ -281,6 +296,7 @@ class FW_AWS:
 
         client = self.__session.client('ec2')
         response = client.describe_security_group_rules(Filters=[{'Name': 'group-id', 'Values': [group_id]}])
+        priority : int = 0
         for rule in response['SecurityGroupRules']:
             # Rule with reference to prefix list
             try:
@@ -290,6 +306,7 @@ class FW_AWS:
                     naddr = prefix['Cidr']
                     if naddr.split('/')[-1] == '32':
                         naddr = naddr.split('/')[0]
+                    priority = priority + 1
                     r = Rule(id=None,
                             group_id=rule['GroupId'],
                             rule_id=rule['SecurityGroupRuleId'],
@@ -299,9 +316,11 @@ class FW_AWS:
                             port_to=rule['ToPort'],
                             naddr=naddr,
                             cloud_id=cloud_id,
-                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
-                    #print(r.to_sql_values())
+                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
+                            action='allow',
+                            priority=priority)
                     r.id = db.add_rule(rule=r.to_sql_values())
+                    #print(r.to_sql_values())
                 continue
             except KeyError:
                 pass
@@ -319,6 +338,7 @@ class FW_AWS:
                         naddr = "0.0.0.0/0"
                     if naddr.split('/')[-1] == '32':
                         naddr = naddr.split('/')[0]
+                    priority = priority + 1
                     r = Rule(id       = None,
                             group_id  = rule['GroupId'],
                             rule_id   = rule['SecurityGroupRuleId'],
@@ -328,8 +348,11 @@ class FW_AWS:
                             port_to   = rule['ToPort'],
                             naddr     = naddr,
                             cloud_id  = cloud_id,
-                            ports     = make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+                            ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
+                            action='allow',
+                            priority=priority)
                     r.id = db.add_rule(rule=r.to_sql_values())
+                    #print(r.to_sql_values())
                 continue
             except KeyError:
                 pass
@@ -343,6 +366,7 @@ class FW_AWS:
                 naddr = "0.0.0.0/0"
             if naddr.split('/')[-1] == '32':
                 naddr = naddr.split('/')[0]
+            priority = priority + 1
             r = Rule(id=None,
                     group_id=rule['GroupId'],
                     rule_id=rule['SecurityGroupRuleId'],
@@ -352,10 +376,68 @@ class FW_AWS:
                     port_to=rule['ToPort'],
                     naddr=naddr,
                     cloud_id=cloud_id,
-                    ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']))
+                    ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
+                    action='allow',
+                    priority=priority)
             r.id = db.add_rule(rule=r.to_sql_values())
-            #print(r.to_gui_dict())
+            #print(r.to_sql_values())
 
+
+
+    def get_network_acl_rules(self, cloud_id: int, group_id: str):
+        db     = DB()
+        naddr  = None
+
+        client = self.__session.client('ec2')
+        response = client.describe_network_acls(Filters=[{'Name': 'association.network-acl-id', 'Values': [group_id]}])
+        for acl in response['NetworkAcls']:
+            for rule in acl['Entries']:
+                try:
+                    naddr = rule["CidrBlock"]
+                except KeyError:
+                    naddr = ""
+                if naddr == "":
+                    naddr = "0.0.0.0/0"
+                if naddr.split('/')[-1] == '32':
+                    naddr = naddr.split('/')[0]
+                
+                port_from : str = None
+                port_to   : str = None
+                try:
+                    port_from = rule['PortRange']['From']
+                    port_to   = rule['PortRange']['To']
+                except KeyError:
+                    try:
+                        port_from = rule['IcmpTypeCode']['Code']
+                        port_to   = rule['IcmpTypeCode']['Type']
+                    except KeyError:
+                        pass
+                
+                proto: str = ''
+                if rule['Protocol'] == '-1':
+                    proto = 'ANY'
+                elif rule['Protocol'] == '1':
+                    proto = 'ICMP'
+                elif rule['Protocol'] == '6':
+                    proto = 'TCP'
+                elif rule['Protocol'] == '17':
+                    proto = 'UDP'
+                else:
+                    proto = rule['Protocol']
+                
+                r = Rule(id=None,
+                         group_id=group_id,
+                         rule_id=acl['NetworkAclId'],
+                         egress=rule['Egress'],
+                         proto=proto,
+                         port_from=port_from,
+                         port_to=port_to,
+                         naddr=naddr,
+                         cloud_id=cloud_id,
+                         ports=make_ports_string(port_from, port_to, proto),
+                         action=rule['RuleAction'],
+                         priority=rule['RuleNumber'])
+                r.id = db.add_rule(rule=r.to_sql_values())
 
 
 
