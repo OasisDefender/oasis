@@ -610,6 +610,24 @@ export function PolicyMap() {
                 dstTooltip: "Label dstTooltip",
             },
             {
+                src: "vm-509",
+                dst: "availability-zone-301",
+                srcTooltip: "Label srcTooltip",
+                dstTooltip: "Label dstTooltip",
+            },
+            {
+                src: "vm-510",
+                dst: "availability-zone-301",
+                srcTooltip: "Label srcTooltip",
+                dstTooltip: "Label dstTooltip",
+            },
+            {
+                src: "vm-601",
+                dst: "availability-zone-301",
+                srcTooltip: "Label srcTooltip",
+                dstTooltip: "Label dstTooltip",
+            },
+            {
                 src: "availability-zone-301",
                 dst: "vm-601",
                 srcTooltip: "Label srcTooltip",
@@ -638,6 +656,7 @@ export function PolicyMap() {
     const style: LayoutStyle = {
         horizontalGap: "5rem",
         verticalGap: "5rem",
+        childrenContainerStyle: { margin: "5rem" }
     };
 
     const [lines, setLines] = useState(initLines);

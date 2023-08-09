@@ -66,9 +66,9 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                 if (item) {
                     const id = item.id;
                     if (action === "select") {
-                        select?.(id);                        
+                        select?.(id);
                     } else if (action === "toogleChildren") {
-                        toogleChildren?.(id);                        
+                        toogleChildren?.(id);
                     }
                 } else {
                     // tap on empty space
@@ -88,7 +88,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
             positionY: number;
         }
     ) => {
-        setScale((oldState) => {            
+        setScale((oldState) => {
             return state.scale;
         });
         refreshArrows();
@@ -117,13 +117,10 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                         style={style}
                         toogleChildren={toogleChildren}
                         selectedID={selectedID}
-                    />                                        
+                    />
+                    <UniversalMapLines lines={lines} />
                 </TransformComponent>
-                <UniversalMapLines
-                        scale={scale}
-                        lines={lines}
-                />
-            </TransformWrapper>            
+            </TransformWrapper>
         </>
     );
 };

@@ -57,7 +57,7 @@ function getElementInfo(element: HTMLElement, zoomFactor: number): ElementInfo {
     };
 }
 
-// Calculate the angle between two points in degrees
+// Calculate the angle between two points
 function calculateAngle(element1: ElementInfo, element2: ElementInfo): number {
     const deltaX = element2.centerX - element1.centerX;
     const deltaY = element2.centerY - element1.centerY;
