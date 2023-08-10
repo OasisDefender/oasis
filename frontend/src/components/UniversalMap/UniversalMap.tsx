@@ -5,6 +5,7 @@ import {
     ItemStyles,
     LayoutStyle,
     LineInfo,
+    LineStyles,
 } from "./UniversalMapData";
 
 import UniversalMapLines from "./UniversalMapLines";
@@ -20,6 +21,7 @@ interface UniversalMapProps {
     lines?: LineInfo;
     style?: LayoutStyle;
     styles?: ItemStyles;
+    lineStyles?: LineStyles;
     selectedID?: string;
     toogleChildren?: (id: string) => void;
     select?: (id?: string) => void;
@@ -30,6 +32,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
     lines,
     style,
     styles,
+    lineStyles,
     selectedID,
     toogleChildren,
     select,
@@ -55,25 +58,32 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
         event: TouchEvent | MouseEvent
     ) {
         if (!wasRealPanning) {
-            // Tap
+            // Tap            
             if (event.target && event.target instanceof Element) {
                 let action: "select" | "toogleChildren" = "select";
                 if (event.target.closest(".toogle-children")) {
                     action = "toogleChildren";
                 }
 
-                const item = event.target.closest(".um-item");
-                if (item) {
-                    const id = item.id;
-                    if (action === "select") {
-                        select?.(id);
-                    } else if (action === "toogleChildren") {
-                        toogleChildren?.(id);
-                    }
-                } else {
-                    // tap on empty space
-                    if (action === "select") {
-                        select?.(undefined);
+                const line = event.target.closest(".um-line");
+                if (line) {
+                    // TODO:
+                    console.log("Line clicked: ", line.id);
+                }
+                else {
+                    const item = event.target.closest(".um-item");
+                    if (item) {
+                        const id = item.id;
+                        if (action === "select") {
+                            select?.(id);
+                        } else if (action === "toogleChildren") {
+                            toogleChildren?.(id);
+                        }
+                    } else {
+                        // tap on empty space
+                        if (action === "select") {
+                            select?.(undefined);
+                        }
                     }
                 }
             }
@@ -118,7 +128,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                         toogleChildren={toogleChildren}
                         selectedID={selectedID}
                     />
-                    <UniversalMapLines lines={lines} />
+                    <UniversalMapLines lines={lines} styles={lineStyles} />
                 </TransformComponent>
             </TransformWrapper>
         </>

@@ -1,6 +1,11 @@
 import { px } from "@mantine/styles";
-import { LineInfo } from "./UniversalMapData";
+import { LineInfo, LineStyle, LineStyles, TypedLineStyle, mergeObjects } from "./UniversalMapData";
 import { useLayoutEffect, useRef, useState } from "react";
+
+const DEFAULT_GRAVITY = 150;
+const DEFAULT_STROKE = "cornflowerblue";
+const DEFAULT_STROKE_WIDTH = 4;
+const DEFAULT_STROKE_OPACITY = 90;
 
 type Position = {
     x: number;
@@ -20,6 +25,8 @@ type ElementInfo = {
 };
 
 type ExtentedInfo = {
+    id: string;
+    type?: string;
     src: ElementInfo;
     dst: ElementInfo;
     dist2: number;
@@ -124,15 +131,16 @@ function findIntersectionOffset(
 
 interface UniversalMapLinesProps {
     lines?: LineInfo;
+    styles?: LineStyles;
 }
 
-const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
+const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) => {
     const [, setRenderState] = useState(0);
     const ref = useRef<SVGSVGElement | null>(null);
     const rerender = () => {
         setRenderState((old) => old + 1);
     };
-
+    
     console.log("UniversalMapLines render");
 
     useLayoutEffect(() => {
@@ -159,7 +167,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
             if (!srcPos || !dstPos) return null;
 
             const srcInfo = {
-                id: line.src,
+                id: line.src,                
                 elem: srcElem,
                 pos: srcPos,
                 center: {
@@ -192,7 +200,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
             if (dist2 < px("15rem") * px("15rem")) {
                 // rem in pixels
                 dstAngle = srcAngle + Math.PI / 4;
-                srcAngle += Math.PI / 2;
+                srcAngle += 3 * Math.PI / 4;
             }
 
             if (srcElem.contains(dstElem)) {
@@ -204,11 +212,13 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
             }
 
             if (srcElem === dstElem) {
-                srcAngle = 0;
-                dstAngle = 0;
+                srcAngle = Math.PI / 36;
+                dstAngle = 2 * Math.PI -  Math.PI / 36;
             }
 
             extentedInfo.push({
+                id: line.id ?? `${srcInfo.id}_${dstInfo.id}`,
+                type: line.type,
                 src: srcInfo,
                 dst: dstInfo,
                 dist2: dist2,
@@ -248,13 +258,9 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
             }
 
             elementsWithArrows[id].sort((a, b) => {
-                if (a.type === "src") {
-                    return a.extInfo.srcAngle - b.extInfo.srcAngle;
-                } else {
-                    return a.extInfo.dstAngle - b.extInfo.dstAngle;
-                }
+                return a.angle - b.angle;
             });
-
+            
             let maxGap = 0;
             let minGap = Number.MAX_VALUE;
             let maxGapIndex = -1;
@@ -275,6 +281,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
             // Check the gap between the last and first elements, considering 2 * Math.PI period
             const gapBetweenLastAndFirst =
                 2 * Math.PI - arrows[arrows.length - 1].angle + arrows[0].angle;
+            
             if (gapBetweenLastAndFirst > maxGap) {
                 maxGap = gapBetweenLastAndFirst;
                 maxGapIndex = 0;
@@ -291,8 +298,8 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
                           ...arrows.slice(maxGapIndex),
                           ...arrows.slice(0, maxGapIndex),
                       ];
-
-            if (minGap <= Math.PI / 4) {                
+            
+            if (minGap <= (Math.PI / 72)) {
                 // need to place arrows by equal intervals
                 let newGap = maxGap / 2;
 
@@ -339,6 +346,17 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
             }}
         >
             {extentedInfo.map((item, index) => {
+                const isSelected = false; // TODO:
+                let style: TypedLineStyle | undefined;                
+                let lineStyle: LineStyle | undefined;
+
+                style = styles?.[item.type ?? ""];
+                if (style) {                    
+                    lineStyle = isSelected
+                        ? mergeObjects(style.line, style.lineSelected)
+                        : style.line;
+                }
+
                 const srcOffset = findIntersectionOffset(item.srcAngle, item.src.pos.width, item.src.pos.height);
                 const dstOffset = findIntersectionOffset(item.dstAngle, item.dst.pos.width, item.dst.pos.height);
                 const srcX = item.src.pos.x + srcOffset.x;
@@ -346,15 +364,21 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines }) => {
                 const dstX = item.dst.pos.x + dstOffset.x;
                 const dstY = item.dst.pos.y + dstOffset.y;
 
+                const gravity = lineStyle?.gravity ?? DEFAULT_GRAVITY;
+
                 return (
                     <path
-                        key={index}
+                        key={item.id}
+                        id={item.id}
+                        className="um-line"
                         d={`M${srcX} ${srcY} 
-                        C ${srcX + 150 * Math.cos(item.srcAngle)} ${srcY + 150 * Math.sin(item.srcAngle)}, ${dstX + 150 * Math.cos(item.dstAngle)} ${dstY + 150 * Math.sin(item.dstAngle)}, ${dstX} ${dstY}`}
-                        stroke="cornflowerblue"
-                        strokeWidth="4"
+                        C ${srcX + gravity * Math.cos(item.srcAngle)} ${srcY + gravity * Math.sin(item.srcAngle)}, ${dstX + gravity * Math.cos(item.dstAngle)} ${dstY + gravity * Math.sin(item.dstAngle)}, ${dstX} ${dstY}`}
+                        stroke={lineStyle?.stroke ?? DEFAULT_STROKE}
+                        strokeWidth={lineStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH}
+                        strokeOpacity={lineStyle?.strokeOpacity ?? DEFAULT_STROKE_OPACITY}
                         strokeLinecap="round"
                         fill="transparent"
+                        style={{pointerEvents: "all"}}
                     />
                 );
             })}

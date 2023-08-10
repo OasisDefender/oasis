@@ -32,6 +32,21 @@ export type TypedStyle = {
 
 export type ItemStyles = { [styleName: string]: TypedStyle };
 
+
+export type LineStyle = {
+    gravity?: number;
+    stroke?: string;
+    strokeWidth?: number | string;
+    strokeOpacity?: number | string;
+};
+
+export type TypedLineStyle = {
+    line?: LineStyle;
+    lineSelected?: LineStyle;
+}
+
+export type LineStyles = { [styleName: string]: TypedLineStyle };
+
 // Data
 
 export type Layout = "row" | "column" | "grid";
@@ -59,8 +74,10 @@ export type InfoItem = {
 
 // Lines
 export type LineItem = {
+    id?: string;
+    type?: string;
     src: string;
-    dst: string;
+    dst: string;    
     srcTooltip?: string;
     dstTooltip?: string;
 };

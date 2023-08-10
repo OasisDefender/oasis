@@ -628,7 +628,7 @@ export function PolicyMap() {
                 dstTooltip: "Label dstTooltip",
             },
             {
-                src: "availability-zone-301",
+                src: "vm-601",
                 dst: "vm-601",
                 srcTooltip: "Label srcTooltip",
                 dstTooltip: "Label dstTooltip",

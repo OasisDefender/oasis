@@ -36,19 +36,18 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     let layoutStyle: LayoutStyle | undefined;
     let itemStyle: ItemStyle | undefined;
     let headerStyle: HeaderStyle | undefined;
-    if (data.type) {
-        style = styles?.[data.type];
-        if (style) {
-            layoutStyle = isSelected
-                ? mergeObjects(style.layout, style.layoutSelected)
-                : style.layout;
-            itemStyle = isSelected
-                ? mergeObjects(style.item, style.itemSelected)
-                : style.item;
-            headerStyle = isSelected
-                ? mergeObjects(style.header, style.headerSelected)
-                : style.header;
-        }
+    
+    style = styles?.[data.type ?? ""];
+    if (style) {
+        layoutStyle = isSelected
+            ? mergeObjects(style.layout, style.layoutSelected)
+            : style.layout;
+        itemStyle = isSelected
+            ? mergeObjects(style.item, style.itemSelected)
+            : style.item;
+        headerStyle = isSelected
+            ? mergeObjects(style.header, style.headerSelected)
+            : style.header;
     }
 
     const childrenExist = data.children && data.children.length > 0;
