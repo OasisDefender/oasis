@@ -377,8 +377,8 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
                         strokeWidth={lineStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH}
                         strokeOpacity={lineStyle?.strokeOpacity ?? DEFAULT_STROKE_OPACITY}
                         strokeLinecap="round"
-                        fill="transparent"
-                        style={{pointerEvents: "all"}}
+                        fill="none"
+                        style={{pointerEvents: "visiblePainted"}}
                     />
                 );
             })}
