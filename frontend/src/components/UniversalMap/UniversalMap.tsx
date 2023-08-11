@@ -23,8 +23,10 @@ interface UniversalMapProps {
     styles?: ItemStyles;
     lineStyles?: LineStyles;
     selectedID?: string;
+    selectedLineID?: string;
     toogleChildren?: (id: string) => void;
     select?: (id?: string) => void;
+    selectLine?: (id?: string) => void;
 }
 
 const UniversalMap: React.FC<UniversalMapProps> = ({
@@ -34,54 +36,53 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
     styles,
     lineStyles,
     selectedID,
+    selectedLineID,
     toogleChildren,
     select,
+    selectLine
 }) => {
     const [scale, setScale] = useState(1);
     const refreshArrows = useXarrow();
 
     let wasRealPanning = false;
-    function onPanningStart(
+    const onPanningStart = (
         ref: ReactZoomPanPinchRef,
         event: TouchEvent | MouseEvent
-    ) {
+    ) => {
         wasRealPanning = false;
     }
-    function onPanning(
+    const onPanning = (
         ref: ReactZoomPanPinchRef,
         event: TouchEvent | MouseEvent
-    ) {
+    ) => {
         wasRealPanning = true;
     }
-    function onPanningStop(
+    const onPanningStop = (
         ref: ReactZoomPanPinchRef,
         event: TouchEvent | MouseEvent
-    ) {
+    ) => {
         if (!wasRealPanning) {
             // Tap            
             if (event.target && event.target instanceof Element) {
-                let action: "select" | "toogleChildren" = "select";
                 if (event.target.closest(".toogle-children")) {
-                    action = "toogleChildren";
-                }
-
-                const line = event.target.closest(".um-line");
-                if (line) {
-                    // TODO:
-                    console.log("Line clicked: ", line.id);
-                }
-                else {
+                    // toogleChildren
                     const item = event.target.closest(".um-item");
                     if (item) {
-                        const id = item.id;
-                        if (action === "select") {
-                            select?.(id);
-                        } else if (action === "toogleChildren") {
-                            toogleChildren?.(id);
+                        toogleChildren?.(item.id);
+                    }
+                }
+                else {
+                    const line = event.target.closest(".um-line");
+                    if (line) {                                                
+                        selectLine?.(line.id);
+                    }                    
+                    else {
+                        // select item
+                        const item = event.target.closest(".um-item");
+                        if (item) {
+                            select?.(item.id);
                         }
-                    } else {
-                        // tap on empty space
-                        if (action === "select") {
+                        else {
                             select?.(undefined);
                         }
                     }
@@ -128,7 +129,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                         toogleChildren={toogleChildren}
                         selectedID={selectedID}
                     />
-                    <UniversalMapLines lines={lines} styles={lineStyles} />
+                    <UniversalMapLines lines={lines} styles={lineStyles} selectedID={selectedLineID} />
                 </TransformComponent>
             </TransformWrapper>
         </>

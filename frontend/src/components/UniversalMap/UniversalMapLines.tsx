@@ -1,11 +1,17 @@
 import { px } from "@mantine/styles";
-import { LineInfo, LineStyle, LineStyles, TypedLineStyle, mergeObjects } from "./UniversalMapData";
+import {
+    LineInfo,
+    LineStyle,
+    LineStyles,
+    TypedLineStyle,
+    mergeObjects,
+} from "./UniversalMapData";
 import { useLayoutEffect, useRef, useState } from "react";
 
 const DEFAULT_GRAVITY = 150;
 const DEFAULT_STROKE = "cornflowerblue";
 const DEFAULT_STROKE_WIDTH = 4;
-const DEFAULT_STROKE_OPACITY = 90;
+const DEFAULT_STROKE_OPACITY = 0.6;
 
 type Position = {
     x: number;
@@ -101,12 +107,12 @@ function findIntersectionOffset(
 
     // top or bottom
     if (rayDirY < 0) {
-        intersection = { x: (rayDirX / rayDirY) * y1 + x2, y: 0};
-        if (intersection.x >= 0 && intersection.x <= width) {            
+        intersection = { x: (rayDirX / rayDirY) * y1 + x2, y: 0 };
+        if (intersection.x >= 0 && intersection.x <= width) {
             return intersection;
         }
     } else if (rayDirY > 0) {
-        intersection = { x: (rayDirX / rayDirY) * y2 + x2, y: height};
+        intersection = { x: (rayDirX / rayDirY) * y2 + x2, y: height };
         if (intersection.x >= 0 && intersection.x <= width) {
             return intersection;
         }
@@ -114,12 +120,12 @@ function findIntersectionOffset(
 
     // left or right
     if (rayDirX < 0) {
-        intersection = { x: 0, y: (rayDirY / rayDirX) * x1 + y2};
+        intersection = { x: 0, y: (rayDirY / rayDirX) * x1 + y2 };
         if (intersection.y >= 0 && intersection.y <= height) {
             return intersection;
         }
     } else if (rayDirX > 0) {
-        intersection = { x: width, y: (rayDirY / rayDirX) * x2 + y2};
+        intersection = { x: width, y: (rayDirY / rayDirX) * x2 + y2 };
         if (intersection.y >= 0 && intersection.y <= height) {
             return intersection;
         }
@@ -132,15 +138,20 @@ function findIntersectionOffset(
 interface UniversalMapLinesProps {
     lines?: LineInfo;
     styles?: LineStyles;
+    selectedID?: string;
 }
 
-const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) => {
+const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({
+    lines,
+    styles,
+    selectedID,
+}) => {
     const [, setRenderState] = useState(0);
     const ref = useRef<SVGSVGElement | null>(null);
     const rerender = () => {
         setRenderState((old) => old + 1);
     };
-    
+
     console.log("UniversalMapLines render");
 
     useLayoutEffect(() => {
@@ -167,7 +178,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
             if (!srcPos || !dstPos) return null;
 
             const srcInfo = {
-                id: line.src,                
+                id: line.src,
                 elem: srcElem,
                 pos: srcPos,
                 center: {
@@ -200,7 +211,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
             if (dist2 < px("15rem") * px("15rem")) {
                 // rem in pixels
                 dstAngle = srcAngle + Math.PI / 4;
-                srcAngle += 3 * Math.PI / 4;
+                srcAngle += (3 * Math.PI) / 4;
             }
 
             if (srcElem.contains(dstElem)) {
@@ -213,7 +224,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
 
             if (srcElem === dstElem) {
                 srcAngle = Math.PI / 36;
-                dstAngle = 2 * Math.PI -  Math.PI / 36;
+                dstAngle = 2 * Math.PI - Math.PI / 36;
             }
 
             extentedInfo.push({
@@ -260,7 +271,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
             elementsWithArrows[id].sort((a, b) => {
                 return a.angle - b.angle;
             });
-            
+
             let maxGap = 0;
             let minGap = Number.MAX_VALUE;
             let maxGapIndex = -1;
@@ -281,7 +292,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
             // Check the gap between the last and first elements, considering 2 * Math.PI period
             const gapBetweenLastAndFirst =
                 2 * Math.PI - arrows[arrows.length - 1].angle + arrows[0].angle;
-            
+
             if (gapBetweenLastAndFirst > maxGap) {
                 maxGap = gapBetweenLastAndFirst;
                 maxGapIndex = 0;
@@ -298,8 +309,8 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
                           ...arrows.slice(maxGapIndex),
                           ...arrows.slice(0, maxGapIndex),
                       ];
-            
-            if (minGap <= (Math.PI / 72)) {
+
+            if (minGap <= Math.PI / 72) {
                 // need to place arrows by equal intervals
                 let newGap = maxGap / 2;
 
@@ -346,19 +357,27 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
             }}
         >
             {extentedInfo.map((item, index) => {
-                const isSelected = false; // TODO:
-                let style: TypedLineStyle | undefined;                
+                const isSelected = selectedID === item.id;                
+                let style: TypedLineStyle | undefined;
                 let lineStyle: LineStyle | undefined;
 
                 style = styles?.[item.type ?? ""];
-                if (style) {                    
+                if (style) {
                     lineStyle = isSelected
                         ? mergeObjects(style.line, style.lineSelected)
                         : style.line;
                 }
 
-                const srcOffset = findIntersectionOffset(item.srcAngle, item.src.pos.width, item.src.pos.height);
-                const dstOffset = findIntersectionOffset(item.dstAngle, item.dst.pos.width, item.dst.pos.height);
+                const srcOffset = findIntersectionOffset(
+                    item.srcAngle,
+                    item.src.pos.width,
+                    item.src.pos.height
+                );
+                const dstOffset = findIntersectionOffset(
+                    item.dstAngle,
+                    item.dst.pos.width,
+                    item.dst.pos.height
+                );
                 const srcX = item.src.pos.x + srcOffset.x;
                 const srcY = item.src.pos.y + srcOffset.y;
                 const dstX = item.dst.pos.x + dstOffset.x;
@@ -372,13 +391,21 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({ lines, styles }) 
                         id={item.id}
                         className="um-line"
                         d={`M${srcX} ${srcY} 
-                        C ${srcX + gravity * Math.cos(item.srcAngle)} ${srcY + gravity * Math.sin(item.srcAngle)}, ${dstX + gravity * Math.cos(item.dstAngle)} ${dstY + gravity * Math.sin(item.dstAngle)}, ${dstX} ${dstY}`}
+                        C ${srcX + gravity * Math.cos(item.srcAngle)} ${
+                            srcY + gravity * Math.sin(item.srcAngle)
+                        }, ${dstX + gravity * Math.cos(item.dstAngle)} ${
+                            dstY + gravity * Math.sin(item.dstAngle)
+                        }, ${dstX} ${dstY}`}
                         stroke={lineStyle?.stroke ?? DEFAULT_STROKE}
-                        strokeWidth={lineStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH}
-                        strokeOpacity={lineStyle?.strokeOpacity ?? DEFAULT_STROKE_OPACITY}
+                        strokeWidth={
+                            lineStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH
+                        }
+                        strokeOpacity={
+                            lineStyle?.strokeOpacity ?? DEFAULT_STROKE_OPACITY
+                        }
                         strokeLinecap="round"
                         fill="none"
-                        style={{pointerEvents: "visiblePainted"}}
+                        style={{ pointerEvents: "visiblePainted" }}
                     />
                 );
             })}

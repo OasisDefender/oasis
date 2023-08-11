@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import UniversalMap from "../components/UniversalMap/UniversalMap";
 import {
     ItemStyles,
@@ -7,6 +7,7 @@ import {
     LayoutStyle,
     DEFAULT_COLLAPSED,
     LineInfo,
+    LineStyles,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
@@ -16,7 +17,29 @@ export function PolicyMap() {
     const theme = useMantineTheme();
     const isDark = theme.colorScheme === "dark";
     const [selected, setSelected] = useState<string | undefined>(undefined);
+    const [selectedLine, setSelectedLine] = useState<string | undefined>(undefined);
+    const selectedRef = useRef(selected);
+    const selectedLineRef = useRef(selected);
+
+    useEffect(() => {
+        selectedRef.current = selected;
+        selectedLineRef.current = selectedLine;
+    }, [selected, selectedLine]);
     
+
+    const select = (id : string | undefined) => {
+        if (selectedLineRef.current) {
+            setSelectedLine(undefined);
+        }
+        setSelected(id);        
+    }
+    const selectLine = (id : string | undefined) => {
+        if (selectedRef.current) {
+            setSelected(undefined);
+        }
+        setSelectedLine(id);        
+    }
+
     const styles: ItemStyles = {
         Cloud: {
             item: {
@@ -636,6 +659,18 @@ export function PolicyMap() {
         ]
     };
 
+    const lineStyles: LineStyles = {
+        "": {
+            line: {
+                stroke: "gray"
+            },
+            lineSelected: {
+                stroke: "cornflowerblue",
+                strokeOpacity: 1
+            }
+        }
+    };
+
     const [data, setData] = useState(initData);
 
     const toogleChildren = function (id: string) {
@@ -673,12 +708,15 @@ export function PolicyMap() {
         >
             <UniversalMap
                 styles={styles}
+                lineStyles={lineStyles}
                 style={style}
                 data={data}
                 lines={lines}
                 selectedID={selected}
+                selectedLineID={selectedLine}
                 toogleChildren={toogleChildren}
-                select={setSelected}
+                select={select}
+                selectLine={selectLine}
             />
         </div>
     );
