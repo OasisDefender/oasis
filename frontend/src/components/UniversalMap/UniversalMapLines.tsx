@@ -405,7 +405,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({
                         }
                         strokeLinecap="round"
                         fill="none"
-                        style={{ pointerEvents: "visiblePainted" }}
+                        style={{ pointerEvents: "visiblePainted", cursor: "pointer" }}
                     />
                 );
             })}
