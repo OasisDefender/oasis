@@ -64,7 +64,7 @@ export type ChildItem = ChildrenInfo & {
     childrenCollapsed?: boolean;
 };
 
-export const DEFAULT_COLLAPSED : boolean = false;
+export const DEFAULT_COLLAPSED : boolean = true;
 
 export type InfoItem = {
     icon: string;

@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { ReactElement, useMemo } from "react";
 import {
     ChildItem,
     ChildrenInfo,
@@ -22,78 +22,84 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
     styles,
     selectedID,
     toogleChildren,
-}) => {
-    if (!data.children || !data.children.length) {
-        return null;
-    }
+}) => {    
+    return useMemo(() => {
+        if (!data.children || !data.children.length) {
+            return null;
+        }
 
-    const childrenCount = data.children.length;
+        const childrenCount = data.children.length;
 
-    let content: ReactElement | undefined = undefined;
+        let content: ReactElement | undefined = undefined;
 
-    const renderChild = (child: ChildItem) => (
-        <UniversalMapChild
-            key={child.id}
-            data={child}
-            styles={styles}
-            selectedID={selectedID}
-            toogleChildren={toogleChildren}
-        />
-    );
+        const renderChild = (child: ChildItem) => (
+            <UniversalMapChild
+                key={child.id}
+                data={child}
+                styles={styles}
+                selectedID={selectedID}
+                toogleChildren={toogleChildren}
+            />
+        );
 
-    switch (data.childrenLayout ?? "grid") {
-        case "row":
-            content = (
-                <Flex
-                    direction="row"
-                    gap={style?.horizontalGap ?? "1rem"}
-                    align="center"
-                >
-                    {data.children.map(renderChild)}
-                </Flex>
-            );
-            break;
-        case "column":
-            content = (
-                <Flex
-                    direction="column"
-                    gap={style?.verticalGap ?? "1rem"}
-                    align="center"
-                >
-                    {data.children.map(renderChild)}
-                </Flex>
-            );
-            break;
-        case "grid":
-            const columnCount = Math.ceil(Math.sqrt(childrenCount)); // Calculate columns for square grid
-            const rows = Math.ceil(childrenCount / columnCount);
-            content = (
-                <Flex direction="column" gap={style?.verticalGap ?? "1rem"}>
-                    {Array.from({ length: rows }).map((_, rowIndex) => (
-                        <Flex
-                            key={rowIndex}
-                            direction="row"
-                            gap={style?.horizontalGap ?? "1rem"}
-                            align="center"
-                        >
-                            {data
-                                .children!.slice(
-                                    rowIndex * columnCount,
-                                    (rowIndex + 1) * columnCount
-                                )
-                                .map(renderChild)}
-                        </Flex>
-                    ))}
-                </Flex>
-            );
-            break;
-    }
+        switch (data.childrenLayout ?? "grid") {
+            case "row":
+                content = (
+                    <Flex
+                        direction="row"
+                        gap={style?.horizontalGap ?? "1rem"}
+                        align="center"                        
+                    >
+                        {data.children.map(renderChild)}
+                    </Flex>
+                );
+                break;
+            case "column":
+                content = (
+                    <Flex
+                        direction="column"
+                        gap={style?.verticalGap ?? "1rem"}
+                        align="center"
+                    >
+                        {data.children.map(renderChild)}
+                    </Flex>
+                );
+                break;
+            case "grid":
+                const columnCount = Math.ceil(Math.sqrt(childrenCount)); // Calculate columns for square grid
+                const rows = Math.ceil(childrenCount / columnCount);
+                content = (
+                    <Flex direction="column" gap={style?.verticalGap ?? "1rem"}>
+                        {Array.from({ length: rows }).map((_, rowIndex) => (
+                            <Flex
+                                key={rowIndex}
+                                direction="row"
+                                gap={style?.horizontalGap ?? "1rem"}
+                                align="center"
+                            >
+                                {data
+                                    .children!.slice(
+                                        rowIndex * columnCount,
+                                        (rowIndex + 1) * columnCount
+                                    )
+                                    .map(renderChild)}
+                            </Flex>
+                        ))}
+                    </Flex>
+                );
+                break;
+        }
 
-    return (
-        <div className="um-children" style={style?.childrenContainerStyle}>
-            {content}
-        </div>
-    );
+        return (
+            <div className="um-children" style={style?.childrenContainerStyle}>
+                {content}
+            </div>
+        );
+    }, [data,
+        style,
+        styles,
+        selectedID,
+        toogleChildren]);
 };
 
 export default UniversalMapContainer;

@@ -41,9 +41,6 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
     select,
     selectLine
 }) => {
-    const [scale, setScale] = useState(1);
-    const refreshArrows = useXarrow();
-
     let wasRealPanning = false;
     const onPanningStart = (
         ref: ReactZoomPanPinchRef,
@@ -99,10 +96,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
             positionY: number;
         }
     ) => {
-        setScale((oldState) => {
-            return state.scale;
-        });
-        refreshArrows();
+
     };
 
     return (

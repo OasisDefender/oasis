@@ -8,6 +8,7 @@ import {
     DEFAULT_COLLAPSED,
     LineInfo,
     LineStyles,
+    ChildItem,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
@@ -156,6 +157,7 @@ export function PolicyMap() {
         },
     };
 
+    /*
     const initData: ChildrenInfo = {
         childrenLayout: "grid",
         children: [
@@ -623,6 +625,124 @@ export function PolicyMap() {
             },
         ],
     };
+    */
+
+    function randomChildCount(): number {
+        return Math.floor(Math.random() * 10) + 1;
+      }
+      
+      function generateMockVM(prevID: string, id: number): ChildItem {
+        return {
+          id: `vm-${prevID}-${id}`,
+          type: "VM",
+          label: `Virtual Machine ${id}`,
+          info: [
+            {
+              icon: "IconWorld",
+              tooltip: `Private IP: 192.168.${id}.${id}`,
+            },
+            {
+              icon: "IconCpu",
+              tooltip: `vCPU: ${2 * (id % 2 + 1)}`, // alternating between 2 and 4 vCPUs
+            },
+          ],
+        };
+      }
+      
+      function generateMockSubnet(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+        const vms: ChildItem[] = [];
+        for (let i = 0; i < childCount; i++) {
+          vms.push(generateMockVM(`${prevID}-${id}`,id * 100 + i + 1));
+        }
+        return {
+          id: `subnet-${prevID}-${id}`,
+          type: "Subnet",
+          label: `Subnet ${id}`,
+          info: [
+            {
+              icon: "IconWorld",
+              tooltip: `CIDR: 192.168.${id}.0/24`,
+            },
+            {
+              icon: "IconShield",
+              tooltip: "Private IP Addressing",
+            },
+            {
+              icon: "IconCloudDownload",
+              tooltip: id % 2 === 0 ? "Access: Internet Gateway" : "Access: NAT", // alternate for mock
+            },
+          ],
+          childrenLayout: "grid",
+          children: vms,
+        };
+      }
+      
+      function generateMockAZ(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+        const subnets: ChildItem[] = [];
+        for (let i = 0; i < childCount; i++) {
+          subnets.push(generateMockSubnet(`${prevID}-${id}`, id * 10 + i + 1));
+        }
+        return {
+          id: `availability-zone-${prevID}-${id}`,
+          type: "Availability Zone",
+          label: `Availability Zone ${id}`,
+          info: [
+            {
+              icon: "IconWorld",
+              tooltip: `This is Availability Zone ${id}`,
+            },
+          ],
+          childrenLayout: "grid",
+          children: subnets,
+        };
+      }
+      
+      function generateMockVPC(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+        const azs: ChildItem[] = [];
+        for (let i = 0; i < childCount; i++) {
+          azs.push(generateMockAZ(`${prevID}-${id}`, id * 10 + i + 1));
+        }
+        return {
+          id: `vpc-${prevID}-${id}`,
+          type: "VPC",
+          label: `VPC ${id}`,
+          info: [
+            {
+              icon: "IconWorld",
+              tooltip: `This is VPC ${id}`,
+            },
+          ],
+          childrenLayout: "grid",
+          children: azs,
+        };
+      }
+      
+      function generateMockCloud(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+        const vpcs: ChildItem[] = [];
+        for (let i = 0; i < childCount; i++) {
+          vpcs.push(generateMockVPC(`${prevID}-${id}`, id * 10 + i + 1));
+        }
+        return {
+          id: `cloud-${prevID}-${id}`,
+          type: "Cloud",
+          label: `Cloud Service ${id}`,
+          info: [
+            {
+              icon: "IconWorld",
+              tooltip: `This is Cloud Service ${id}`,
+            },
+          ],
+          childrenLayout: "grid",
+          children: vpcs,
+        };
+      }
+      
+    const initData : ChildrenInfo = {
+        childrenLayout: "grid",
+        children: [generateMockCloud("", 1), generateMockCloud("", 2)]
+    }            
+      
+
 
     const initLines: LineInfo = {
         items: [
