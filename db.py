@@ -525,6 +525,12 @@ class DB:
         return cursor.fetchall() 
 
 
+    def get_all_rules(self) -> list[str]:
+        sql    = f"select id,group_id,rule_id,egress,proto,port_from,port_to,naddr,cloud_id,ports,action,priority from rules"
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        return cursor.fetchall() 
+
 
     def get_services_by_name(self, name) -> list[NetworkService]:
         sql    = f"select distinct id, name, proto, port from network_services where trim(name)='{name.strip()}' order by name"
