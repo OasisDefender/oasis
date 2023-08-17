@@ -32,6 +32,21 @@ export type TypedStyle = {
 
 export type ItemStyles = { [styleName: string]: TypedStyle };
 
+
+export type LineStyle = {
+    gravity?: number;
+    stroke?: string;
+    strokeWidth?: number | string;
+    strokeOpacity?: number | string;
+};
+
+export type TypedLineStyle = {
+    line?: LineStyle;
+    lineSelected?: LineStyle;
+}
+
+export type LineStyles = { [styleName: string]: TypedLineStyle };
+
 // Data
 
 export type Layout = "row" | "column" | "grid";
@@ -49,11 +64,28 @@ export type ChildItem = ChildrenInfo & {
     childrenCollapsed?: boolean;
 };
 
+export const DEFAULT_COLLAPSED : boolean = false;
+
 export type InfoItem = {
     icon: string;
     iconColor?: string;
     tooltip?: string;
 };
+
+// Lines
+export type LineItem = {
+    id?: string;
+    type?: string;
+    src: string;
+    dst: string;    
+    srcTooltip?: string;
+    dstTooltip?: string;
+};
+
+export type LineInfo = {
+    items: LineItem[];
+};
+
 
 // Functions
 
