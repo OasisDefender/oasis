@@ -24,15 +24,31 @@ interface UniversalMapChildProps {
     toogleChildren?: (id: string) => void;
 }
 
+function hasChildWithId(item: ChildItem, selectedId: string): boolean {
+    if (item.id === selectedId) {
+        return true;
+    }
+
+    if (item.children && item.children.length > 0) {
+        for (const child of item.children) {
+            if (hasChildWithId(child, selectedId)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     data,
     styles,
     selectedID,
     toogleChildren,
-}) => {
+}) => {    
+    const containSelected = selectedID ? hasChildWithId(data, selectedID) : false;    
     return useMemo(() => {
         const isSelected = data.id === selectedID;
-
         let style: TypedStyle | undefined;
 
         let layoutStyle: LayoutStyle | undefined;
@@ -144,9 +160,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
             </div>
         );
     }, [data,
-        styles,
-        selectedID,
-        toogleChildren]);
+        containSelected ? selectedID : undefined]);
 };
 
 export default UniversalMapChild;

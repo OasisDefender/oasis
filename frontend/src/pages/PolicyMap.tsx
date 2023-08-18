@@ -652,7 +652,7 @@ export function PolicyMap() {
       function generateMockSubnet(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
         const vms: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          vms.push(generateMockVM(`${prevID}-${id}`,id * 100 + i + 1));
+          vms.push(generateMockVM(`${prevID}-${id}`,i));
         }
         return {
           id: `subnet-${prevID}-${id}`,
@@ -680,7 +680,7 @@ export function PolicyMap() {
       function generateMockAZ(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
         const subnets: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          subnets.push(generateMockSubnet(`${prevID}-${id}`, id * 10 + i + 1));
+          subnets.push(generateMockSubnet(`${prevID}-${id}`, i));
         }
         return {
           id: `availability-zone-${prevID}-${id}`,
@@ -700,7 +700,7 @@ export function PolicyMap() {
       function generateMockVPC(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
         const azs: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          azs.push(generateMockAZ(`${prevID}-${id}`, id * 10 + i + 1));
+          azs.push(generateMockAZ(`${prevID}-${id}`, i));
         }
         return {
           id: `vpc-${prevID}-${id}`,
@@ -720,7 +720,7 @@ export function PolicyMap() {
       function generateMockCloud(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
         const vpcs: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          vpcs.push(generateMockVPC(`${prevID}-${id}`, id * 10 + i + 1));
+          vpcs.push(generateMockVPC(`${prevID}-${id}`, i));
         }
         return {
           id: `cloud-${prevID}-${id}`,
@@ -739,7 +739,7 @@ export function PolicyMap() {
       
     const initData : ChildrenInfo = {
         childrenLayout: "grid",
-        children: [generateMockCloud("", 1), generateMockCloud("", 2)]
+        children: [generateMockCloud("", 1), generateMockCloud("", 2), generateMockCloud("", 3)]
     }            
       
 

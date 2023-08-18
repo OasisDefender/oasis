@@ -9,7 +9,6 @@ import {
 } from "./UniversalMapData";
 
 import UniversalMapLines from "./UniversalMapLines";
-import { useXarrow } from "react-xarrows";
 import {
     ReactZoomPanPinchRef,
     TransformComponent,
@@ -111,7 +110,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                 onTransformed={onTransformed}
                 wheel={{ step: 0.25 }}
                 minScale={0.25}
-                maxScale={3}
+                maxScale={12}
             >
                 <TransformComponent
                     wrapperStyle={{ width: "100%", height: "100%" }}
