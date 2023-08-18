@@ -160,6 +160,8 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
             </div>
         );
     }, [data,
+        styles,
+        toogleChildren,
         containSelected ? selectedID : undefined]);
 };
 

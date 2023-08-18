@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import UniversalMap from "../components/UniversalMap/UniversalMap";
 import {
     ItemStyles,
@@ -18,7 +18,9 @@ export function PolicyMap() {
     const theme = useMantineTheme();
     const isDark = theme.colorScheme === "dark";
     const [selected, setSelected] = useState<string | undefined>(undefined);
-    const [selectedLine, setSelectedLine] = useState<string | undefined>(undefined);
+    const [selectedLine, setSelectedLine] = useState<string | undefined>(
+        undefined
+    );
     const selectedRef = useRef(selected);
     const selectedLineRef = useRef(selected);
 
@@ -26,723 +28,285 @@ export function PolicyMap() {
         selectedRef.current = selected;
         selectedLineRef.current = selectedLine;
     }, [selected, selectedLine]);
-    
 
-    const select = (id : string | undefined) => {
+    const select = (id: string | undefined) => {
         if (selectedLineRef.current) {
             setSelectedLine(undefined);
         }
-        setSelected(id);        
-    }
-    const selectLine = (id : string | undefined) => {
+        setSelected(id);
+    };
+    const selectLine = (id: string | undefined) => {
         if (selectedRef.current) {
             setSelected(undefined);
         }
-        setSelectedLine(id);        
-    }
-
-    const styles: ItemStyles = {
-        Cloud: {
-            item: {
-                style: {
-                    margin: "2rem"
-                }
-            },
-            header: {
-                icon: "IconCloud",
-            },
-            headerSelected: {
-                textColor: isDark ? theme.colors.blue[6] : "blue"
-            },
-            layout: {
-                childrenContainerStyle: {
-                    border: "1px solid gray",
-                    padding: "1rem",
-                },
-            },
-            layoutSelected: {
-                childrenContainerStyle: {
-                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
-                }
-            }
-        },
-        VPC: {
-            item: {
-                style: {
-                    margin: "0.5rem"
-                }
-            },
-            header: {
-                icon: "IconCloudFilled",
-            },
-            headerSelected: {
-                textColor: isDark ? theme.colors.blue[6] : "blue"
-            },  
-            layout: {
-                childrenContainerStyle: {
-                    border: "1px solid gray",
-                    padding: "1rem",
-                },
-            },
-            layoutSelected: {
-                childrenContainerStyle: {
-                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
-                }
-            }
-        },
-        "Availability Zone": {
-            item: {
-                style: {
-                    margin: "0.5rem"
-                }
-            },
-            headerSelected: {
-                textColor: isDark ? theme.colors.blue[6] : "blue"
-            },
-            layout: {
-                childrenContainerStyle: {
-                    border: "1px solid gray",
-                    padding: "1rem",
-                },
-            },
-            layoutSelected: {
-                childrenContainerStyle: {
-                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
-                }
-            }
-        },
-        Subnet: {
-            item: {
-                style: {
-                    margin: "0.5rem"
-                }
-            },
-            header: {
-                icon: "IconGridDots",
-            },
-            headerSelected: {
-                textColor: isDark ? theme.colors.blue[6] : "blue"
-            },          
-            layout: {
-                childrenContainerStyle: {
-                    border: "1px solid gray",
-                    padding: "1rem",
-                },
-            },
-            layoutSelected: {
-                childrenContainerStyle: {
-                    border: `1px solid ${isDark ? theme.colors.blue[6] : "blue"}`
-                }
-            }
-        },
-        VM: {
-            item: {
-                style: {
-                    border: "1px solid gray",
-                    padding: "0.2rem",
-                    background: isDark ? theme.colors.dark[6] : theme.colors.blue[3]
-                }
-            },
-            itemSelected: {
-                style: {                    
-                    background: isDark ? theme.colors.gray[0] : "white"
-                }
-            },
-            header: {
-                icon: "VM",
-            },
-            headerSelected: {
-                textColor: isDark ? theme.colors.blue[6] : "blue"
-            },  
-        },
+        setSelectedLine(id);
     };
 
-    /*
-    const initData: ChildrenInfo = {
-        childrenLayout: "grid",
-        children: [
-            {
-                id: "cloud-101",
-                type: "Cloud",
-                label: "Cloud Service 1",
-                info: [
-                    {
-                        icon: "IconWorld",
-                        tooltip: "This is Cloud Service 1",
+    const styles: ItemStyles = useMemo(() => {
+        return {
+            Cloud: {
+                item: {
+                    style: {
+                        margin: "2rem",
                     },
-                ],
-                children: [
-                    {
-                        id: "vpc-201",
-                        type: "VPC",
-                        label: "VPC 1",
-                        info: [
-                            {
-                                icon: "IconWorld",
-                                tooltip: "This is VPC 1",
-                            },
-                            {
-                                icon: "IconNetwork",
-                                tooltip: "CIDR: 192.168.0.0/16",
-                            },
-                        ],
-                        childrenLayout: "row",
-                        children: [
-                            {
-                                id: "availability-zone-301",
-                                type: "Availability Zone",
-                                label: "Availability Zone A",
-                                info: [
-                                    {
-                                        icon: "IconWorld",
-                                        tooltip: "This is Availability Zone A",
-                                    },
-                                ],
-                                childrenLayout: "grid",
-                                children: [
-                                    {
-                                        id: "subnet-401",
-                                        type: "Subnet",
-                                        label: "Subnet 1",
-                                        info: [
-                                            {
-                                                icon: "IconWorld",
-                                                tooltip: "CIDR: 192.168.1.0/24",
-                                            },
-                                            {
-                                                icon: "IconShield",
-                                                tooltip:
-                                                    "Private IP Addressing",
-                                            },
-                                            {
-                                                icon: "IconCloudDownload",
-                                                tooltip:
-                                                    "Access: Internet Gateway",
-                                            },
-                                        ],
-                                        childrenLayout: "column",
-                                        children: [
-                                            {
-                                                id: "vm-501",
-                                                type: "VM",
-                                                label: "Virtual Machine 1",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.1.2",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 2",
-                                                    },
-                                                    {
-                                                        icon: "IconGlobe",
-                                                        tooltip:
-                                                            "Public IP: 203.0.113.0",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-502",
-                                                type: "VM",
-                                                label: "Virtual Machine 2",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.1.3",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 4",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-601",
-                                                type: "VM",
-                                                label: "Virtual Machine 1.1",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.1.4",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 2",
-                                                    },
-                                                    {
-                                                        icon: "IconGlobe",
-                                                        tooltip:
-                                                            "Public IP: 203.0.113.4",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-602",
-                                                type: "VM",
-                                                label: "Virtual Machine 1.2",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.1.5",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 4",
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        id: "subnet-402",
-                                        type: "Subnet",
-                                        label: "Subnet 402",
-                                        info: [
-                                            {
-                                                icon: "IconWorld",
-                                                tooltip: "CIDR: 192.168.2.0/24",
-                                            },
-                                            {
-                                                icon: "IconShield",
-                                                tooltip:
-                                                    "Private IP Addressing",
-                                            },
-                                            {
-                                                icon: "IconCloudDownload",
-                                                tooltip: "Access: NAT",
-                                            },
-                                        ],
-                                        childrenLayout: "column",
-                                        children: [
-                                            {
-                                                id: "vm-503",
-                                                type: "VM",
-                                                label: "Virtual Machine 3",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.2.2",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 2",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-504",
-                                                type: "VM",
-                                                label: "Virtual Machine 4",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.2.3",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 4",
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                            {
-                                id: "availability-zone-302",
-                                type: "Availability Zone",
-                                label: "Availability Zone B",
-                                info: [
-                                    {
-                                        icon: "IconWorld",
-                                        tooltip: "This is Availability Zone B",
-                                    },
-                                ],
-                                childrenLayout: "grid",
-                                children: [
-                                    {
-                                        id: "subnet-403",
-                                        type: "Subnet",
-                                        label: "Subnet 3",
-                                        info: [
-                                            {
-                                                icon: "IconWorld",
-                                                tooltip: "CIDR: 192.168.3.0/24",
-                                            },
-                                            {
-                                                icon: "IconShield",
-                                                tooltip:
-                                                    "Private IP Addressing",
-                                            },
-                                        ],
-                                        childrenLayout: "column",
-                                        children: [
-                                            {
-                                                id: "vm-505",
-                                                type: "VM",
-                                                label: "Virtual Machine 5",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.3.2",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 2",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-506",
-                                                type: "VM",
-                                                label: "Virtual Machine 6",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 192.168.3.3",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 4",
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
+                },
+                header: {
+                    icon: "IconCloud",
+                },
+                headerSelected: {
+                    textColor: isDark ? theme.colors.blue[6] : "blue",
+                },
+                layout: {
+                    childrenContainerStyle: {
+                        border: "1px solid gray",
+                        padding: "1rem",
                     },
-                    {
-                        id: "vpc-202",
-                        type: "VPC",
-                        label: "VPC 2",
-                        info: [
-                            {
-                                icon: "IconWorld",
-                                tooltip: "This is VPC 2",
-                            },
-                            {
-                                icon: "IconNetwork",
-                                tooltip: "CIDR: 10.0.0.0/16",
-                            },
-                        ],
-                        childrenLayout: "row",
-                        children: [
-                            {
-                                id: "availability-zone-303",
-                                type: "Availability Zone",
-                                label: "Availability Zone C",
-                                info: [
-                                    {
-                                        icon: "IconWorld",
-                                        tooltip: "This is Availability Zone C",
-                                    },
-                                ],
-                                childrenLayout: "grid",
-                                children: [
-                                    {
-                                        id: "subnet-404",
-                                        type: "Subnet",
-                                        label: "Subnet 4",
-                                        info: [
-                                            {
-                                                icon: "IconWorld",
-                                                tooltip: "CIDR: 10.0.1.0/24",
-                                            },
-                                            {
-                                                icon: "IconShield",
-                                                tooltip:
-                                                    "Private IP Addressing",
-                                            },
-                                            {
-                                                icon: "IconCloudDownload",
-                                                tooltip:
-                                                    "Access: Internet Gateway",
-                                            },
-                                        ],
-                                        childrenLayout: "column",
-                                        children: [
-                                            {
-                                                id: "vm-507",
-                                                type: "VM",
-                                                label: "Virtual Machine 7",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 10.0.1.2",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 2",
-                                                    },
-                                                    {
-                                                        icon: "IconGlobe",
-                                                        tooltip:
-                                                            "Public IP: 203.0.113.1",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-508",
-                                                type: "VM",
-                                                label: "Virtual Machine 8",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 10.0.1.3",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 4",
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
+                },
+                layoutSelected: {
+                    childrenContainerStyle: {
+                        border: `1px solid ${
+                            isDark ? theme.colors.blue[6] : "blue"
+                        }`,
                     },
-                ],
+                },
             },
-            {
-                id: "cloud-102",
-                type: "Cloud",
-                label: "Cloud Service 2",
-                info: [
-                    {
-                        icon: "IconWorld",
-                        tooltip: "This is Cloud Service 2",
+            VPC: {
+                item: {
+                    style: {
+                        margin: "0.5rem",
                     },
-                ],
-                children: [
-                    {
-                        id: "vpc-203",
-                        type: "VPC",
-                        label: "VPC 3",
-                        info: [
-                            {
-                                icon: "IconWorld",
-                                tooltip: "This is VPC 3",
-                            },
-                            {
-                                icon: "IconNetwork",
-                                tooltip: "CIDR: 172.16.0.0/16",
-                            },
-                        ],
-                        childrenLayout: "row",
-                        children: [
-                            {
-                                id: "availability-zone-304",
-                                type: "Availability Zone",
-                                label: "Availability Zone A",
-                                info: [
-                                    {
-                                        icon: "IconWorld",
-                                        tooltip: "This is Availability Zone A",
-                                    },
-                                ],
-                                childrenLayout: "grid",
-                                children: [
-                                    {
-                                        id: "subnet-405",
-                                        type: "Subnet",
-                                        label: "Subnet 5",
-                                        info: [
-                                            {
-                                                icon: "IconWorld",
-                                                tooltip: "CIDR: 172.16.1.0/24",
-                                            },
-                                            {
-                                                icon: "IconShield",
-                                                tooltip:
-                                                    "Private IP Addressing",
-                                            },
-                                            {
-                                                icon: "IconCloudDownload",
-                                                tooltip:
-                                                    "Access: Internet Gateway",
-                                            },
-                                        ],
-                                        childrenLayout: "column",
-                                        children: [
-                                            {
-                                                id: "vm-509",
-                                                type: "VM",
-                                                label: "Virtual Machine 9",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 172.16.1.2",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 2",
-                                                    },
-                                                    {
-                                                        icon: "IconGlobe",
-                                                        tooltip:
-                                                            "Public IP: 203.0.113.2",
-                                                    },
-                                                ],
-                                            },
-                                            {
-                                                id: "vm-510",
-                                                type: "VM",
-                                                label: "Virtual Machine 10",
-                                                info: [
-                                                    {
-                                                        icon: "IconWorld",
-                                                        tooltip:
-                                                            "Private IP: 172.16.1.3",
-                                                    },
-                                                    {
-                                                        icon: "IconCpu",
-                                                        tooltip: "vCPU: 4",
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
+                },
+                header: {
+                    icon: "IconCloudFilled",
+                },
+                headerSelected: {
+                    textColor: isDark ? theme.colors.blue[6] : "blue",
+                },
+                layout: {
+                    childrenContainerStyle: {
+                        border: "1px solid gray",
+                        padding: "1rem",
                     },
-                ],
+                },
+                layoutSelected: {
+                    childrenContainerStyle: {
+                        border: `1px solid ${
+                            isDark ? theme.colors.blue[6] : "blue"
+                        }`,
+                    },
+                },
             },
-        ],
-    };
-    */
+            "Availability Zone": {
+                item: {
+                    style: {
+                        margin: "0.5rem",
+                    },
+                },
+                headerSelected: {
+                    textColor: isDark ? theme.colors.blue[6] : "blue",
+                },
+                layout: {
+                    childrenContainerStyle: {
+                        border: "1px solid gray",
+                        padding: "1rem",
+                    },
+                },
+                layoutSelected: {
+                    childrenContainerStyle: {
+                        border: `1px solid ${
+                            isDark ? theme.colors.blue[6] : "blue"
+                        }`,
+                    },
+                },
+            },
+            Subnet: {
+                item: {
+                    style: {
+                        margin: "0.5rem",
+                    },
+                },
+                header: {
+                    icon: "IconGridDots",
+                },
+                headerSelected: {
+                    textColor: isDark ? theme.colors.blue[6] : "blue",
+                },
+                layout: {
+                    childrenContainerStyle: {
+                        border: "1px solid gray",
+                        padding: "1rem",
+                    },
+                },
+                layoutSelected: {
+                    childrenContainerStyle: {
+                        border: `1px solid ${
+                            isDark ? theme.colors.blue[6] : "blue"
+                        }`,
+                    },
+                },
+            },
+            VM: {
+                item: {
+                    style: {
+                        border: "1px solid gray",
+                        padding: "0.2rem",
+                        background: isDark
+                            ? theme.colors.dark[6]
+                            : theme.colors.blue[3],
+                    },
+                },
+                itemSelected: {
+                    style: {
+                        background: isDark ? theme.colors.gray[0] : "white",
+                    },
+                },
+                header: {
+                    icon: "VM",
+                },
+                headerSelected: {
+                    textColor: isDark ? theme.colors.blue[6] : "blue",
+                },
+            },
+        };
+    }, [isDark]);
 
     function randomChildCount(): number {
         return Math.floor(Math.random() * 10) + 1;
-      }
-      
-      function generateMockVM(prevID: string, id: number): ChildItem {
+    }
+
+    function generateMockVM(prevID: string, id: number): ChildItem {
         return {
-          id: `vm-${prevID}-${id}`,
-          type: "VM",
-          label: `Virtual Machine ${id}`,
-          info: [
-            {
-              icon: "IconWorld",
-              tooltip: `Private IP: 192.168.${id}.${id}`,
-            },
-            {
-              icon: "IconCpu",
-              tooltip: `vCPU: ${2 * (id % 2 + 1)}`, // alternating between 2 and 4 vCPUs
-            },
-          ],
+            id: `vm-${prevID}-${id}`,
+            type: "VM",
+            label: `Virtual Machine ${id}`,
+            info: [
+                {
+                    icon: "IconWorld",
+                    tooltip: `Private IP: 192.168.${id}.${id}`,
+                },
+                {
+                    icon: "IconCpu",
+                    tooltip: `vCPU: ${2 * ((id % 2) + 1)}`, // alternating between 2 and 4 vCPUs
+                },
+            ],
         };
-      }
-      
-      function generateMockSubnet(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+    }
+
+    function generateMockSubnet(
+        prevID: string,
+        id: number,
+        childCount = randomChildCount()
+    ): ChildItem {
         const vms: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          vms.push(generateMockVM(`${prevID}-${id}`,i));
+            vms.push(generateMockVM(`${prevID}-${id}`, i));
         }
         return {
-          id: `subnet-${prevID}-${id}`,
-          type: "Subnet",
-          label: `Subnet ${id}`,
-          info: [
-            {
-              icon: "IconWorld",
-              tooltip: `CIDR: 192.168.${id}.0/24`,
-            },
-            {
-              icon: "IconShield",
-              tooltip: "Private IP Addressing",
-            },
-            {
-              icon: "IconCloudDownload",
-              tooltip: id % 2 === 0 ? "Access: Internet Gateway" : "Access: NAT", // alternate for mock
-            },
-          ],
-          childrenLayout: "grid",
-          children: vms,
+            id: `subnet-${prevID}-${id}`,
+            type: "Subnet",
+            label: `Subnet ${id}`,
+            info: [
+                {
+                    icon: "IconWorld",
+                    tooltip: `CIDR: 192.168.${id}.0/24`,
+                },
+                {
+                    icon: "IconShield",
+                    tooltip: "Private IP Addressing",
+                },
+                {
+                    icon: "IconCloudDownload",
+                    tooltip:
+                        id % 2 === 0
+                            ? "Access: Internet Gateway"
+                            : "Access: NAT", // alternate for mock
+                },
+            ],
+            childrenLayout: "grid",
+            children: vms,
         };
-      }
-      
-      function generateMockAZ(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+    }
+
+    function generateMockAZ(
+        prevID: string,
+        id: number,
+        childCount = randomChildCount()
+    ): ChildItem {
         const subnets: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          subnets.push(generateMockSubnet(`${prevID}-${id}`, i));
+            subnets.push(generateMockSubnet(`${prevID}-${id}`, i));
         }
         return {
-          id: `availability-zone-${prevID}-${id}`,
-          type: "Availability Zone",
-          label: `Availability Zone ${id}`,
-          info: [
-            {
-              icon: "IconWorld",
-              tooltip: `This is Availability Zone ${id}`,
-            },
-          ],
-          childrenLayout: "grid",
-          children: subnets,
+            id: `availability-zone-${prevID}-${id}`,
+            type: "Availability Zone",
+            label: `Availability Zone ${id}`,
+            info: [
+                {
+                    icon: "IconWorld",
+                    tooltip: `This is Availability Zone ${id}`,
+                },
+            ],
+            childrenLayout: "grid",
+            children: subnets,
         };
-      }
-      
-      function generateMockVPC(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+    }
+
+    function generateMockVPC(
+        prevID: string,
+        id: number,
+        childCount = randomChildCount()
+    ): ChildItem {
         const azs: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          azs.push(generateMockAZ(`${prevID}-${id}`, i));
+            azs.push(generateMockAZ(`${prevID}-${id}`, i));
         }
         return {
-          id: `vpc-${prevID}-${id}`,
-          type: "VPC",
-          label: `VPC ${id}`,
-          info: [
-            {
-              icon: "IconWorld",
-              tooltip: `This is VPC ${id}`,
-            },
-          ],
-          childrenLayout: "grid",
-          children: azs,
+            id: `vpc-${prevID}-${id}`,
+            type: "VPC",
+            label: `VPC ${id}`,
+            info: [
+                {
+                    icon: "IconWorld",
+                    tooltip: `This is VPC ${id}`,
+                },
+            ],
+            childrenLayout: "grid",
+            children: azs,
         };
-      }
-      
-      function generateMockCloud(prevID: string, id: number, childCount = randomChildCount()): ChildItem {
+    }
+
+    function generateMockCloud(
+        prevID: string,
+        id: number,
+        childCount = randomChildCount()
+    ): ChildItem {
         const vpcs: ChildItem[] = [];
         for (let i = 0; i < childCount; i++) {
-          vpcs.push(generateMockVPC(`${prevID}-${id}`, i));
+            vpcs.push(generateMockVPC(`${prevID}-${id}`, i));
         }
         return {
-          id: `cloud-${prevID}-${id}`,
-          type: "Cloud",
-          label: `Cloud Service ${id}`,
-          info: [
-            {
-              icon: "IconWorld",
-              tooltip: `This is Cloud Service ${id}`,
-            },
-          ],
-          childrenLayout: "grid",
-          children: vpcs,
+            id: `cloud-${prevID}-${id}`,
+            type: "Cloud",
+            label: `Cloud Service ${id}`,
+            info: [
+                {
+                    icon: "IconWorld",
+                    tooltip: `This is Cloud Service ${id}`,
+                },
+            ],
+            childrenLayout: "grid",
+            children: vpcs,
         };
-      }
-      
-    const initData : ChildrenInfo = {
-        childrenLayout: "grid",
-        children: [generateMockCloud("", 1), generateMockCloud("", 2), generateMockCloud("", 3)]
-    }            
-      
+    }
 
+    const initData: ChildrenInfo = {
+        childrenLayout: "grid",
+        children: [
+            generateMockCloud("", 1),
+            generateMockCloud("", 2),
+            generateMockCloud("", 3),
+        ],
+    };
 
     const initLines: LineInfo = {
         items: [
@@ -775,25 +339,25 @@ export function PolicyMap() {
                 dst: "vm-601",
                 srcTooltip: "Label srcTooltip",
                 dstTooltip: "Label dstTooltip",
-            }
-        ]
+            },
+        ],
     };
 
     const lineStyles: LineStyles = {
         "": {
             line: {
-                stroke: "gray"
+                stroke: "gray",
             },
             lineSelected: {
                 stroke: "cornflowerblue",
-                strokeOpacity: 1
-            }
-        }
+                strokeOpacity: 1,
+            },
+        },
     };
 
     const [data, setData] = useState(initData);
 
-    const toogleChildren = function (id: string) {
+    const toogleChildren = useCallback((id: string) => {
         setData((oldData) => {
             const newData = JSON.parse(JSON.stringify(oldData));
             const item = findItemById(newData, id);
@@ -806,12 +370,12 @@ export function PolicyMap() {
             }
             return newData;
         });
-    };
+    }, []);
 
     const style: LayoutStyle = {
         horizontalGap: "5rem",
         verticalGap: "5rem",
-        childrenContainerStyle: { margin: "5rem" }
+        childrenContainerStyle: { margin: "5rem" },
     };
 
     const [lines, setLines] = useState(initLines);
@@ -823,7 +387,7 @@ export function PolicyMap() {
                 height: `calc(100vh - ${HEADER_HEIGHT})`,
                 position: "relative",
                 backgroundColor: isDark ? theme.colors.gray[8] : "#F5F5DC",
-                overflow: "hidden"
+                overflow: "hidden",
             }}
         >
             <UniversalMap
