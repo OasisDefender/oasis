@@ -306,7 +306,7 @@ def api_storages_list():
     return jsonify(retval)
 
 
-@app.route('/api/classification', methods=['GET'])
+@app.route('/api/classifiers', methods=['GET'])
 def api_classifiers_list():
     # here we need to load available classifiers
     c = classifier()
