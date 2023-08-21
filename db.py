@@ -515,7 +515,21 @@ class DB:
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return [row[0] for row in cursor.fetchall()] 
-    
+
+
+    def get_all_rule_groups(self) -> list[str]:
+        sql    = f"select id, if_id, subnet_id, name, type, cloud_id from rule_groups"
+        #print(f"{sql}")
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        return cursor.fetchall() 
+
+
+    def get_all_rules(self) -> list[str]:
+        sql    = f"select id,group_id,rule_id,egress,proto,port_from,port_to,naddr,cloud_id,ports,action,priority from rules"
+        cursor = self.__database.cursor()
+        cursor.execute(sql)
+        return cursor.fetchall() 
 
 
     def get_services_by_name(self, name) -> list[NetworkService]:

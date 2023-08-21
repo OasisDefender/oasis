@@ -3,26 +3,40 @@ import sys
 from db import DB
 
 class Rule:
-    def __init__(self, id: int, group_id: str, rule_id: str, egress: str, proto: str,
-                 port_from: str, port_to: str, naddr: str, cloud_id: int, ports: str, action='allow', priority=0):
-        self.id        : int = id
-        self.group_id  : str = group_id
-        self.rule_id   : str = rule_id
-        self.egress    : str = egress
-        self.proto     : str = proto
-        self.port_from : str = port_from
-        self.port_to   : str = port_to
-        self.naddr     : str = None
-        self.cloud_id  : int = cloud_id
-        self.ports     : str = ports
-        self.action    : str = action
-        self.priority  : int = priority
+    def __init__(self, rule_row: list[str], id:int=0, group_id:str='', rule_id:str='', egress:str='', proto:str='',
+                 port_from:str='', port_to:str='', naddr:str='', cloud_id:int='', ports:str='', action:str='allow', priority:int=0):
+        if rule_row != None: # load from DB
+            self.id        : int = rule_row[0]
+            self.group_id  : str = rule_row[1]
+            self.rule_id   : str = rule_row[2]
+            self.egress    : str = rule_row[3]
+            self.proto     : str = rule_row[4]
+            self.port_from : str = rule_row[5]
+            self.port_to   : str = rule_row[6]
+            self.naddr     : str = rule_row[7]
+            self.cloud_id  : int = rule_row[8]
+            self.ports     : str = rule_row[9]
+            self.action    : str = rule_row[10]
+            self.priority  : int = rule_row[11]
+        else: # load from cloud
+            self.id        : int = id
+            self.group_id  : str = group_id
+            self.rule_id   : str = rule_id
+            self.egress    : str = egress
+            self.proto     : str = proto
+            self.port_from : str = port_from
+            self.port_to   : str = port_to
+            self.naddr     : str = None
+            self.cloud_id  : int = cloud_id
+            self.ports     : str = ports
+            self.action    : str = action
+            self.priority  : int = priority
 
-        ip = naddr.split('/')
-        if len(ip) == 1:
-            self.naddr = f"{naddr}/32"
-        else:
-            self.naddr = naddr
+            ip = naddr.split('/')
+            if len(ip) == 1:
+                self.naddr = f"{naddr}/32"
+            else:
+                self.naddr = naddr
 
 
     def to_dict(self):
@@ -106,3 +120,10 @@ class Rule:
             }
 
 
+def get_all_rules() -> list[Rule]:
+    db                = DB()
+    rules: list[Rule] = []
+    for row in db.get_all_rules():
+        rule = Rule(row)
+        rules.append(rule)
+    return rules
