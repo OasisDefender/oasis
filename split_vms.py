@@ -136,9 +136,9 @@ class split_vms:
 
     def add_val(self, vm_id, order, val):
         if (type(val) is list):
-            self.add_val_list(self, vm_id, order, val)
+            self.add_val_list(vm_id, order, val)
         else:
-            self.add_val_list(self, vm_id, order, [val])
+            self.add_val_list(vm_id, order, [val])
 
     def unpack_rule(self, r: Rule):
         l = []
