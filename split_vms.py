@@ -13,11 +13,10 @@ from classifiers_list import classifier
 
 class attr_set:
     def __init__(self, classifiers: classifier = None):
-        if (classifier == None):
-            self.sas = []
-        else:
+        self.sas = []
+        if (classifier != None):
             for item in classifiers.selected:
-                self.sas.append({"class": item["class_name"], "attr": item["field"], "caption": item["caption"],
+                self.sas.append({"class": item["class_name"], "attr": item["field"], "caption": item["description"],
                                 "type": item["node_type"], "icon": item["node_icon"], "fn": item["fn"]})
 
     def add_split(self, name, attribute, cap, n_type="Cloud", icon="IconInfoCircle", fn=None):
@@ -79,19 +78,15 @@ class split_vms:
                                 break
                         if res_cl != None:
                             val = sas.get_aval(i, res_cl)
-                            self.set_val_list(vm.id, i, [val])
+                            self.add_val(vm.id, i, val)
                         else:
                             # security group or rule
-                            l = []
                             for sg in sgs:
                                 if not sas.check_class_name(i, sg):
                                     break
                                 if sg.if_id == vm.if_id or sg.subnet_id == subnet.name:
                                     val = sas.get_aval(i, sg)
-                                    l.append(val)
-                            if (len(l)) > 0:
-                                self.set_val_list(vm.id, i, l)
-                            l = []
+                                    self.add_val(vm.id, i, val)
                             for sg in sgs:
                                 if sg.if_id != vm.if_id and sg.subnet_id != subnet.id:
                                     continue
@@ -101,10 +96,8 @@ class split_vms:
                                     if self.is_applicable(vm, rule):
                                         rlist = self.unpack_rule(rule)
                                         for r in rlist:
-                                            val = sas.get_aval(i, res_cl)
-                                            l.append(val)
-                            if (len(l)) > 0:
-                                self.set_val_list(vm.id, i, l)
+                                            val = sas.get_aval(i, r)
+                                            self.add_val(vm.id, i, val)
 
     def build_vms_tree(self, sas: attr_set):
         t = vm_tree(sas)
@@ -134,6 +127,18 @@ class split_vms:
         if self.vms.get(vm_id, None) == None:
             self.vms[vm_id] = {}
         self.vms[vm_id][order] = val_list
+
+    def add_val_list(self, vm_id, order, val_list):
+        if self.vms.get(vm_id, None) == None:
+            self.vms[vm_id] = {}
+            self.vms[vm_id][order] = []
+        self.vms[vm_id][order] = self.vms[vm_id][order] + val_list
+
+    def add_val(self, vm_id, order, val):
+        if (type(val) is list):
+            self.add_val_list(self, vm_id, order, val)
+        else:
+            self.add_val_list(self, vm_id, order, [val])
 
     def unpack_rule(self, r: Rule):
         l = []
