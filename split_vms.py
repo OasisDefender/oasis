@@ -131,6 +131,7 @@ class split_vms:
     def add_val_list(self, vm_id, order, val_list):
         if self.vms.get(vm_id, None) == None:
             self.vms[vm_id] = {}
+        if order not in self.vms[vm_id]:
             self.vms[vm_id][order] = []
         self.vms[vm_id][order] = self.vms[vm_id][order] + val_list
 
