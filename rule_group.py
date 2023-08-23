@@ -1,7 +1,7 @@
 from db import DB
 
 class RuleGroup:
-    def __init__(self, rg_row: list[str], id:int = 0, if_id:str = '', subnet_id:str = '', name:str = '', type:str = '', cloud_id:int = 0):
+    def __init__(self, rg_row:list[str] = None, id:int = 0, if_id:str = '', subnet_id:str = '', name:str = '', type:str = '', cloud_id:int = 0):
         if rg_row != None: # load from DB
             self.id       : int = rg_row[0]
             self.if_id    : str = rg_row[1]

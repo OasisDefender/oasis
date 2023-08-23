@@ -3,7 +3,7 @@ import sys
 from db import DB
 
 class Rule:
-    def __init__(self, rule_row: list[str], id:int=0, group_id:str='', rule_id:str='', egress:str='', proto:str='',
+    def __init__(self, rule_row:list[str]=None, id:int=0, group_id:str='', rule_id:str='', egress:str='', proto:str='',
                  port_from:str='', port_to:str='', naddr:str='', cloud_id:int='', ports:str='', action:str='allow', priority:int=0):
         if rule_row != None: # load from DB
             self.id        : int = rule_row[0]
