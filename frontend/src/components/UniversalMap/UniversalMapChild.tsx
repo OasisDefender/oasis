@@ -95,7 +95,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                             />
                         )}
                         <Box
-                            maw={headerStyle?.maxLabelWidth ?? "10rem"}
+                            maw={headerStyle?.maxLabelWidth}
                             sx={{
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",

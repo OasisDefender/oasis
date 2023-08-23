@@ -1,46 +1,52 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import UniversalMap from "../components/UniversalMap/UniversalMap";
 import {
     ItemStyles,
     ChildrenInfo,
-    findItemById,
     LayoutStyle,
     DEFAULT_COLLAPSED,
-    LineInfo,
-    LineStyles,
     ChildItem,
-    findItemAndParentsById,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
-import { useMantineTheme } from "@mantine/core";
+import { Alert, Loader, ScrollArea, useMantineTheme } from "@mantine/core";
+import PolicyMapFilters from "../components/PolicyMapFilters";
+import { useClassifiers } from "../core/hooks/classifiers";
+import { IconAlertTriangle } from "@tabler/icons-react";
+import { usePolicyMap } from "../core/hooks/policymap";
+import PolicyMapView from "../components/PolicyMapView";
 
 export function PolicyMap() {
     const theme = useMantineTheme();
     const isDark = theme.colorScheme === "dark";
     const [selected, setSelected] = useState<string | undefined>(undefined);
-    const [selectedLine, setSelectedLine] = useState<string | undefined>(
-        undefined
-    );
+    const [stage, setStage] = useState<"filters" | "view">("filters");
+    const {
+        loading: classifiersLoading,
+        error: classifiersError,
+        data: classifiers,
+    } = useClassifiers();
+    const {
+        loading: classificationLoading,
+        error: classificationError,
+        data: classification,
+        fetchData: fetchClassification,
+    } = usePolicyMap();
+
     const selectedRef = useRef(selected);
-    const selectedLineRef = useRef(selected);
 
     useEffect(() => {
         selectedRef.current = selected;
-        selectedLineRef.current = selectedLine;
-    }, [selected, selectedLine]);
+    }, [selected]);
 
     const select = (id: string | undefined) => {
-        if (selectedLineRef.current) {
-            setSelectedLine(undefined);
-        }
         setSelected(id);
-    };
-    const selectLine = (id: string | undefined) => {
-        if (selectedRef.current) {
-            setSelected(undefined);
-        }
-        setSelectedLine(id);
     };
 
     const styles: ItemStyles = useMemo(() => {
@@ -171,227 +177,44 @@ export function PolicyMap() {
         };
     }, [isDark]);
 
-    function randomChildCount(): number {
-        return Math.floor(Math.random() * 10) + 1;
-    }
-
-    function generateMockVM(prevID: string, id: number): ChildItem {
-        return {
-            id: `vm-${prevID}-${id}`,
-            type: "VM",
-            label: `Virtual Machine ${id}`,
-            info: [
-                {
-                    icon: "IconWorld",
-                    tooltip: `Private IP: 192.168.${id}.${id}`,
-                },
-                {
-                    icon: "IconCpu",
-                    tooltip: `vCPU: ${2 * ((id % 2) + 1)}`, // alternating between 2 and 4 vCPUs
-                },
-            ],
-        };
-    }
-
-    function generateMockSubnet(
-        prevID: string,
-        id: number,
-        childCount = randomChildCount()
-    ): ChildItem {
-        const vms: ChildItem[] = [];
-        for (let i = 0; i < childCount; i++) {
-            vms.push(generateMockVM(`${prevID}-${id}`, i));
-        }
-        return {
-            id: `subnet-${prevID}-${id}`,
-            type: "Subnet",
-            label: `Subnet ${id}`,
-            info: [
-                {
-                    icon: "IconWorld",
-                    tooltip: `CIDR: 192.168.${id}.0/24`,
-                },
-                {
-                    icon: "IconShield",
-                    tooltip: "Private IP Addressing",
-                },
-                {
-                    icon: "IconCloudDownload",
-                    tooltip:
-                        id % 2 === 0
-                            ? "Access: Internet Gateway"
-                            : "Access: NAT", // alternate for mock
-                },
-            ],
-            childrenLayout: "grid",
-            children: vms,
-        };
-    }
-
-    function generateMockAZ(
-        prevID: string,
-        id: number,
-        childCount = randomChildCount()
-    ): ChildItem {
-        const subnets: ChildItem[] = [];
-        for (let i = 0; i < childCount; i++) {
-            subnets.push(generateMockSubnet(`${prevID}-${id}`, i));
-        }
-        return {
-            id: `availability-zone-${prevID}-${id}`,
-            type: "Availability Zone",
-            label: `Availability Zone ${id}`,
-            info: [
-                {
-                    icon: "IconWorld",
-                    tooltip: `This is Availability Zone ${id}`,
-                },
-            ],
-            childrenLayout: "grid",
-            children: subnets,
-        };
-    }
-
-    function generateMockVPC(
-        prevID: string,
-        id: number,
-        childCount = randomChildCount()
-    ): ChildItem {
-        const azs: ChildItem[] = [];
-        for (let i = 0; i < childCount; i++) {
-            azs.push(generateMockAZ(`${prevID}-${id}`, i));
-        }
-        return {
-            id: `vpc-${prevID}-${id}`,
-            type: "VPC",
-            label: `VPC ${id}`,
-            info: [
-                {
-                    icon: "IconWorld",
-                    tooltip: `This is VPC ${id}`,
-                },
-            ],
-            childrenLayout: "grid",
-            children: azs,
-        };
-    }
-
-    function generateMockCloud(
-        prevID: string,
-        id: number,
-        childCount = randomChildCount()
-    ): ChildItem {
-        const vpcs: ChildItem[] = [];
-        for (let i = 0; i < childCount; i++) {
-            vpcs.push(generateMockVPC(`${prevID}-${id}`, i));
-        }
-        return {
-            id: `cloud-${prevID}-${id}`,
-            type: "Cloud",
-            label: `Cloud Service ${id}`,
-            info: [
-                {
-                    icon: "IconWorld",
-                    tooltip: `This is Cloud Service ${id}`,
-                },
-            ],
-            childrenLayout: "grid",
-            children: vpcs,
-        };
-    }
-
-    const initData: ChildrenInfo = {
-        childrenLayout: "grid",
-        children: [
-            generateMockCloud("", 1),
-            generateMockCloud("", 2),
-            generateMockCloud("", 3),
-        ],
-    };
-
-    const initLines: LineInfo = {
-        items: [
-            {
-                src: "vm-509",
-                dst: "vm-510",
-                srcTooltip: "Label srcTooltip",
-                dstTooltip: "Label dstTooltip",
-            },
-            {
-                src: "vm-509",
-                dst: "availability-zone-301",
-                srcTooltip: "Label srcTooltip",
-                dstTooltip: "Label dstTooltip",
-            },
-            {
-                src: "vm-510",
-                dst: "availability-zone-301",
-                srcTooltip: "Label srcTooltip",
-                dstTooltip: "Label dstTooltip",
-            },
-            {
-                src: "vm-601",
-                dst: "availability-zone-301",
-                srcTooltip: "Label srcTooltip",
-                dstTooltip: "Label dstTooltip",
-            },
-            {
-                src: "vm-601",
-                dst: "vm-601",
-                srcTooltip: "Label srcTooltip",
-                dstTooltip: "Label dstTooltip",
-            },
-        ],
-    };
-
-    const lineStyles: LineStyles = {
-        "": {
-            line: {
-                stroke: "gray",
-            },
-            lineSelected: {
-                stroke: "cornflowerblue",
-                strokeOpacity: 1,
-            },
-        },
-    };
-
-    const [data, setData] = useState(initData);
+    const [data, setData] = useState<ChildrenInfo>({});
 
     const toggleItemById = (id: string, items: ChildItem[]): ChildItem[] => {
         let changed = false;
-    
-        const updatedItems = items.map(item => {
+
+        const updatedItems = items.map((item) => {
             if (item.id === id) {
                 changed = true;
                 return {
                     ...item,
-                    childrenCollapsed: !(item.childrenCollapsed ?? DEFAULT_COLLAPSED)
+                    childrenCollapsed: !(
+                        item.childrenCollapsed ?? DEFAULT_COLLAPSED
+                    ),
                 };
             }
-            
+
             if (item.children) {
                 const updatedChildren = toggleItemById(id, item.children);
                 if (updatedChildren !== item.children) {
                     changed = true;
                     return {
                         ...item,
-                        children: updatedChildren
+                        children: updatedChildren,
                     };
                 }
             }
-            
+
             return item;
         });
-    
+
         return changed ? updatedItems : items;
     };
-    
+
     const toogleChildren = useCallback((id: string) => {
         setData((oldData) => {
-            const newData : ChildrenInfo = {
+            const newData: ChildrenInfo = {
                 children: toggleItemById(id, oldData.children ?? []),
-                childrenLayout: oldData.childrenLayout
+                childrenLayout: oldData.childrenLayout,
             };
             return newData;
         });
@@ -403,7 +226,74 @@ export function PolicyMap() {
         childrenContainerStyle: { margin: "5rem" },
     };
 
-    const [lines, setLines] = useState(initLines);
+    const showData = (classifiersIds: number[]) => {
+        console.log("fetchClassification", classifiersIds);
+        fetchClassification(classifiersIds);
+        setStage("view");
+        console.log(classification);
+    };
+
+    let content: React.ReactNode = <></>;
+    const getLoader = () => (
+        <Loader
+            sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+            }}
+        />
+    );
+    const getError = (error: string) => (
+        <ScrollArea
+            h="100%"
+            type="auto"
+            offsetScrollbars
+            pt="1rem"
+            sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+            }}
+        >
+            <Alert
+                icon={<IconAlertTriangle size="1rem" />}
+                title="Cannot get classifiers"
+                color="red"
+                m={"xs"}                
+            >
+                {error}
+            </Alert>
+        </ScrollArea>
+    );
+
+    if (stage === "filters") {
+        if (classifiersLoading) {
+            content = getLoader();
+        } else {
+            if (classifiersError) {
+                content = getError(classifiersError);
+            } else {
+                content = (
+                    <PolicyMapFilters
+                        classifiers={classifiers}
+                        showData={showData}
+                    />
+                );
+            }
+        }
+    } else if (stage === "view") {
+        if (classificationLoading) {
+            content = getLoader();
+        } else {
+            if (classificationError || !classification) {
+                content = getError(classificationError ?? "unknown error");
+            } else {
+                content = <PolicyMapView data={classification} />;
+            }
+        }
+    }
 
     return (
         <div
@@ -415,18 +305,7 @@ export function PolicyMap() {
                 overflow: "hidden",
             }}
         >
-            <UniversalMap
-                styles={styles}
-                lineStyles={lineStyles}
-                style={style}
-                data={data}
-                lines={lines}
-                selectedID={selected}
-                selectedLineID={selectedLine}
-                toogleChildren={toogleChildren}
-                select={select}
-                selectLine={selectLine}
-            />
+            {content}
         </div>
     );
 }
