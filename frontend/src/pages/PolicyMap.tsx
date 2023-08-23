@@ -15,7 +15,13 @@ import {
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
-import { Alert, Loader, ScrollArea, useMantineTheme } from "@mantine/core";
+import {
+    Alert,
+    Button,
+    Loader,
+    ScrollArea,
+    useMantineTheme,
+} from "@mantine/core";
 import PolicyMapFilters from "../components/PolicyMapFilters";
 import { useClassifiers } from "../core/hooks/classifiers";
 import { IconAlertTriangle } from "@tabler/icons-react";
@@ -261,7 +267,7 @@ export function PolicyMap() {
                 icon={<IconAlertTriangle size="1rem" />}
                 title="Cannot get classifiers"
                 color="red"
-                m={"xs"}                
+                m={"xs"}
             >
                 {error}
             </Alert>
@@ -290,7 +296,22 @@ export function PolicyMap() {
             if (classificationError || !classification) {
                 content = getError(classificationError ?? "unknown error");
             } else {
-                content = <PolicyMapView data={classification} />;
+                content = (
+                    <>
+                        <PolicyMapView data={classification} />
+                        <Button
+                            radius="xl"
+                            onClick={(_) => setStage("filters")}
+                            style={{
+                                position: "absolute",
+                                top: "1rem",
+                                left: "1rem",
+                            }}
+                        >
+                            Back
+                        </Button>
+                    </>
+                );
             }
         }
     }
