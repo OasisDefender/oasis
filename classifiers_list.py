@@ -22,8 +22,10 @@ class classifier:
                           "field": "os", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "VM State", "description": "Host current state", "class_name": "VM",
                           "field": "state", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "Security group", "description": "Securityh group name", "class_name": "RuleGroup",
+        self.items.append({"name": "Security group", "description": "Security group name", "class_name": "RuleGroup",
                           "field": "name", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "VM",
+                          "field": "azone`", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle"):
         self.item = {}
