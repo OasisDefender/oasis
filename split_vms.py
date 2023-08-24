@@ -14,7 +14,7 @@ from classifiers_list import classifier
 class attr_set:
     def __init__(self, classifiers: classifier = None):
         self.sas = []
-        if (classifier != None):
+        if (classifiers != None):
             for item in classifiers.selected:
                 self.sas.append({"class": item["class_name"], "attr": item["field"], "caption": item["description"],
                                 "type": item["node_type"], "icon": item["node_icon"], "fn": item["fn"]})
@@ -91,13 +91,15 @@ class split_vms:
                                 if sg.if_id != vm.if_id and sg.subnet_id != subnet.id:
                                     continue
                                 for rule in rules:
+                                    if rule.group_id != sg.name:
+                                        continue
                                     if not sas.check_class_name(i, rule):
                                         break
                                     if self.is_applicable(vm, rule):
-                                        rlist = self.unpack_rule(rule)
-                                        for r in rlist:
-                                            val = sas.get_aval(i, r)
-                                            self.add_val(vm.id, i, val)
+                                        #                                        rlist = self.unpack_rule(rule)
+                                        #                                        for r in rlist:
+                                        val = sas.get_aval(i, rule)
+                                        self.add_val(vm.id, i, val)
 
     def build_vms_tree(self, sas: attr_set):
         t = vm_tree(sas)
@@ -106,6 +108,8 @@ class split_vms:
             leaf_count = 1
             ord_val = {}
             for ord in range(0, ord_count):
+                if self.vms[vm_id].get(ord, None) == None:
+                    self.vms[vm_id][ord] = ["Non Applicable"]
                 leaf_count *= len(self.vms[vm_id][ord])
                 ord_val[ord] = 0
             for i in range(0, leaf_count):
@@ -118,6 +122,7 @@ class split_vms:
                         ord_val[j] += 1
                         for k in [0, j - 1]:
                             ord_val[k] = 0
+                        break
         return t
 
     def is_applicable(self, vm: VM, rule: Rule):
@@ -133,7 +138,7 @@ class split_vms:
             self.vms[vm_id] = {}
         if order not in self.vms[vm_id]:
             self.vms[vm_id][order] = []
-        self.vms[vm_id][order] = self.vms[vm_id][order] + val_list
+        self.vms[vm_id][order] = [*set(self.vms[vm_id][order] + val_list),]
 
     def add_val(self, vm_id, order, val):
         if (type(val) is list):
@@ -143,9 +148,13 @@ class split_vms:
 
     def unpack_rule(self, r: Rule):
         l = []
-        for i in range(r.port_from, r.port_to):
+        if r.ports == "ALL" or r.ports == "*" or r.port_from == "*":
+            return [r]
+        if r.port_to == '':
+            r.port_to = r.port_from
+        for i in range(int(r.port_from), int(r.port_to)):
             t = r
-            t.type = self.type_by_port(i)
+            # t.type = self.type_by_port(i, r.proto)
             l.append(t)
         return l
 
@@ -222,8 +231,9 @@ class vm_tree:
 
 def run_test():
     sas = attr_set()
+    sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
     sas.add_split("VM", "os", "OS", "VPC")
-    sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
+    # sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
     sas.add_split("VPC", "name", "VPC Name", "VPC")
     sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
 #    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")

@@ -25,7 +25,9 @@ class classifier:
         self.items.append({"name": "Security group", "description": "Security group name", "class_name": "RuleGroup",
                           "field": "name", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "VM",
-                          "field": "azone`", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
+                          "field": "azone", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
+                          "field": " ", "fn": "server_type", "node_type": "VM", "node_icon": "IconInfoCircle"})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle"):
         self.item = {}
