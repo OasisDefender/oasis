@@ -13,7 +13,6 @@ import { useListState } from "@mantine/hooks";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { IconGripVertical } from "@tabler/icons-react";
 import { IClassifier } from "../core/models/IClassifier";
-import { useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
     item: {
@@ -36,12 +35,6 @@ const useStyles = createStyles((theme) => ({
         boxShadow: theme.shadows.sm,
     },
 
-    symbol: {
-        fontSize: rem(30),
-        fontWeight: 700,
-        width: rem(60),
-    },
-
     dragHandle: {
         ...theme.fn.focusStyles(),
         display: "flex",
@@ -57,54 +50,28 @@ const useStyles = createStyles((theme) => ({
     },
 }));
 
+export type IClassifierExt = IClassifier & {
+    isChecked: boolean;
+};
+
 interface PolicyMapFiltersProps {
-    classifiers?: IClassifier[];
-    showData: (classifiersIds: number[]) => void;
+    classifiers?: IClassifierExt[];
+    toogle: (id: number) => void;
+    reorder: (from: number, to: number) => void;
+    next: () => void;
 }
 
 const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
     classifiers,
-    showData,
+    toogle,
+    reorder,
+    next,
 }) => {
-    const { classes, cx } = useStyles();
-    const [state, handlers] = useListState(classifiers);
-    const [checkedMap, setCheckedMap] = useState<{ [id: number]: boolean }>(
-        () => {
-            const initialCheckedMap: { [id: number]: boolean } = {};
-            if (classifiers) {
-                classifiers.forEach((classifier) => {
-                    initialCheckedMap[classifier.id] = false;
-                });
-            }
-            return initialCheckedMap;
-        }
-    );
-
-    useEffect(() => {
-        if (classifiers) {
-            handlers.setState(classifiers);
-            setCheckedMap(
-                classifiers.reduce((map, classifier) => {
-                    map[classifier.id] = false;
-                    return map;
-                }, {} as { [id: number]: boolean })
-            );
-        } else {
-            handlers.setState([]);
-            setCheckedMap({});
-        }
-    }, [classifiers]);
+    const { classes, cx } = useStyles();    
 
     if (!classifiers) return null;
 
-    const handleCheckboxChange = (id: number) => {
-        setCheckedMap((prevCheckedMap) => ({
-            ...prevCheckedMap,
-            [id]: !prevCheckedMap[id],
-        }));
-    };
-
-    const items = state.map((item, index) => (
+    const items = classifiers.map((item, index) => (
         <Draggable key={item.id} index={index} draggableId={item.id.toString()}>
             {(provided, snapshot) => (
                 <div
@@ -123,8 +90,8 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
                     <Checkbox
                         size="lg"
                         pr="1rem"
-                        checked={checkedMap[item.id]}
-                        onChange={() => handleCheckboxChange(item.id)}
+                        checked={item.isChecked}
+                        onChange={() => toogle(item.id)}
                     />
                     <div>
                         <Text>{item.name}</Text>
@@ -138,13 +105,7 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
     ));
 
     const showDataClick = () => {
-        let data: number[] = [];
-        state.forEach((item) => {
-            if (checkedMap[item.id]) {
-                data.push(item.id);
-            }
-        });
-        showData(data);
+        next();
     };
 
     return (
@@ -156,10 +117,7 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
                 <DragDropContext
                     onDragEnd={({ destination, source }) => {
                         if (destination) {
-                            handlers.reorder({
-                                from: source.index,
-                                to: destination.index,
-                            });
+                            reorder(source.index, destination.index)
                         }
                     }}
                 >
@@ -180,11 +138,9 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
                         size="lg"
                         radius="xl"
                         onClick={showDataClick}
-                        disabled={
-                            !Object.values(checkedMap).some(
-                                (value) => value === true
-                            )
-                        }
+                        disabled={classifiers.every(
+                            (classifier) => !classifier.isChecked
+                        )}
                     >
                         Show data
                     </Button>

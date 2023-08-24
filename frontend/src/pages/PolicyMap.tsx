@@ -22,7 +22,9 @@ import {
     ScrollArea,
     useMantineTheme,
 } from "@mantine/core";
-import PolicyMapFilters from "../components/PolicyMapFilters";
+import PolicyMapFilters, {
+    IClassifierExt,
+} from "../components/PolicyMapFilters";
 import { useClassifiers } from "../core/hooks/classifiers";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { usePolicyMap } from "../core/hooks/policymap";
@@ -38,6 +40,20 @@ export function PolicyMap() {
         error: classifiersError,
         data: classifiers,
     } = useClassifiers();
+
+    const [classifiersExt, setClassifiersExt] = useState<IClassifierExt[]>([]);
+    useEffect(() => {
+        if (classifiers) {
+            const newValue = classifiers.map((classifier) => ({
+                ...classifier,
+                isChecked: false,
+            }));
+            setClassifiersExt(newValue);
+        } else {
+            setClassifiersExt([]);
+        }
+    }, [classifiers]);
+
     const {
         loading: classificationLoading,
         error: classificationError,
@@ -232,11 +248,36 @@ export function PolicyMap() {
         childrenContainerStyle: { margin: "5rem" },
     };
 
-    const showData = (classifiersIds: number[]) => {
-        console.log("fetchClassification", classifiersIds);
-        fetchClassification(classifiersIds);
+    const toogleClassifiers = (id: number) => {
+        setClassifiersExt((oldValue) =>
+            oldValue.map((item) => {
+                if (item.id === id) {
+                    return {
+                        ...item,
+                        isChecked: !item.isChecked,
+                    };
+                }
+                return item;
+            })
+        );
+    };
+
+    const reorderClassifiers = (from: number, to: number) => {
+        setClassifiersExt((oldValue) => {
+            const updatedClassifiers = [...oldValue];
+            const [movedItem] = updatedClassifiers.splice(from, 1);
+            updatedClassifiers.splice(to, 0, movedItem);
+            return updatedClassifiers;
+        });
+    };
+
+    const showData = () => {
+        fetchClassification(
+            classifiersExt
+                .filter((item) => item.isChecked)
+                .map((item) => item.id)
+        );
         setStage("view");
-        console.log(classification);
     };
 
     let content: React.ReactNode = <></>;
@@ -283,8 +324,10 @@ export function PolicyMap() {
             } else {
                 content = (
                     <PolicyMapFilters
-                        classifiers={classifiers}
-                        showData={showData}
+                        classifiers={classifiersExt}
+                        toogle={toogleClassifiers}
+                        reorder={reorderClassifiers}
+                        next={showData}
                     />
                 );
             }
