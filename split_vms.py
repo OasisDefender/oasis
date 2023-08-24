@@ -8,20 +8,28 @@ from subnet import Subnet
 from vm import VM
 from rule_group import RuleGroup, get_all_rule_groups
 from rule import Rule, get_all_rules
-from classifiers_list import classifier
+from classifiers_list import classifier, vminfo
 
 
 class attr_set:
-    def __init__(self, classifiers: classifier = None):
+    def __init__(self, classifiers: classifier = None, vm_fields: vminfo = None):
         self.sas = []
+        self.vinfo = []
         if (classifiers != None):
             for item in classifiers.selected:
                 self.sas.append({"class": item["class_name"], "attr": item["field"], "caption": item["description"],
                                 "type": item["node_type"], "icon": item["node_icon"], "fn": item["fn"]})
+        if (vm_fields != None):
+            for item in vm_fields.selected:
+                self.vinfo.append(
+                    {"name": item["name"], "attr": item["field"]})
 
     def add_split(self, name, attribute, cap, n_type="Cloud", icon="IconInfoCircle", fn=None):
         self.sas.append({'class': name, 'attr': attribute,
                         'caption': cap, 'type': n_type, 'icon': icon, 'fn': fn})
+
+    def add_vm_info(self, name, attribute):
+        self.vinfo.append({"name": name, 'attr': attribute})
 
     def get_split(self, order):
         return self.sas[order]
@@ -31,6 +39,14 @@ class attr_set:
 
     def check_class_name(self, order, cl):
         return ((type(cl).__name__) == (self.sas[order]['class']))
+
+    def get_vm_info(self, vm: VM):
+        info = []
+        for i in self.vinfo:
+            a = i["name"]
+            v = getattr(vm, i['attr'])
+            info.append(f"{a} : {v}")
+        return info
 
     def get_val(self, order, cl):
         if self.sas[order]['fn'] == None:
@@ -58,6 +74,7 @@ class split_vms:
     def __init__(self, clouds: list[Cloud], vpcs: list[VPC], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
         # 1. make vm_id list and forward required attributes
         self.vms = {}
+        self.vminfo = {}
         for vpc in vpcs:
             cloud = None
             for cloud in clouds:
@@ -70,6 +87,8 @@ class split_vms:
             for subnet in vpc.subnets:
                 for vm in subnet.vms:
                     # self.vms.append(vm.id)
+                    if self.vminfo.get(vm.id, None) == None:
+                        self.vminfo[vm.id] = sas.get_vm_info(vm)
                     for i in range(0, sas.get_max_order()):
                         res_cl = None
                         for cl in [cloud, vpc, subnet, vm]:
@@ -116,7 +135,7 @@ class split_vms:
                 path = []
                 for j in range(0, ord_count):
                     path.append(self.vms[vm_id][j][ord_val[j]])
-                t.add_node_by_path(path, vm_id)
+                t.add_node_by_path(path, vm_id, self.vminfo[vm_id])
                 for j in range(0, ord_count):
                     if ord_val[j] < (len(self.vms[vm_id][j]) - 1):
                         ord_val[j] += 1
@@ -169,12 +188,14 @@ class vm_tree:
         self.label = {}
         self.n_type = {}
         self.n_icon = {}
+        self.vinfo = {}
         for ord in range(0, sas.get_max_order()):
             self.label[ord] = sas.get_order_caption(ord)
             self.n_type[ord] = sas.get_order_node_type(ord)
             self.n_icon[ord] = sas.get_order_node_icon(ord)
 
-    def add_node_by_path(self, leaf_path: list, vm_id):
+    def add_node_by_path(self, leaf_path: list, vm_id, info):
+        self.vinfo[vm_id] = info
         d = self.children
         if len(leaf_path) != self.max_level:
             # error
@@ -213,10 +234,13 @@ class vm_tree:
         else:
             for vm_id in subtree:
                 self.counter += 1
+                label_text = ""
+                for info in self.vinfo[vm_id]:
+                    label_text += f" {info}"
                 t = {
                     "id": "VM_" + "_" + str(vm_id) + "_" + str(self.counter),
                     "type": "VM",
-                    "label": "VM_ID: " + str(vm_id),
+                    "label": label_text,
                     "info": [{"icon": "VM", "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
                 }
                 c["children"].append(t)
@@ -226,11 +250,14 @@ class vm_tree:
 def run_test():
     sas = attr_set()
     # sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
-    # sas.add_split("VM", "os", "OS", "VPC")
-    # sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
-    sas.add_split("VPC", "name", "VPC Name", "VPC")
+    sas.add_split("VM", "os", "OS", "VPC")
+    sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
+    # sas.add_split("VPC", "name", "VPC Name", "VPC")
     sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
 #    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
+    sas.add_vm_info("<BR>MAC", "mac")
+    sas.add_vm_info("<BR>Name", "note")
+    sas.add_vm_info("<BR>Private IP", "privip")
 
     context = DB()
     clouds = context.get_clouds()

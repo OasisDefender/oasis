@@ -1,3 +1,28 @@
+class vminfo:
+    def __init__(self):
+        self.items = []
+        self.selected = []
+        self.items.append({"name": "Full Host Name", "field": "name"})
+        self.items.append({"name": "Private IP", "field": "privip"})
+        self.items.append({"name": "Private DNS Name", "field": "privdn"})
+        self.items.append({"name": "Generated Name", "field": "note"})
+        self.items.append({"name": "MAC Address", "field": "mac"})
+        self.items.append({"name": "Public IP", "field": "pubip"})
+        self.items.append({"name": "Public DNS Name", "field": "pubdn"})
+
+    def get_info(self):
+        res = []
+        for idx in range(0, len(self.items)):
+            item = {"id": idx, "name": self.items[idx]["name"]}
+            res.append(item)
+        return res
+
+    def set_selected(self, selected: list[int]):
+        self.selected = []
+        for i in selected:
+            self.selected.append(self.items[i])
+
+
 class classifier:
     def __init__(self):
         self.items = []
@@ -36,6 +61,8 @@ class classifier:
                           "field": "privdn", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "VM Name", "description": "Host Name", "class_name": "VM",
                           "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Description", "description": "Host description", "class_name": "VM",
+                          "field": "note", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle"):
         self.item = {}
