@@ -32,7 +32,7 @@ class attr_set:
     def check_class_name(self, order, cl):
         return ((type(cl).__name__) == (self.sas[order]['class']))
 
-    def get_aval(self, order, cl):
+    def get_val(self, order, cl):
         if self.sas[order]['fn'] == None:
             return getattr(cl, self.sas[order]['attr'])
         else:
@@ -77,7 +77,7 @@ class split_vms:
                                 res_cl = cl
                                 break
                         if res_cl != None:
-                            val = sas.get_aval(i, res_cl)
+                            val = sas.get_val(i, res_cl)
                             self.add_val(vm.id, i, val)
                         else:
                             # security group or rule
@@ -85,7 +85,7 @@ class split_vms:
                                 if not sas.check_class_name(i, sg):
                                     break
                                 if sg.if_id == vm.if_id or sg.subnet_id == subnet.name:
-                                    val = sas.get_aval(i, sg)
+                                    val = sas.get_val(i, sg)
                                     self.add_val(vm.id, i, val)
                             for sg in sgs:
                                 if sg.if_id != vm.if_id and sg.subnet_id != subnet.id:
@@ -98,7 +98,7 @@ class split_vms:
                                     if self.is_applicable(vm, rule):
                                         #                                        rlist = self.unpack_rule(rule)
                                         #                                        for r in rlist:
-                                        val = sas.get_aval(i, rule)
+                                        val = sas.get_val(i, rule)
                                         self.add_val(vm.id, i, val)
 
     def build_vms_tree(self, sas: attr_set):
@@ -118,9 +118,9 @@ class split_vms:
                     path.append(self.vms[vm_id][j][ord_val[j]])
                 t.add_node_by_path(path, vm_id)
                 for j in range(0, ord_count):
-                    if ord_val[j] < (len(self.vms[vm_id][ord]) - 1):
+                    if ord_val[j] < (len(self.vms[vm_id][j]) - 1):
                         ord_val[j] += 1
-                        for k in [0, j - 1]:
+                        for k in range(0, j):
                             ord_val[k] = 0
                         break
         return t
@@ -146,7 +146,8 @@ class split_vms:
         else:
             self.add_val_list(vm_id, order, [val])
 
-    def unpack_rule(self, r: Rule):
+
+'''    def unpack_rule(self, r: Rule):
         l = []
         if r.ports == "ALL" or r.ports == "*" or r.port_from == "*":
             return [r]
@@ -157,15 +158,7 @@ class split_vms:
             # t.type = self.type_by_port(i, r.proto)
             l.append(t)
         return l
-
-    def type_by_port(port):
-        if port == 80:
-            return 'Web (HTTP)'
-        if port == 443:
-            return 'Web (HTTPS)'
-        if port == 3306:
-            return 'SQL Server (MySQL)'
-        return port
+'''
 
 
 class vm_tree:
@@ -190,7 +183,8 @@ class vm_tree:
             d = d.setdefault(key, {})
         if leaf_path[-1] not in d:
             d[leaf_path[-1]] = []
-        d[leaf_path[-1]].append(vm_id)
+        if vm_id not in [leaf_path[-1]]:
+            d[leaf_path[-1]].append(vm_id)
 
     def dump_tree(self):
         c = {}
@@ -231,8 +225,8 @@ class vm_tree:
 
 def run_test():
     sas = attr_set()
-    sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
-    sas.add_split("VM", "os", "OS", "VPC")
+    # sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
+    # sas.add_split("VM", "os", "OS", "VPC")
     # sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
     sas.add_split("VPC", "name", "VPC Name", "VPC")
     sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")

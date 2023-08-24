@@ -27,7 +27,15 @@ class classifier:
         self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "VM",
                           "field": "azone", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
-                          "field": " ", "fn": "server_type", "node_type": "VM", "node_icon": "IconInfoCircle"})
+                          "field": " ", "fn": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "VM",
+                          "field": "pubip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "VM",
+                          "field": "privip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Private DNS Name", "description": "Private DNS Name", "class_name": "VM",
+                          "field": "privdn", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Name", "description": "Host Name", "class_name": "VM",
+                          "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle"):
         self.item = {}
