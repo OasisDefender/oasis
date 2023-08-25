@@ -3,13 +3,13 @@ import {
     Checkbox,
     Container,
     createStyles,
+    Flex,
     Group,
     rem,
     ScrollArea,
     Text,
     Title,
 } from "@mantine/core";
-import { useListState } from "@mantine/hooks";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { IconGripVertical } from "@tabler/icons-react";
 import { IClassifier } from "../core/models/IClassifier";
@@ -67,7 +67,7 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
     reorder,
     next,
 }) => {
-    const { classes, cx } = useStyles();    
+    const { classes, cx } = useStyles();
 
     if (!classifiers) return null;
 
@@ -109,30 +109,32 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
     };
 
     return (
-        <ScrollArea h="100%" type="auto" offsetScrollbars pt="1rem">
-            <Container>
-                <Title order={2}>
+        <Container h="100%" p="1rem 0">
+            <Flex direction="column" h="100%">
+                <Title order={3}>
                     Configure the order in which the data is grouped
                 </Title>
-                <DragDropContext
-                    onDragEnd={({ destination, source }) => {
-                        if (destination) {
-                            reorder(source.index, destination.index)
-                        }
-                    }}
-                >
-                    <Droppable droppableId="dnd-list" direction="vertical">
-                        {(provided) => (
-                            <div
-                                {...provided.droppableProps}
-                                ref={provided.innerRef}
-                            >
-                                {items}
-                                {provided.placeholder}
-                            </div>
-                        )}
-                    </Droppable>
-                </DragDropContext>
+                <ScrollArea type="auto" offsetScrollbars pt="1rem">
+                    <DragDropContext
+                        onDragEnd={({ destination, source }) => {
+                            if (destination) {
+                                reorder(source.index, destination.index);
+                            }
+                        }}
+                    >
+                        <Droppable droppableId="dnd-list" direction="vertical">
+                            {(provided) => (
+                                <div
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                >
+                                    {items}
+                                    {provided.placeholder}
+                                </div>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
+                </ScrollArea>
                 <Group position="center" mt="xl">
                     <Button
                         size="lg"
@@ -145,8 +147,8 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
                         Show data
                     </Button>
                 </Group>
-            </Container>
-        </ScrollArea>
+            </Flex>
+        </Container>
     );
 };
 
