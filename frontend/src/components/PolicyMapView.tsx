@@ -143,7 +143,6 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                     },
                 },
                 header: {
-                    icon: "VM",
                 },
                 headerSelected: {
                     textColor: isDark ? theme.colors.blue[6] : "blue",

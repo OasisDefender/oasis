@@ -70,7 +70,6 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
 
         const childrenExist = data.children && data.children.length > 0;
         const childrenShow = childrenExist && !(data.childrenCollapsed ?? DEFAULT_COLLAPSED);
-
         return (
             <div className="um-item" id={data.id} style={itemStyle?.style}>
                 <div

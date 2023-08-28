@@ -22,7 +22,7 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
     styles,
     selectedID,
     toogleChildren,
-}) => {    
+}) => {
     return useMemo(() => {
         if (!data.children || !data.children.length) {
             return null;
@@ -48,7 +48,8 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
                     <Flex
                         direction="row"
                         gap={style?.horizontalGap ?? "1rem"}
-                        align="center"                        
+                        align="center"
+                        style={{ alignSelf: "center" }}
                     >
                         {data.children.map(renderChild)}
                     </Flex>
@@ -60,6 +61,7 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
                         direction="column"
                         gap={style?.verticalGap ?? "1rem"}
                         align="center"
+                        style={{ alignSelf: "center" }}
                     >
                         {data.children.map(renderChild)}
                     </Flex>
@@ -69,13 +71,18 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
                 const columnCount = Math.ceil(Math.sqrt(childrenCount)); // Calculate columns for square grid
                 const rows = Math.ceil(childrenCount / columnCount);
                 content = (
-                    <Flex direction="column" gap={style?.verticalGap ?? "1rem"}>
+                    <Flex
+                        direction="column"
+                        gap={style?.verticalGap ?? "1rem"}
+                        style={{ alignSelf: "center" }}
+                    >
                         {Array.from({ length: rows }).map((_, rowIndex) => (
                             <Flex
                                 key={rowIndex}
                                 direction="row"
                                 gap={style?.horizontalGap ?? "1rem"}
                                 align="center"
+                                style={{ alignSelf: "center" }}
                             >
                                 {data
                                     .children!.slice(
@@ -95,11 +102,7 @@ const UniversalMapContainer: React.FC<UniversalMapContainerProps> = ({
                 {content}
             </div>
         );
-    }, [data,
-        style,
-        styles,
-        selectedID,
-        toogleChildren]);
+    }, [data, style, styles, selectedID, toogleChildren]);
 };
 
 export default UniversalMapContainer;
