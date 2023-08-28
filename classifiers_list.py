@@ -1,3 +1,28 @@
+class vminfo:
+    def __init__(self):
+        self.items = []
+        self.selected = []
+        self.items.append({"name": "Full Host Name", "field": "name"})
+        self.items.append({"name": "Private IP", "field": "privip"})
+        self.items.append({"name": "Private DNS Name", "field": "privdn"})
+        self.items.append({"name": "Generated Name", "field": "note"})
+        self.items.append({"name": "MAC Address", "field": "mac"})
+        self.items.append({"name": "Public IP", "field": "pubip"})
+        self.items.append({"name": "Public DNS Name", "field": "pubdn"})
+
+    def get_info(self):
+        res = []
+        for idx in range(0, len(self.items)):
+            item = {"id": idx, "name": self.items[idx]["name"]}
+            res.append(item)
+        return res
+
+    def set_selected(self, selected: list[int]):
+        self.selected = []
+        for i in selected:
+            self.selected.append(self.items[i])
+
+
 class classifier:
     def __init__(self):
         self.items = []
@@ -18,24 +43,28 @@ class classifier:
                           "field": "arn", "fn": None, "node_type": "Subnet", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "Subnet Network", "description": "Subnet network", "class_name": "Subnet",
                           "field": "network", "fn": None, "node_type": "Subnet", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "VM OS", "description": "Host Operating system", "class_name": "VM",
+        self.items.append({"name": "VM OS", "description": "Host Operating system", "class_name": "OneNode",
                           "field": "os", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "VM State", "description": "Host current state", "class_name": "VM",
+        self.items.append({"name": "VM State", "description": "Host current state", "class_name": "OneNode",
                           "field": "state", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "Security group", "description": "Security group name", "class_name": "RuleGroup",
                           "field": "name", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "VM",
+        self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "OneNode",
                           "field": "azone", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle"})
         self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
                           "field": " ", "fn": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "VM",
+        self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "OneNode",
                           "field": "pubip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "VM",
+        self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "OneNode",
                           "field": "privip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "VM Private DNS Name", "description": "Private DNS Name", "class_name": "VM",
+        self.items.append({"name": "VM Private DNS Name", "description": "Private DNS Name", "class_name": "OneNode",
                           "field": "privdn", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
-        self.items.append({"name": "VM Name", "description": "Host Name", "class_name": "VM",
+        self.items.append({"name": "VM Name", "description": "Host Name", "class_name": "OneNode",
                           "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Description", "description": "Host description", "class_name": "OneNode",
+                          "field": "note", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+        self.items.append({"name": "VM Type", "description": "Host type", "class_name": "OneNode",
+                          "field": "type", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle"):
         self.item = {}

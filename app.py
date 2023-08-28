@@ -17,6 +17,7 @@ from classifiers_list import classifier
 from split_vms import attr_set, split_vms
 from rule_group import RuleGroup, get_all_rule_groups
 from rule import Rule, get_all_rules
+from vm import Nodes
 
 app = Flask(__name__)
 CORS(app)
@@ -323,6 +324,11 @@ def api_classification_build():
     vpcs = map.vpcs
     sgs = get_all_rule_groups()
     rules = get_all_rules()
+    nodes = Nodes(context.get_all_nodes_info())
+    s = []
+    for v in vpcs:
+        s = s + v.subnets
+    subnets = [*set(s)]
 
     # get data from frontend
     sel = request.get_json()
@@ -331,7 +337,12 @@ def api_classification_build():
     c = classifier()
     c.set_selected(sel)
     sas = attr_set(c)
-    vms = split_vms(clouds, vpcs, sgs, rules, sas)
+
+    sas.add_vm_info("<br/>MAC", "mac")
+    sas.add_vm_info("<br/>Name", "note")
+    sas.add_vm_info("<br/>Private IP", "privip")
+
+    vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
     res = t.dump_tree()
 
