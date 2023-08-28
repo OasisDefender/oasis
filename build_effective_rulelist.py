@@ -6,13 +6,14 @@ from vm import VM
 from rule_group import RuleGroup
 from rule import Rule
 
+
 class EffectiveRulelist:
     def __init__(self, cloud: Cloud, vpcs: list[VPC], sgs: list[RuleGroup], rules: list[Rule]):
         # for each vpc
         #   1 add vm it to dictianary with id key
         #   2 for each vm
         #     3 add applicable rules from subnet
-        #     4 for each vm sg 
+        #     4 for each vm sg
         #       5 add applicable rule from sg
         self.vms_er = {}
         for vpc in vpcs:
@@ -29,11 +30,12 @@ class EffectiveRulelist:
                                 vm_rules.append(rule)
                     crosses = self.check_crosses(vm_rules)
                     bp = self.check_best_practice(vm_rules)
-                    self.vms_er[(cloud.id, vpc.id, subnet.id, vm.id)] = {'Rules': vm_rules, 'Crosses': crosses, 'Best Practice Warnings': bp}
+                    self.vms_er[(cloud.id, vpc.id, subnet.id, vm.id)] = {
+                        'Rules': vm_rules, 'Crosses': crosses, 'Best Practice Warnings': bp}
 
     def is_applicable(self, vm: VM, rule: Rule):
         return True
-    
+
     def check_crosses(self, vm_rules):
         #   1. for each rule in rule list
         #     2. find crossed rules
@@ -50,12 +52,11 @@ class EffectiveRulelist:
         for kr1 in vm_rules:
             for kr2 in vm_rules:
                 if set(res[kr1]) == set(res[kr2]):
-                    del res[kr2]              
+                    del res[kr2]
         return res
-    
+
     def get_effective_rules(self):
         return self.vms_er
-    
+
     def check_best_practice(vm_rules):
         return {}
-   

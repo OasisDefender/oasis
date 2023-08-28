@@ -5,7 +5,7 @@ from db import DB
 from cloud_map import CloudMap, cloud_map_encoder
 from vpc import VPC
 from subnet import Subnet
-from vm import VM
+from vm import VM, Nodes, OneNode
 from rule_group import RuleGroup, get_all_rule_groups
 from rule import Rule, get_all_rules
 from classifiers_list import classifier, vminfo
@@ -71,54 +71,90 @@ class attr_set:
 
 
 class split_vms:
-    def __init__(self, clouds: list[Cloud], vpcs: list[VPC], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
-        # 1. make vm_id list and forward required attributes
+    def __init__(self, clouds: list[Cloud], vpcs: list[VPC], subnets: list[Subnet], nodes: list[OneNode], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
         self.vms = {}
         self.vminfo = {}
-        for vpc in vpcs:
-            cloud = None
-            for cloud in clouds:
-                print(vpc)
-                if cloud.id == vpc.cloud_id:
-                    break
-                if cloud == None:
-                    # error
-                    print("Cloud not found for vpc")
-            for subnet in vpc.subnets:
-                for vm in subnet.vms:
-                    # self.vms.append(vm.id)
-                    if self.vminfo.get(vm.id, None) == None:
-                        self.vminfo[vm.id] = sas.get_vm_info(vm)
-                    for i in range(0, sas.get_max_order()):
-                        res_cl = None
-                        for cl in [cloud, vpc, subnet, vm]:
-                            if sas.check_class_name(i, cl):
-                                res_cl = cl
-                                break
-                        if res_cl != None:
-                            val = sas.get_val(i, res_cl)
-                            self.add_val(vm.id, i, val)
-                        else:
-                            # security group or rule
-                            for sg in sgs:
-                                if not sas.check_class_name(i, sg):
-                                    break
-                                if sg.if_id == vm.if_id or sg.subnet_id == subnet.name:
-                                    val = sas.get_val(i, sg)
-                                    self.add_val(vm.id, i, val)
-                            for sg in sgs:
-                                if sg.if_id != vm.if_id and sg.subnet_id != subnet.id:
-                                    continue
-                                for rule in rules:
-                                    if rule.group_id != sg.name:
-                                        continue
-                                    if not sas.check_class_name(i, rule):
-                                        break
-                                    if self.is_applicable(vm, rule):
-                                        #                                        rlist = self.unpack_rule(rule)
-                                        #                                        for r in rlist:
-                                        val = sas.get_val(i, rule)
-                                        self.add_val(vm.id, i, val)
+
+        self.fakeCloud = Cloud(
+            None, "fakeCloud", "fakeCloud", "fakeCloud", "", "", "", "", "", "")
+        self.fakeVpc = VPC(None, "fakeVPC")
+        self.fakeSubnet = Subnet(None, "fakeSubnet")
+        self.fakeSecGroup = RuleGroup()
+        self.fakeSecRule = Rule()
+
+        # cl_list = []
+        t = [clouds, vpcs, subnets, nodes, sgs, rules]
+        o = []
+        o_dict = {}
+        self.vm_info = {}
+        for item in nodes:
+            c_list = self.cloud_list(clouds, item)
+            v_list = self.vpc_list(vpcs, item)
+            s_list = self.subnet_list(subnets, item)
+            n_list = self.nodes_list(nodes, item)
+            sgs_list = self.sec_groups_list(sgs, item)
+            r_list = self.sec_rules_list(rules, sgs_list, item)
+            o_dict[item] = [c_list, v_list, s_list, n_list, sgs_list, r_list]
+            # if self.vminfo.get(vm.id, None) == None:
+            self.vminfo[item.id] = sas.get_vm_info(item)
+
+        for order in range(0, sas.get_max_order()):
+            idx = self.find_class_idx(order, t, sas)
+            # cl_list.append(t[idx])
+            # odict = self.build_object_dict(nodes, t[idx])
+            for n in nodes:
+                olist = o_dict[n][idx]
+                for o in olist:
+                    val = sas.get_val(order, o)
+                    self.add_val(n.id, order, val)
+
+    def find_class_idx(self, order, t: list, sas: attr_set):
+        for idx in range(0, len(t)):
+            cl = t[idx][0]
+            if sas.check_class_name(order, cl):
+                return idx
+        return None
+
+    def cloud_list(self, clouds: list[Cloud], n: OneNode):
+        r = [c for c in clouds if c.id == n.cloud_id]
+        if len(r) == 0:
+            r = [self.fakeCloud]
+        return r
+
+    def vpc_list(self, vpcs: list[VPC], n: OneNode):
+        r = [c for c in vpcs if c.vpc_id ==
+             n.vpc_id and c.cloud_id == n.cloud_id]
+        if len(r) == 0:
+            r = [self.fakeVpc]
+        return r
+
+    def subnet_list(self, subnets: list[Subnet], n: OneNode):
+        r = [c for c in subnets if c.name == n.subnet_id and c.cloud_id ==
+             n.cloud_id and c.vpc_id == n.vpc_id]
+        if len(r) == 0:
+            r = [self.fakeSubnet]
+        return r
+
+    def sec_groups_list(self, sgs: list[RuleGroup], n: OneNode):
+        r = [c for c in sgs if (c.cloud_id == n.cloud_id) and (
+            (c.if_id == n.if_id) or (c.subnet_id == n.subnet_id))]
+        if len(r) == 0:
+            r = [self.fakeSecGroup]
+        return r
+
+    def sec_rules_list(self, rules: list[Rule], sec_groups: list[RuleGroup], n: OneNode):
+        t = []
+        for s in sec_groups:
+            t.append(s.name)
+        r = [c for c in rules if c.cloud_id ==
+             n.cloud_id and (c.group_id in t)]
+        if len(r) == 0:
+            r = [self.fakeSecRule]
+        return r
+
+    def nodes_list(self, nodes: list[OneNode], n: OneNode):
+        r = [n]
+        return r
 
     def build_vms_tree(self, sas: attr_set):
         t = vm_tree(sas)
@@ -166,17 +202,54 @@ class split_vms:
             self.add_val_list(vm_id, order, [val])
 
 
-'''    def unpack_rule(self, r: Rule):
-        l = []
-        if r.ports == "ALL" or r.ports == "*" or r.port_from == "*":
-            return [r]
-        if r.port_to == '':
-            r.port_to = r.port_from
-        for i in range(int(r.port_from), int(r.port_to)):
-            t = r
-            # t.type = self.type_by_port(i, r.proto)
-            l.append(t)
-        return l
+'''
+   class split_vms:
+    def __init__(self, clouds: list[Cloud], vpcs: list[VPC], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
+        # 1. make vm_id list and forward required attributes
+        self.vms = {}
+        self.vminfo = {}
+        for vpc in vpcs:
+            cloud = None
+            for cloud in clouds:
+                print(vpc)
+                if cloud.id == vpc.cloud_id:
+                    break
+                if cloud == None:
+                    # error
+                    print("Cloud not found for vpc")
+            for subnet in vpc.subnets:
+                for vm in subnet.vms:
+                    # self.vms.append(vm.id)
+                    if self.vminfo.get(vm.id, None) == None:
+                        self.vminfo[vm.id] = sas.get_vm_info(vm)
+                    for i in range(0, sas.get_max_order()):
+                        res_cl = None
+                        for cl in [cloud, vpc, subnet, vm]:
+                            if sas.check_class_name(i, cl):
+                                res_cl = cl
+                                break
+                        if res_cl != None:
+                            val = sas.get_val(i, res_cl)
+                            self.add_val(vm.id, i, val)
+                        else:
+                            # security group or rule
+                            for sg in sgs:
+                                if not sas.check_class_name(i, sg):
+                                    break
+                                if sg.if_id == vm.if_id or sg.subnet_id == subnet.name:
+                                    val = sas.get_val(i, sg)
+                                    self.add_val(vm.id, i, val)
+                            for sg in sgs:
+                                if sg.if_id != vm.if_id and sg.subnet_id != subnet.id:
+                                    continue
+                                for rule in rules:
+                                    if rule.group_id != sg.name:
+                                        continue
+                                    if not sas.check_class_name(i, rule):
+                                        break
+                                    if self.is_applicable(vm, rule):
+                                        val = sas.get_val(i, rule)
+                                        self.add_val(vm.id, i, val)
 '''
 
 
@@ -249,11 +322,11 @@ class vm_tree:
 
 def run_test():
     sas = attr_set()
-    # sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
-    sas.add_split("VM", "os", "OS", "VPC")
-    sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
+    sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
+    # sas.add_split("OneNode", "type", "type", "VPC")
+    # sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
     # sas.add_split("VPC", "name", "VPC Name", "VPC")
-    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
+    # sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
 #    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
     sas.add_vm_info("<BR>MAC", "mac")
     sas.add_vm_info("<BR>Name", "note")
@@ -267,12 +340,15 @@ def run_test():
 
     sgs = get_all_rule_groups()
     rules = get_all_rules()
+    nodes = Nodes(context.get_all_nodes_info())
+    s = []
+    for v in vpcs:
+        s = s + v.subnets
+    subnets = [*set(s)]
 
-    vms = split_vms(clouds, vpcs, sgs, rules, sas)
+    vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
     res = t.dump_tree()
-    print(res)
-
     print(res)
 
 
