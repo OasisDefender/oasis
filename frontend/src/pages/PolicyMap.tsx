@@ -1,17 +1,13 @@
 import React, {
-    useCallback,
     useEffect,
     useMemo,
     useRef,
     useState,
 } from "react";
-import UniversalMap from "../components/UniversalMap/UniversalMap";
 import {
     ItemStyles,
     ChildrenInfo,
     LayoutStyle,
-    DEFAULT_COLLAPSED,
-    ChildItem,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { HEADER_HEIGHT } from "../components/Header";
@@ -59,6 +55,7 @@ export function PolicyMap() {
         error: classificationError,
         data: classification,
         fetchData: fetchClassification,
+        toogleChildren
     } = usePolicyMap();
 
     const selectedRef = useRef(selected);
@@ -201,47 +198,6 @@ export function PolicyMap() {
 
     const [data, setData] = useState<ChildrenInfo>({});
 
-    const toggleItemById = (id: string, items: ChildItem[]): ChildItem[] => {
-        let changed = false;
-
-        const updatedItems = items.map((item) => {
-            if (item.id === id) {
-                changed = true;
-                return {
-                    ...item,
-                    childrenCollapsed: !(
-                        item.childrenCollapsed ?? DEFAULT_COLLAPSED
-                    ),
-                };
-            }
-
-            if (item.children) {
-                const updatedChildren = toggleItemById(id, item.children);
-                if (updatedChildren !== item.children) {
-                    changed = true;
-                    return {
-                        ...item,
-                        children: updatedChildren,
-                    };
-                }
-            }
-
-            return item;
-        });
-
-        return changed ? updatedItems : items;
-    };
-
-    const toogleChildren = useCallback((id: string) => {
-        setData((oldData) => {
-            const newData: ChildrenInfo = {
-                children: toggleItemById(id, oldData.children ?? []),
-                childrenLayout: oldData.childrenLayout,
-            };
-            return newData;
-        });
-    }, []);
-
     const style: LayoutStyle = {
         horizontalGap: "5rem",
         verticalGap: "5rem",
@@ -341,7 +297,7 @@ export function PolicyMap() {
             } else {
                 content = (
                     <>
-                        <PolicyMapView data={classification} />
+                        <PolicyMapView data={classification} toogleChildren={toogleChildren} />
                         <Button
                             radius="xl"
                             onClick={(_) => setStage("filters")}
