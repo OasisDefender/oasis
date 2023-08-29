@@ -13,7 +13,7 @@ const UniversalIcon = forwardRef<HTMLDivElement, UniversalIconProps>(
       const IconComponent = TablerIcons[name];    
       return <IconComponent color={color} ref={ref} />;
     }
-    return <div style={{
+    return <div ref={ref} style={{
       border: `2px solid ${color ?? ""}`,
       color: color ?? undefined,
       lineHeight: 1,
