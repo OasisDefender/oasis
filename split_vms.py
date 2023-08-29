@@ -74,19 +74,21 @@ class split_vms:
     def __init__(self, clouds: list[Cloud], vpcs: list[VPC], subnets: list[Subnet], nodes: list[OneNode], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
         self.vms = {}
         self.vminfo = {}
+        self.vmicon = {}
 
         self.fakeCloud = Cloud(
             None, "fakeCloud", "fakeCloud", "fakeCloud", "", "", "", "", "", "")
         self.fakeVpc = VPC(None, "fakeVPC")
         self.fakeSubnet = Subnet(None, "fakeSubnet")
         self.fakeSecGroup = RuleGroup()
-        self.fakeSecRule = Rule()
+        self.fakeSecRule = Rule(group_id=0, action='deny')
 
         # cl_list = []
-        t = [clouds, vpcs, subnets, nodes, sgs, rules]
+        t = [[*set(clouds)], [*set(vpcs)], [*set(subnets)],
+             [*set(nodes)], [*set(sgs)], [*set(rules)]]
         o = []
         o_dict = {}
-        self.vm_info = {}
+        # self.vm_info = {}
         for item in nodes:
             c_list = self.cloud_list(clouds, item)
             v_list = self.vpc_list(vpcs, item)
@@ -97,6 +99,7 @@ class split_vms:
             o_dict[item] = [c_list, v_list, s_list, n_list, sgs_list, r_list]
             # if self.vminfo.get(vm.id, None) == None:
             self.vminfo[item.id] = sas.get_vm_info(item)
+            self.vmicon[item.id] = item.type
 
         for order in range(0, sas.get_max_order()):
             idx = self.find_class_idx(order, t, sas)
@@ -171,7 +174,8 @@ class split_vms:
                 path = []
                 for j in range(0, ord_count):
                     path.append(self.vms[vm_id][j][ord_val[j]])
-                t.add_node_by_path(path, vm_id, self.vminfo[vm_id])
+                t.add_node_by_path(
+                    path, vm_id, self.vminfo[vm_id], self.vmicon[vm_id])
                 for j in range(0, ord_count):
                     if ord_val[j] < (len(self.vms[vm_id][j]) - 1):
                         ord_val[j] += 1
@@ -262,13 +266,15 @@ class vm_tree:
         self.n_type = {}
         self.n_icon = {}
         self.vinfo = {}
+        self.vicon = {}
         for ord in range(0, sas.get_max_order()):
             self.label[ord] = sas.get_order_caption(ord)
             self.n_type[ord] = sas.get_order_node_type(ord)
             self.n_icon[ord] = sas.get_order_node_icon(ord)
 
-    def add_node_by_path(self, leaf_path: list, vm_id, info):
+    def add_node_by_path(self, leaf_path: list, vm_id, info, icon="VM"):
         self.vinfo[vm_id] = info
+        self.vicon[vm_id] = icon
         d = self.children
         if len(leaf_path) != self.max_level:
             # error
@@ -314,10 +320,17 @@ class vm_tree:
                     "id": "VM_" + "_" + str(vm_id) + "_" + str(self.counter),
                     "type": "VM",
                     "label": label_text,
-                    "info": [{"icon": "VM", "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
+                    "info": [{"icon": self.vicon[vm_id], "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
                 }
                 c["children"].append(t)
         return c
+
+
+'''class vm_links:
+    def __init__(self, nodes: list[OneNode], sgs: list[RuleGroup], rules: list[Rule]):
+        # self.in_links = {vm:[{vm}]}}
+        # self.out_links = {vm:[]}}
+'''
 
 
 def run_test():

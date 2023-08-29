@@ -338,9 +338,10 @@ def api_classification_build():
     c.set_selected(sel)
     sas = attr_set(c)
 
-    sas.add_vm_info("<br/>MAC", "mac")
-    sas.add_vm_info("<br/>Name", "note")
-    sas.add_vm_info("<br/>Private IP", "privip")
+    sas.add_vm_info("Name", "note")
+    sas.add_vm_info("<br/>Priv DNS", "privdn")
+    sas.add_vm_info("<br/>Pub DNS", "pubdn")
+    sas.add_vm_info("<br/>Name", "name")
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
