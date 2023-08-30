@@ -112,7 +112,7 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
         <Container h="100%" p="1rem 0">
             <Flex direction="column" h="100%">
                 <Title order={3}>
-                    Configure the order in which the data is grouped
+                    Configure the order in which the data will be grouped
                 </Title>
                 <ScrollArea type="auto" offsetScrollbars pt="1rem">
                     <DragDropContext
