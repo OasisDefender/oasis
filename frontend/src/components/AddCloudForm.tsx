@@ -8,6 +8,7 @@ import {
     List,
     Modal,
     NativeSelect,
+    PasswordInput,
     Select,
     TextInput,
 } from "@mantine/core";
@@ -149,7 +150,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             placeholder=""
                             {...form.getInputProps("aws_key")}
                         />
-                        <TextInput
+                        <PasswordInput
                             withAsterisk
                             label="Secret Key"
                             placeholder=""
@@ -187,11 +188,11 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             placeholder=""
                             {...form.getInputProps("azure_client_id")}
                         />
-                        <TextInput
+                        <PasswordInput
                             withAsterisk
                             label="Client Secret"
                             placeholder=""
-                            {...form.getInputProps("azure_client_key")}
+                            {...form.getInputProps("azure_client_secret")}
                         />
                     </>
                 )}
@@ -289,7 +290,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                         placeholder=""
                                         {...form.getInputProps("aws_key")}
                                     />
-                                    <TextInput
+                                    <PasswordInput
                                         withAsterisk
                                         label="Secret Key"
                                         placeholder=""
@@ -300,8 +301,13 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 </List.Item>
                             </List>
                         </List.Item>
-                    </List>
+                    </List>                    
                 )}
+                <Group position="right" mt="md">                    
+                    <Button color="blue" onClick={closeCloudHelp}>
+                        Continue
+                    </Button>
+                </Group>
             </Modal>
         </>
     );
