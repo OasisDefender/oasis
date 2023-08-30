@@ -68,6 +68,10 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                 : style.header;
         }
 
+        const headerIcon = data.icon ?? headerStyle?.icon;
+        const headerIconColor = data.iconColor ?? headerStyle?.iconColor;
+        const headerIconTooltip = data.iconTooltip ?? headerStyle?.iconTooltip;
+
         const childrenExist = data.children && data.children.length > 0;
         const childrenShow =
             childrenExist && !(data.childrenCollapsed ?? DEFAULT_COLLAPSED);
@@ -88,10 +92,11 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                             alignItems: "center",
                         }}
                     >
-                        {headerStyle?.icon && (
+                        {headerIcon && (
                             <UniversalIcon
-                                name={headerStyle?.icon}
-                                color={headerStyle?.iconColor}
+                                name={headerIcon}
+                                color={headerIconColor}
+                                tooltip={headerIconTooltip}
                             />
                         )}
                         <Box
@@ -121,27 +126,14 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                         }}
                     >
                         {data.info &&
-                            data.info.map((item, index) => {
-                                return item.tooltip ? (
-                                    <Tooltip
-                                        key={index}
-                                        label={item.tooltip}
-                                        withArrow
-                                        withinPortal
-                                    >
-                                        <UniversalIcon
-                                            name={item.icon}
-                                            color={item.iconColor}
-                                        />
-                                    </Tooltip>
-                                ) : (
-                                    <UniversalIcon
-                                        name={item.icon}
-                                        color={item.iconColor}
-                                        key={index}
-                                    />
-                                );
-                            })}
+                            data.info.map((item, index) => (
+                                <UniversalIcon
+                                    key={index}
+                                    name={item.icon}
+                                    color={item.iconColor}
+                                    tooltip={item.tooltip}
+                                />
+                            ))}
                         {childrenExist && toogleChildren && (
                             <UnstyledButton lh={0} className="toogle-children">
                                 {data.childrenCollapsed ?? DEFAULT_COLLAPSED ? (

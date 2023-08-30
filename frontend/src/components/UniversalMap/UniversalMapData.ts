@@ -17,6 +17,7 @@ export type LayoutStyle = {
 export type HeaderStyle = {
     icon?: string;
     iconColor?: string;
+    iconTooltip?: string;
     textColor?: string;
     maxLabelWidth?: SystemProp<CSSProperties["maxWidth"]>;
 };
@@ -32,7 +33,6 @@ export type TypedStyle = {
 
 export type ItemStyles = { [styleName: string]: TypedStyle };
 
-
 export type LineStyle = {
     gravity?: number;
     stroke?: string;
@@ -43,7 +43,7 @@ export type LineStyle = {
 export type TypedLineStyle = {
     line?: LineStyle;
     lineSelected?: LineStyle;
-}
+};
 
 export type LineStyles = { [styleName: string]: TypedLineStyle };
 
@@ -56,28 +56,32 @@ export type ChildrenInfo = {
     childrenLayout?: Layout;
 };
 
-export type ChildItem = ChildrenInfo & {
-    id: string;
-    type?: string;
-    label?: string;
-    info?: InfoItem[];
-    childrenCollapsed?: boolean;
-};
-
-export const DEFAULT_COLLAPSED : boolean = true;
-
 export type InfoItem = {
     icon: string;
     iconColor?: string;
     tooltip?: string;
 };
 
+export type ChildItem = ChildrenInfo & {
+    id: string;
+    type?: string;
+    icon?: string;
+    iconColor?: string;
+    iconTooltip?: string;
+    label?: string;
+    info?: InfoItem[];
+    childrenCollapsed?: boolean;
+};
+
+export const DEFAULT_COLLAPSED: boolean = true;
+
+
 // Lines
 export type LineItem = {
     id?: string;
     type?: string;
     src: string;
-    dst: string;    
+    dst: string;
     srcTooltip?: string;
     dstTooltip?: string;
 };
@@ -85,7 +89,6 @@ export type LineItem = {
 export type LineInfo = {
     items: LineItem[];
 };
-
 
 // Functions
 
