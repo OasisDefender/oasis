@@ -1,7 +1,17 @@
 import React from "react";
 import { useForm } from "@mantine/form";
 import { ICloudCreate } from "../core/models/ICloud";
-import { Button, Group, NativeSelect, Select, TextInput } from "@mantine/core";
+import {
+    Anchor,
+    Button,
+    Group,
+    List,
+    Modal,
+    NativeSelect,
+    Select,
+    TextInput,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 
 interface AddCloudFormProps {
     onCancel: () => void;
@@ -9,6 +19,8 @@ interface AddCloudFormProps {
 }
 
 export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
+    const [cloudHelpOpened, { open: openCloudHelp, close: closeCloudHelp }] =
+        useDisclosure(false);
     const cloudTypes = ["AWS", "AZURE"];
     const awsRegions = [
         "ap-east-1",
@@ -122,6 +134,15 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             withAsterisk
                             {...form.getInputProps("aws_region")}
                         />
+                        <Anchor
+                            component="button"
+                            type="button"
+                            w="100%"
+                            pt="xs"
+                            onClick={openCloudHelp}
+                        >
+                            How to create an Access Key for Oasis Defender?
+                        </Anchor>
                         <TextInput
                             withAsterisk
                             label="Key"
@@ -139,6 +160,15 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
 
                 {form.values.cloud_type === "AZURE" && (
                     <>
+                        <Anchor
+                            component="button"
+                            type="button"
+                            w="100%"
+                            pt="xs"
+                            onClick={openCloudHelp}
+                        >
+                            How to create an access for Oasis Defender?
+                        </Anchor>
                         <TextInput
                             withAsterisk
                             label="Subscription ID"
@@ -175,6 +205,104 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                     </Button>
                 </Group>
             </form>
+            <Modal
+                title="How to Connect Your Cloud with Oasis Defender"
+                opened={cloudHelpOpened}
+                onClose={closeCloudHelp}
+                zIndex={300}
+                size="auto"
+                centered
+            >
+                {form.values.cloud_type === "AWS" && (
+                    <List type="ordered" w="90%">
+                        <List.Item>
+                            Create a New IAM User
+                            <List listStyleType="disc">
+                                <List.Item>
+                                    Log in to your AWS Management Console
+                                </List.Item>
+                                <List.Item>
+                                    Navigate to the IAM (Identity and Access
+                                    Management) service
+                                </List.Item>
+                                <List.Item>
+                                    Click on "Users" in the left navigation pane
+                                </List.Item>
+                                <List.Item>
+                                    Click the "Create user" button to create a
+                                    new user
+                                </List.Item>
+                                <List.Item>
+                                    Provide a username for the new user
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                        <List.Item>
+                            Set User Permissions
+                            <List listStyleType="disc">
+                                <List.Item>
+                                    Select "Attach policies directly" in the
+                                    "Permissions options"
+                                </List.Item>
+                                <List.Item>
+                                    To create <b>ReadOnly</b> account:
+                                    <List listStyleType="circle">
+                                        <List.Item>
+                                            Check policy with the name
+                                            "SecurityAudit"
+                                        </List.Item>
+                                    </List>
+                                </List.Item>
+                                <List.Item>
+                                    Review your user's settings and permissions,
+                                    and confirm
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                        <List.Item>
+                            Create Access Key
+                            <List listStyleType="disc">
+                                <List.Item>
+                                    Click on the name of created user in Users
+                                    list
+                                </List.Item>
+                                <List.Item>
+                                    Click on the "Create access key" button to
+                                    generate an Access Key
+                                </List.Item>
+                                <List.Item>
+                                    Choose the "Application running outside AWS"
+                                    use case
+                                </List.Item>
+                                <List.Item>Create the Access Key</List.Item>
+                                <List.Item>
+                                    After creating the access key, you'll be
+                                    able to download a CSV file containing the
+                                    Access Key ID and Secret Access Key
+                                </List.Item>
+                                <List.Item>
+                                    Copy the "Access key" and "Secret access
+                                    key" into Oasis Defender
+                                    <TextInput
+                                        withAsterisk
+                                        label="Key"
+                                        placeholder=""
+                                        {...form.getInputProps("aws_key")}
+                                    />
+                                    <TextInput
+                                        withAsterisk
+                                        label="Secret Key"
+                                        placeholder=""
+                                        {...form.getInputProps(
+                                            "aws_secret_key"
+                                        )}
+                                    />
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                    </List>
+                )}
+            </Modal>
         </>
     );
 };
