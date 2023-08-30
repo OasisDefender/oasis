@@ -50,13 +50,13 @@ class classifier:
         self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
                           "field": " ", "fn": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "OneNode",
-                          "field": "pubip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+                          "field": "pubip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "OneNode",
-                          "field": "privip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+                          "field": "privip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private DNS Name", "description": "Private DNS Name", "class_name": "OneNode",
-                          "field": "privdn", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+                          "field": "privdn", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Name", "description": "Host Name", "class_name": "OneNode",
-                          "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+                          "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         '''        self.items.append({"name": "VM", "description": "Host description", "class_name": "OneNode",
                           "field": "note", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle",
                            "info": [

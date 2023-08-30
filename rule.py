@@ -123,11 +123,11 @@ class Rule:
         else:
             clientserver = "Server"
         if self.ports in ["0", "*", "Any", "ALL", ""]:
-            return f"{clientserver}: All Ports"
+            return [f"{clientserver}: All Ports"]
         if self.port_from == "*" or self.port_to == "*":
-            return f"{clientserver}: All Ports"
+            return [f"{clientserver}: All Ports"]
         if self.proto == "ICMP":
-            return f"{clientserver}: ICMP"
+            return [f"{clientserver}: ICMP"]
 
         types = []
         if self.port_from == "":

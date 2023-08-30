@@ -124,7 +124,11 @@ class split_vms:
                     val = sas.get_val(order, o)
                     self.add_val(n, order, val)
                     info = sas.get_info(order, o)
-                    self.add_info(order, val, info)
+                    if type(val) is list:
+                        for v in val:
+                            self.add_info(order, v, info)
+                    else:
+                        self.add_info(order, val, info)
 
     def add_info(self, order, val, info):
         self.info[(order, val)] = info
