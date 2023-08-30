@@ -15,21 +15,39 @@ class attr_set:
     def __init__(self, classifiers: classifier = None, vm_fields: vminfo = None):
         self.sas = []
         self.vinfo = []
+        self.info = []
         if (classifiers != None):
             for item in classifiers.selected:
                 self.sas.append({"class": item["class_name"], "attr": item["field"], "caption": item["description"],
                                 "type": item["node_type"], "icon": item["node_icon"], "fn": item["fn"]})
+                self.info.append(item["info"])
         if (vm_fields != None):
             for item in vm_fields.selected:
                 self.vinfo.append(
                     {"name": item["name"], "attr": item["field"]})
 
-    def add_split(self, name, attribute, cap, n_type="Cloud", icon="IconInfoCircle", fn=None):
+    def add_split(self, name, attribute, cap, n_type="Cloud", icon="IconInfoCircle", fn=None, info=[]):
         self.sas.append({'class': name, 'attr': attribute,
                         'caption': cap, 'type': n_type, 'icon': icon, 'fn': fn})
+        self.info.append(info)
 
     def add_vm_info(self, name, attribute):
         self.vinfo.append({"name": name, 'attr': attribute})
+
+    def add_info(self, order, title,  attr_name, icon="IconInfoCircle"):
+        if self.info.get(order, None) == None:
+            self.info[order] = []
+        self.info[order].append(
+            {"title": title, "attr": attr_name, "icon": icon})
+
+    def get_info(self, order, cl):
+        info = []
+        for item in self.info[order]:
+            a = item["title"]
+            i = item.get("icon", "IconInfoCircle")
+            v = getattr(cl, item['attr'])
+            info.append({"a": a, "v": v, "i": i})
+        return info
 
     def get_split(self, order):
         return self.sas[order]
@@ -40,12 +58,12 @@ class attr_set:
     def check_class_name(self, order, cl):
         return ((type(cl).__name__) == (self.sas[order]['class']))
 
-    def get_vm_info(self, vm: VM):
+    def get_vm_info(self, cl):
         info = []
         for i in self.vinfo:
             a = i["name"]
-            v = getattr(vm, i['attr'])
-            info.append(f"{a} : {v}")
+            v = getattr(cl, i['attr'])
+            info.append({"a": a, "v": v})
         return info
 
     def get_val(self, order, cl):
@@ -73,8 +91,7 @@ class attr_set:
 class split_vms:
     def __init__(self, clouds: list[Cloud], vpcs: list[VPC], subnets: list[Subnet], nodes: list[OneNode], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
         self.vms = {}
-        self.vminfo = {}
-        self.vmicon = {}
+        self.info = {}
 
         self.fakeCloud = Cloud(
             None, "fakeCloud", "fakeCloud", "fakeCloud", "", "", "", "", "", "")
@@ -88,7 +105,6 @@ class split_vms:
              [*set(nodes)], [*set(sgs)], [*set(rules)]]
         o = []
         o_dict = {}
-        # self.vm_info = {}
         for item in nodes:
             c_list = self.cloud_list(clouds, item)
             v_list = self.vpc_list(vpcs, item)
@@ -97,9 +113,6 @@ class split_vms:
             sgs_list = self.sec_groups_list(sgs, item)
             r_list = self.sec_rules_list(rules, sgs_list, item)
             o_dict[item] = [c_list, v_list, s_list, n_list, sgs_list, r_list]
-            # if self.vminfo.get(vm.id, None) == None:
-            self.vminfo[item.id] = sas.get_vm_info(item)
-            self.vmicon[item.id] = item.type
 
         for order in range(0, sas.get_max_order()):
             idx = self.find_class_idx(order, t, sas)
@@ -109,7 +122,12 @@ class split_vms:
                 olist = o_dict[n][idx]
                 for o in olist:
                     val = sas.get_val(order, o)
-                    self.add_val(n.id, order, val)
+                    self.add_val(n, order, val)
+                    info = sas.get_info(order, o)
+                    self.add_info(order, val, info)
+
+    def add_info(self, order, val, info):
+        self.info[(order, val)] = info
 
     def find_class_idx(self, order, t: list, sas: attr_set):
         for idx in range(0, len(t)):
@@ -160,24 +178,23 @@ class split_vms:
         return r
 
     def build_vms_tree(self, sas: attr_set):
-        t = vm_tree(sas)
+        t = vm_tree(sas, self.info)
         ord_count = sas.get_max_order()
-        for vm_id in self.vms:
+        for vm in self.vms:
             leaf_count = 1
             ord_val = {}
             for ord in range(0, ord_count):
-                if self.vms[vm_id].get(ord, None) == None:
-                    self.vms[vm_id][ord] = ["Non Applicable"]
-                leaf_count *= len(self.vms[vm_id][ord])
+                if self.vms[vm].get(ord, None) == None:
+                    self.vms[vm][ord] = ["Non Applicable"]
+                leaf_count *= len(self.vms[vm][ord])
                 ord_val[ord] = 0
             for i in range(0, leaf_count):
                 path = []
                 for j in range(0, ord_count):
-                    path.append(self.vms[vm_id][j][ord_val[j]])
-                t.add_node_by_path(
-                    path, vm_id, self.vminfo[vm_id], self.vmicon[vm_id])
+                    path.append(self.vms[vm][j][ord_val[j]])
+                t.add_node_by_path(path, vm)
                 for j in range(0, ord_count):
-                    if ord_val[j] < (len(self.vms[vm_id][j]) - 1):
+                    if ord_val[j] < (len(self.vms[vm][j]) - 1):
                         ord_val[j] += 1
                         for k in range(0, j):
                             ord_val[k] = 0
@@ -187,23 +204,23 @@ class split_vms:
     def is_applicable(self, vm: VM, rule: Rule):
         return True
 
-    def set_val_list(self, vm_id, order, val_list):
-        if self.vms.get(vm_id, None) == None:
-            self.vms[vm_id] = {}
-        self.vms[vm_id][order] = val_list
+    def set_val_list(self, vm, order, val_list):
+        if self.vms.get(vm, None) == None:
+            self.vms[vm] = {}
+        self.vms[vm][order] = val_list
 
-    def add_val_list(self, vm_id, order, val_list):
-        if self.vms.get(vm_id, None) == None:
-            self.vms[vm_id] = {}
-        if order not in self.vms[vm_id]:
-            self.vms[vm_id][order] = []
-        self.vms[vm_id][order] = [*set(self.vms[vm_id][order] + val_list),]
+    def add_val_list(self, vm, order, val_list):
+        if self.vms.get(vm, None) == None:
+            self.vms[vm] = {}
+        if order not in self.vms[vm]:
+            self.vms[vm][order] = []
+        self.vms[vm][order] = [*set(self.vms[vm][order] + val_list),]
 
-    def add_val(self, vm_id, order, val):
+    def add_val(self, vm, order, val):
         if (type(val) is list):
-            self.add_val_list(vm_id, order, val)
+            self.add_val_list(vm, order, val)
         else:
-            self.add_val_list(vm_id, order, [val])
+            self.add_val_list(vm, order, [val])
 
 
 '''
@@ -258,7 +275,7 @@ class split_vms:
 
 
 class vm_tree:
-    def __init__(self, sas: attr_set):
+    def __init__(self, sas: attr_set, info: dict):
         self.counter = 0
         self.max_level = sas.get_max_order()
         self.children = {}
@@ -267,14 +284,14 @@ class vm_tree:
         self.n_icon = {}
         self.vinfo = {}
         self.vicon = {}
+        self.sas = sas
+        self.info = info
         for ord in range(0, sas.get_max_order()):
             self.label[ord] = sas.get_order_caption(ord)
             self.n_type[ord] = sas.get_order_node_type(ord)
             self.n_icon[ord] = sas.get_order_node_icon(ord)
 
-    def add_node_by_path(self, leaf_path: list, vm_id, info, icon="VM"):
-        self.vinfo[vm_id] = info
-        self.vicon[vm_id] = icon
+    def add_node_by_path(self, leaf_path: list, vm: OneNode):
         d = self.children
         if len(leaf_path) != self.max_level:
             # error
@@ -283,8 +300,8 @@ class vm_tree:
             d = d.setdefault(key, {})
         if leaf_path[-1] not in d:
             d[leaf_path[-1]] = []
-        if vm_id not in [leaf_path[-1]]:
-            d[leaf_path[-1]].append(vm_id)
+        if vm not in [leaf_path[-1]]:
+            d[leaf_path[-1]].append(vm)
 
     def dump_tree(self):
         c = {}
@@ -299,11 +316,19 @@ class vm_tree:
     def dump_child(self, subtree, lvl, val):
         print("lvl: " + str(lvl))
         print("subtree: " + str(subtree))
+        info = self.info.get((lvl, val), [])
+        l = []
+        for nfo in info:
+            a = nfo.get("a", "")
+            v = nfo.get("v", "Unknown")
+            i = nfo.get("i", "IconInfoCircle")
+            l.append({"icon": i, "tooltip": f"{a}: {v}"})
+
         c = {
             "id": str(lvl) + "_" + str(val),
             "type": self.n_type[lvl],
-            "label": self.label[lvl] + ":" + str(val),
-            "info": [{"icon": self.n_icon[lvl], "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
+            "label": str(val),
+            "info": l,
             "children": []
         }
         if (lvl + 1) < self.max_level:
@@ -311,16 +336,20 @@ class vm_tree:
                 c["children"].append(self.dump_child(
                     subtree[child], lvl + 1, child))
         else:
-            for vm_id in subtree:
+            vm: OneNode
+            for vm in subtree:
                 self.counter += 1
                 label_text = ""
-                for info in self.vinfo[vm_id]:
-                    label_text += f" {info}"
+                vinfo = self.sas.get_vm_info(vm)
+                for info in vinfo:
+                    a = info["a"]
+                    v = info["v"]
+                    label_text += f"{a}: {v}"
                 t = {
-                    "id": "VM_" + "_" + str(vm_id) + "_" + str(self.counter),
+                    "id": "VM_" + "_" + str(vm.id) + "_" + str(self.counter),
                     "type": "VM",
                     "label": label_text,
-                    "info": [{"icon": self.vicon[vm_id], "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
+                    "info": [{"icon": vm.type, "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
                 }
                 c["children"].append(t)
         return c
