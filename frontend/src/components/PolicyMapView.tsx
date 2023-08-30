@@ -134,7 +134,7 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                         padding: "0.2rem",
                         background: isDark
                             ? theme.colors.dark[6]
-                            : theme.colors.blue[3],
+                            : theme.colors.blue[3]
                     },
                 },
                 itemSelected: {
@@ -143,6 +143,7 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                     },
                 },
                 header: {
+                    maxLabelWidth: "15rem"
                 },
                 headerSelected: {
                     textColor: isDark ? theme.colors.blue[6] : "blue",
