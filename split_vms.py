@@ -135,6 +135,10 @@ class split_vms:
 
     def find_class_idx(self, order, t: list, sas: attr_set):
         for idx in range(0, len(t)):
+            if type(t[idx]) is not list:
+                return None
+            if len(t[idx]) == 0:
+                return None
             cl = t[idx][0]
             if sas.check_class_name(order, cl):
                 return idx
