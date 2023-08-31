@@ -122,23 +122,33 @@ class Rule:
             clientserver = "Client"
         else:
             clientserver = "Server"
-        if self.ports in ["0", "*", "Any", "ALL", ""]:
-            return [f"{clientserver}: All Ports"]
-        if self.port_from == "*" or self.port_to == "*":
+        if self.is_all_ports():
             return [f"{clientserver}: All Ports"]
         if self.proto == "ICMP":
             return [f"{clientserver}: ICMP"]
 
-        types = []
+        res = []
+        port_list = self.get_port_list()
+        for port in port_list:
+            t = f"{clientserver}: {str(port)}/{str(self.proto)}"
+            res.append(t)
+
+        return [*set(res),]
+
+    def is_all_ports(self):
+        return (self.ports in ["0", "*", "Any", "ALL", ""]) or (self.port_from == "*") or (self.port_to == "*")
+
+    def get_port_list(self):
+        if self.is_all_ports():
+            return [0]
+        l = []
         if self.port_from == "":
             self.port_from = self.port_to
         if self.port_to == "":
             self.port_to = self.port_from
         for port in [int(self.port_from), int(self.port_to)]:
-            t = f"{clientserver}: {port}/{str(self.proto)}"
-            types.append(t)
-
-        return [*set(types),]
+            l.append(port)
+        return l
 
 
 def get_all_rules() -> list[Rule]:
