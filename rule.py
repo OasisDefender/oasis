@@ -146,7 +146,7 @@ class Rule:
             self.port_from = self.port_to
         if self.port_to == "":
             self.port_to = self.port_from
-        for port in [int(self.port_from), int(self.port_to)]:
+        for port in range(int(self.port_from), int(self.port_to) + 1):
             l.append(port)
         return l
 

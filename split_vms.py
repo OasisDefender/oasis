@@ -9,6 +9,7 @@ from vm import VM, Nodes, OneNode
 from rule_group import RuleGroup, get_all_rule_groups
 from rule import Rule, get_all_rules
 from classifiers_list import classifier, vminfo
+from links_by_rules import links_by_rules
 
 
 class attr_set:
@@ -92,6 +93,7 @@ class split_vms:
     def __init__(self, clouds: list[Cloud], vpcs: list[VPC], subnets: list[Subnet], nodes: list[OneNode], sgs: list[RuleGroup], rules: list[Rule], sas: attr_set):
         self.vms = {}
         self.info = {}
+        self.idlist_by_node = {}
 
         self.fakeCloud = Cloud(
             None, "fakeCloud", "fakeCloud", "fakeCloud", "", "", "", "", "", "")
@@ -294,6 +296,7 @@ class vm_tree:
         self.vicon = {}
         self.sas = sas
         self.info = info
+        self.idlist_by_node = {}
         for ord in range(0, sas.get_max_order()):
             self.label[ord] = sas.get_order_caption(ord)
             self.n_type[ord] = sas.get_order_node_type(ord)
@@ -354,8 +357,12 @@ class vm_tree:
                     a = info["a"]
                     v = info["v"]
                     label_text += f"{a}: {v}"
+                id = "VM_" + "_" + str(vm.id) + "_" + str(self.counter)
+                if self.idlist_by_node.get(vm, None) == None:
+                    self.idlist_by_node[vm] = []
+                self.idlist_by_node[vm].append(id)
                 t = {
-                    "id": "VM_" + "_" + str(vm.id) + "_" + str(self.counter),
+                    "id": id,
                     "type": "VM",
                     "label": label_text,
                     "info": [{"icon": vm.type, "tooltip": "level:" + str(lvl) + " value:" + str(val)}],
@@ -363,20 +370,16 @@ class vm_tree:
                 c["children"].append(t)
         return c
 
-
-'''class vm_links:
-    def __init__(self, nodes: list[OneNode], sgs: list[RuleGroup], rules: list[Rule]):
-        # self.in_links = {vm:[{vm}]}}
-        # self.out_links = {vm:[]}}
-'''
+    def get_idlist_by_node(self):
+        return self.idlist_by_node
 
 
 def run_test():
     sas = attr_set()
-    sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
+    # sas.add_split("Rule", "", "os", "VM", "IconInfoCircle", "server_type")
     # sas.add_split("OneNode", "type", "type", "VPC")
-    # sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
-    # sas.add_split("VPC", "name", "VPC Name", "VPC")
+    sas.add_split("Cloud", "name", "Cloud Name", "Cloud")
+    sas.add_split("VPC", "name", "VPC Name", "VPC")
     # sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
 #    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
     sas.add_vm_info("<BR>MAC", "mac")
@@ -400,6 +403,11 @@ def run_test():
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
     res = t.dump_tree()
+    idl = t.get_idlist_by_node()
+    l = links_by_rules(nodes.nodes, subnets, sgs, rules)
+    links = l.dump_links(idl)
+
+    print(links)
     print(res)
 
 

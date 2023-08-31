@@ -18,6 +18,7 @@ from split_vms import attr_set, split_vms
 from rule_group import RuleGroup, get_all_rule_groups
 from rule import Rule, get_all_rules
 from vm import Nodes
+from links_by_rules import links_by_rules
 
 app = Flask(__name__)
 CORS(app)
@@ -346,6 +347,47 @@ def api_classification_build():
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
     res = t.dump_tree()
+
+    # return it to frontend
+    return jsonify(res)
+
+
+@app.route('/api/classification2', methods=['POST'])
+def api_classification_build2():
+    # load cloud data from DB
+    context = DB()
+    clouds = context.get_clouds()
+    map = CloudMap()
+    map.get()
+    vpcs = map.vpcs
+    sgs = get_all_rule_groups()
+    rules = get_all_rules()
+    nodes = Nodes(context.get_all_nodes_info())
+    s = []
+    for v in vpcs:
+        s = s + v.subnets
+    subnets = [*set(s)]
+
+    # get data from frontend
+    sel = request.get_json()
+
+    # build classification
+    c = classifier()
+    c.set_selected(sel)
+    sas = attr_set(c)
+
+    sas.add_vm_info("Name", "note")
+    sas.add_vm_info("<br/>Priv DNS", "privdn")
+    sas.add_vm_info("<br/>Pub DNS", "pubdn")
+    sas.add_vm_info("<br/>Name", "name")
+
+    vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
+    t = vms.build_vms_tree(sas)
+    scheme = t.dump_tree()
+    idl = t.get_idlist_by_node()
+    l = links_by_rules(nodes.nodes, subnets, sgs, rules)
+    links = l.dump_links(idl)
+    res = {"scheme": scheme, "links": links}
 
     # return it to frontend
     return jsonify(res)
