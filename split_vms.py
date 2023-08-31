@@ -336,6 +336,7 @@ class vm_tree:
             "id": str(lvl) + "_" + str(val),
             "type": self.n_type[lvl],
             "label": str(val),
+            "iconTooltip": self.label[lvl],
             "info": l,
             "children": []
         }

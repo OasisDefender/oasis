@@ -70,7 +70,9 @@ class classifier:
                            ]})
         '''
         self.items.append({"name": "VM Type", "description": "Host type", "class_name": "OneNode",
-                          "field": "type", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle"})
+                          "field": "type", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+        self.items.append({"name": "RuleAddr", "description": "Address in security Rule", "class_name": "Rule",
+                          "field": "naddr", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle", info=[]):
         self.item = {}
