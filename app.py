@@ -387,7 +387,7 @@ def api_classification_build2():
     idl = t.get_idlist_by_node()
     l = links_by_rules(nodes.nodes, subnets, sgs, rules)
     links = l.dump_links(idl)
-    res = {"scheme": scheme, "links": links}
+    res = {"scheme": scheme, "lines": { "items": links }}
 
     # return it to frontend
     return jsonify(res)

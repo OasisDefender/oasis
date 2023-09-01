@@ -3,6 +3,7 @@ import {
     ChildItem,
     ChildrenInfo,
     DEFAULT_COLLAPSED,
+    UniversalMapInfo,
 } from "../../components/UniversalMap/UniversalMapData";
 import { api } from "../api";
 import { OasisDecodeError } from "../oasiserror";
@@ -42,15 +43,15 @@ const toggleItemById = (id: string, items: ChildItem[]): ChildItem[] => {
 export function usePolicyMap() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<null | string>(null);
-    const [data, setData] = useState<ChildrenInfo | undefined>(undefined);
+    const [data, setData] = useState<UniversalMapInfo | undefined>(undefined);
 
     async function fetchData(classificationIds: number[]) {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await api.post<ChildrenInfo>(
-                "/api/classification",
+            const response = await api.post<UniversalMapInfo>(
+                "/api/classification2",
                 JSON.stringify(classificationIds),
                 {
                     headers: {
@@ -70,10 +71,13 @@ export function usePolicyMap() {
         setData((oldData) => {
             if (!oldData) return oldData;
             const newData: ChildrenInfo = {
-                children: toggleItemById(id, oldData.children ?? []),
-                childrenLayout: oldData.childrenLayout,
+                children: toggleItemById(id, oldData.scheme.children ?? []),
+                childrenLayout: oldData.scheme.childrenLayout,
             };
-            return newData;
+            return {
+                lines: oldData.lines,
+                scheme: newData,
+            };
         });
     }, []);
 

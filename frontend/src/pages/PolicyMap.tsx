@@ -151,7 +151,7 @@ export function PolicyMap() {
             } else {
                 content = (
                     <>
-                        <PolicyMapView data={classification} toogleChildren={toogleChildren} />
+                        <PolicyMapView data={classification.scheme} lines={classification.lines} toogleChildren={toogleChildren} />
                         <Button
                             radius="xl"
                             onClick={(_) => setStage("filters")}

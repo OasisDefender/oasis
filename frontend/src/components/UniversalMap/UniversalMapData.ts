@@ -90,6 +90,11 @@ export type LineInfo = {
     items: LineItem[];
 };
 
+export type UniversalMapInfo = {
+    scheme: ChildrenInfo;
+    lines: LineInfo;
+}
+
 // Functions
 
 export function findItemById(data: ChildrenInfo, id: string): ChildItem | null {

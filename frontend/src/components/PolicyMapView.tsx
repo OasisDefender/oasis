@@ -4,12 +4,14 @@ import {
     ItemStyles,
     ChildrenInfo,
     LayoutStyle,
+    LineInfo,
 } from "../components/UniversalMap/UniversalMapData";
 
 import { useMantineTheme } from "@mantine/core";
 
 interface PolicyMapViewProps {
     data: ChildrenInfo;
+    lines: LineInfo;
     selectedID?: string;
     toogleChildren?: (id: string) => void;
     select?: (id?: string) => void;
@@ -17,6 +19,7 @@ interface PolicyMapViewProps {
 
 const PolicyMapView: React.FC<PolicyMapViewProps> = ({
         data,
+        lines,
         selectedID,
         toogleChildren,
         select
@@ -163,6 +166,7 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                 styles={styles}
                 style={style}
                 data={data}
+                lines={lines}
                 selectedID={selectedID}
                 toogleChildren={toogleChildren}
                 select={select}
