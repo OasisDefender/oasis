@@ -75,7 +75,7 @@ export function usePolicyMap() {
                 childrenLayout: oldData.scheme.childrenLayout,
             };
             return {
-                lines: oldData.lines,
+                lines: { items: oldData.lines.items },
                 scheme: newData,
             };
         });
