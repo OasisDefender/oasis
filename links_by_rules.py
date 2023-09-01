@@ -10,6 +10,9 @@ class links_by_rules:
     def __init__(self, nodes: list[OneNode], subnets: list[Subnet], sgs: list[RuleGroup], rules: list[Rule]):
         self.links = set()
         self.links_info = {}
+        self.onesided_links = set()
+        self.onesided_links_info = {}
+
         self.servers = {}
         self.clients = {}
         for sg in sgs:
@@ -34,6 +37,7 @@ class links_by_rules:
             for node in nodes:
                 if self.is_node_in_sg(node, sg):
                     nodes_by_sg[sg].append(node)
+        # links host -> host
         for (srv_sg, srv_r) in r_compat:
             r_list = r_compat[(srv_sg, srv_r)]
             for n in r_list:
@@ -45,6 +49,20 @@ class links_by_rules:
                 if len(servers) != 0 and len(clients) != 0:
                     self.add_links(servers, clients, ports,
                                    srv_sg, srv_r, cln_sg, cln_r)
+        # links host -> ALL and ALL -> host
+        for sg in self.servers:
+            for r in self.servers[sg]:
+                if self.is_any_addr(r.naddr):
+                    self.add_onesided_in_links(
+                        nodes_by_sg[sg], r.get_port_list(), sg, r)
+        for sg in self.clients:
+            for r in self.clients[sg]:
+                if self.is_any_addr(r.naddr):
+                    self.add_onesided_out_links(
+                        nodes_by_sg[sg], r.get_port_list(), sg, r)
+
+    def is_any_addr(self, a):
+        return a == "0.0.0.0/0"
 
     def is_node_in_sg(self, node: OneNode, sg: RuleGroup):
         return node.if_id == sg.if_id
@@ -83,8 +101,7 @@ class links_by_rules:
 
     def filter_by_addr(self, r: Rule, nl: list[OneNode]):
         # special cases
-        if r.naddr == "0.0.0.0/0":
-            # XXX return nl
+        if self.is_any_addr(r.naddr):
             return []
         if r.naddr == "/32":
             return nl
@@ -108,19 +125,47 @@ class links_by_rules:
                 self.links_info[key].append((srv_sg, srv_r, cln_sg, cln_r))
                 self.links.add(key)
 
+    def add_onesided_out_links(self, cln: list[OneNode], ports: list[int], sg: RuleGroup, r: Rule):
+        for cn in cln:
+            key = (None, cn)
+            if self.onesided_links_info.get(key, None) == None:
+                self.onesided_links_info[key] = []
+            self.onesided_links_info[key].append((sg, r))
+            self.onesided_links.add(key)
+
+    def add_onesided_in_links(self, srv: list[OneNode], ports: list[int], sg: RuleGroup, r: Rule):
+        for sn in srv:
+            key = (sn, None)
+            if self.onesided_links_info.get(key, None) == None:
+                self.onesided_links_info[key] = []
+            self.onesided_links_info[key].append((sg, r))
+            self.onesided_links.add(key)
+
     def get_links(self):
         return self.links
 
     def dump_links(self, idlist_by_node: dict):
         res = []
         i = 0
-        t = set()
         for (srv, cln) in self.links:
             for sn_id in idlist_by_node[srv]:
                 for cn_id in idlist_by_node[cln]:
                     (tooltip_srv, tooltip_cln) = self.make_tooltip(srv, cln)
                     res.append({"id": i, "dst": sn_id, "src": cn_id,
                                "dstTooltip": tooltip_srv, "srcTooltip": tooltip_cln})
+                    i += 1
+        for (srv, cln) in self.onesided_links:
+            if srv != None:
+                for sn_id in idlist_by_node[srv]:
+                    tooltip = self.make_onesided_tooltip(srv, None)
+                    res.append({"id": i, "dst": sn_id, "src": "",
+                               "dstTooltip": tooltip, "srcTooltip": ""})
+                    i += 1
+            if cln != None:
+                for cn_id in idlist_by_node[cln]:
+                    tooltip = self.make_onesided_tooltip(None, cln)
+                    res.append({"id": i, "dst": "", "src": cn_id,
+                               "dstTooltip": "", "srcTooltip": tooltip})
                     i += 1
         return res
 
@@ -134,9 +179,31 @@ class links_by_rules:
         srv_r: Rule
         cln_r: Rule
         for (srv_sg, srv_r, cln_sg, cln_r) in l:
+            if srv_r.proto == "ICMP":
+                sp = srv_r.ports
+                cp = cln_r.ports
+            else:
+                sp = f"Ports: {srv_r.ports}"
+                cp = f"Ports: {cln_r.ports}"
+
             srv_tt = srv_tt + \
-                f"Group: {srv_sg.id}, Proto: {srv_r.proto}, Addr: {srv_r.naddr}, Ports: {srv_r.ports}\n"
+                f"Group: {srv_sg.id}, Proto: {srv_r.proto}, Addr: {srv_r.naddr}, {sp}\n"
             cln_tt = cln_tt + \
-                f"Group: {cln_sg.id}, Proto: {cln_r.proto}, Addr: {cln_r.naddr}, Ports: {cln_r.ports}\n"
+                f"Group: {cln_sg.id}, Proto: {cln_r.proto}, Addr: {cln_r.naddr}, {cp}\n"
 
         return (srv_tt, cln_tt)
+
+    def make_onesided_tooltip(self, srv, cln):
+        key = (srv, cln)
+        l = self.onesided_links_info[key]
+        tt = ""
+        sg: RuleGroup
+        r: Rule
+        for (sg, r) in l:
+            if r.proto == "ICMP":
+                p = r.ports
+            else:
+                p = f"Ports:{r.ports}"
+            tt = tt + \
+                f"Group: {sg.id}, Proto: {r.proto}, {p}\n"
+        return tt
