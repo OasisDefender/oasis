@@ -73,7 +73,7 @@ export type ChildItem = ChildrenInfo & {
     childrenCollapsed?: boolean;
 };
 
-export const DEFAULT_COLLAPSED: boolean = true;
+export const DEFAULT_COLLAPSED: boolean = false;
 
 
 // Lines
