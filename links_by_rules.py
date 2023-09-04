@@ -37,7 +37,11 @@ class links_by_rules:
             for node in nodes:
                 if self.is_node_in_sg(node, sg):
                     nodes_by_sg[sg].append(node)
-        # links host -> host
+            for subnet in subnets:
+                if self.subnet_in_sg(subnet, sg):
+                    nodes_by_sg[sg] = nodes_by_sg[sg] + \
+                        self.get_subnet_nodelist(subnet, nodes)
+        # links host(subnet) -> host(subnet)
         for (srv_sg, srv_r) in r_compat:
             r_list = r_compat[(srv_sg, srv_r)]
             for n in r_list:
@@ -66,6 +70,9 @@ class links_by_rules:
 
     def is_node_in_sg(self, node: OneNode, sg: RuleGroup):
         return node.if_id == sg.if_id
+
+    def subnet_in_sg(self, subnet: Subnet, sg: RuleGroup):
+        return subnet.id == sg.subnet_id
 
     def find_clients_r_for_server_r(self, srv_r: Rule):
         res = []
@@ -98,6 +105,9 @@ class links_by_rules:
             return r1_list
         res = list(set(r1_list).intersection(set(r2_list)))
         return res
+
+    def get_subnet_nodelist(self, subnet: Subnet, nodes: list[OneNode]):
+        return [n for n in nodes if n.subnet_id == subnet.id]
 
     def filter_by_addr(self, r: Rule, nl: list[OneNode]):
         # special cases
