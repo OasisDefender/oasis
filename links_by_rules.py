@@ -194,7 +194,6 @@ class links_by_rules:
                 f"Group: {srv_sg.id}, Proto: {srv_r.proto}, Addr: {srv_r.naddr}, {sp}\n"
             cln_tt = cln_tt + \
                 f"Group: {cln_sg.id}, Proto: {cln_r.proto}, Addr: {cln_r.naddr}, {cp}\n"
-
         return (srv_tt, cln_tt)
 
     def make_onesided_tooltip(self, srv, cln):
