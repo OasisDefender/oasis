@@ -319,6 +319,15 @@ class vm_tree:
         c = {
             "children": []
         }
+        # XXX Internet/All ips
+        i = {
+            "id": "0",
+            "type": "Cloud",
+            "label": "0.0.0.0/0",
+            "iconTooltip": "Any IP",
+            "info": []
+        }
+        c["children"].append(i)
         for child in self.children:
             c["children"].append(self.dump_child(
                 self.children[child], 0, child))

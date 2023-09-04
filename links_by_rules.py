@@ -109,11 +109,13 @@ class links_by_rules:
         r_addr = ip_network(r.naddr)
         res = []
         for n in nl:
-            if n.privip == "" or n.privip == "None":
-                # XXX may be we need check node subnet addr here?
-                continue
-            if ip_network(n.privip).overlaps(r_addr):
-                res.append(n)
+            if n.privip != "" and n.privip != "None":
+                if ip_network(n.privip).overlaps(r_addr):
+                    res.append(n)
+                    continue
+            if n.pubip != "" and n.pubip != "None" and n.pubip != None:
+                if ip_network(n.pubip).overlaps(r_addr):
+                    res.append(n)
         return res
 
     def add_links(self, srv: list[OneNode], cln: list[OneNode], ports: list[int], srv_sg: RuleGroup, srv_r: Rule, cln_sg: RuleGroup, cln_r: Rule):
@@ -147,6 +149,7 @@ class links_by_rules:
     def dump_links(self, idlist_by_node: dict):
         res = []
         i = 0
+        # two sided
         for (srv, cln) in self.links:
             for sn_id in idlist_by_node[srv]:
                 for cn_id in idlist_by_node[cln]:
@@ -154,17 +157,18 @@ class links_by_rules:
                     res.append({"id": i, "dst": sn_id, "src": cn_id,
                                "dstTooltip": tooltip_srv, "srcTooltip": tooltip_cln})
                     i += 1
+        # one sided
         for (srv, cln) in self.onesided_links:
             if srv != None:
                 for sn_id in idlist_by_node[srv]:
                     tooltip = self.make_onesided_tooltip(srv, None)
-                    res.append({"id": i, "dst": sn_id, "src": "",
+                    res.append({"id": i, "dst": sn_id, "src": "0",
                                "dstTooltip": tooltip, "srcTooltip": ""})
                     i += 1
             if cln != None:
                 for cn_id in idlist_by_node[cln]:
                     tooltip = self.make_onesided_tooltip(None, cln)
-                    res.append({"id": i, "dst": "", "src": cn_id,
+                    res.append({"id": i, "dst": "0", "src": cn_id,
                                "dstTooltip": "", "srcTooltip": tooltip})
                     i += 1
         return res
