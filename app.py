@@ -340,10 +340,10 @@ def api_classification_build():
     c.set_selected(sel)
     sas = attr_set(c)
 
-    sas.add_vm_info("Name", "note", None)
-    sas.add_vm_info("<br/>Priv DNS", "privdn", None)
-    sas.add_vm_info("<br/>Pub DNS", "pubdn", None)
-    sas.add_vm_info("<br/>Pub IP", "pubip", None)
+    sas.add_vm_info("Name", "note")
+    sas.add_vm_info("<br/>Priv DNS", "privdn")
+    sas.add_vm_info("<br/>Pub DNS", "pubdn")
+    sas.add_vm_info("<br/>Pub IP", "pubip")
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
@@ -378,15 +378,15 @@ def api_classification_build2():
     sas = attr_set(c)
 
     if DEMO_MODE:
-        sas.add_vm_info("Name", "note", None)
-        sas.add_vm_info("<br/>Priv DNS", "privdn", None)
-        sas.add_vm_info("<br/>Pub DNS", None, "hide_pubdn")
-        sas.add_vm_info("<br/>Pub IP", None, "hide_pubip")
+        sas.add_vm_info("Name", "note")
+        sas.add_vm_info("<br/>Priv DNS", "privdn")
+        sas.add_vm_info("<br/>Pub DNS", "hide_pubdn")
+        sas.add_vm_info("<br/>Pub IP", "hide_pubip")
     else:
-        sas.add_vm_info("Name", "note", None)
-        sas.add_vm_info("<br/>Priv DNS", "privdn", None)
-        sas.add_vm_info("<br/>Pub DNS", "pubdn", None)
-        sas.add_vm_info("<br/>Pub IP", "pubip", None)
+        sas.add_vm_info("Name", "note")
+        sas.add_vm_info("<br/>Priv DNS", "privdn")
+        sas.add_vm_info("<br/>Pub DNS", "pubdn")
+        sas.add_vm_info("<br/>Pub IP", "pubip")
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)

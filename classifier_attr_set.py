@@ -9,26 +9,26 @@ class attr_set:
         if (classifiers != None):
             for item in classifiers.selected:
                 self.sas.append({"class": item["class_name"], "attr": item["field"], "caption": item["description"],
-                                "type": item["node_type"], "icon": item["node_icon"], "fn": item["fn"]})
+                                "type": item["node_type"], "icon": item["node_icon"]})
                 self.info.append(item["info"])
         if (vm_fields != None):
             for item in vm_fields.selected:
                 self.vinfo.append(
-                    {"name": item["name"], "attr": item["field"], "fn": item["fn"]})
+                    {"name": item["name"], "attr": item["field"]})
 
-    def add_split(self, name, attribute, cap, n_type="Cloud", icon="IconInfoCircle", fn=None, info=[]):
+    def add_split(self, name, attribute, cap, n_type="Cloud", icon="IconInfoCircle", info=[]):
         self.sas.append({'class': name, 'attr': attribute,
-                        'caption': cap, 'type': n_type, 'icon': icon, 'fn': fn})
+                        'caption': cap, 'type': n_type, 'icon': icon})
         self.info.append(info)
 
-    def add_vm_info(self, name, attribute, fn):
-        self.vinfo.append({"name": name, 'attr': attribute, 'fn': fn})
+    def add_vm_info(self, name, attribute):
+        self.vinfo.append({"name": name, 'attr': attribute})
 
-    def add_info(self, order, title,  attr_name, fn, icon="IconInfoCircle"):
+    def add_info(self, order, title,  attr_name, icon="IconInfoCircle"):
         if self.info.get(order, None) == None:
             self.info[order] = []
         self.info[order].append(
-            {"title": title, "attr": attr_name, 'fn': fn, "icon": icon})
+            {"title": title, "attr": attr_name, "icon": icon})
 
     def get_info(self, order, cl):
         info = []
@@ -36,6 +36,8 @@ class attr_set:
             a = item["title"]
             i = item.get("icon", "IconInfoCircle")
             v = getattr(cl, item['attr'])
+            if callable(v):
+                v = v()
             info.append({"a": a, "v": v, "i": i})
         return info
 
@@ -52,19 +54,19 @@ class attr_set:
         info = []
         for i in self.vinfo:
             a = i["name"]
-            v = self.get_cl_val(cl, i['attr'], i['fn'])
+            v = self.get_cl_val(cl, i['attr'])
             info.append({"a": a, "v": v})
         return info
 
     def get_val_by_order(self, order, cl):
-        return self.get_cl_val(cl, self.sas[order]['attr'], self.sas[order]['fn'])
+        return self.get_cl_val(cl, self.sas[order]['attr'])
 
-    def get_cl_val(self, cl, attr, fn):
-        if attr != None:
-            return getattr(cl, attr)
-        if fn != None:
-            return getattr(cl, fn)()
-        return None
+    def get_cl_val(self, cl, attr):
+        t = getattr(cl, attr)
+        if callable(t):
+            return t()
+        else:
+            return t
 
     def get_order_caption(self, order):
         if order < len(self.sas):
