@@ -216,8 +216,8 @@ def run_test():
     sas.add_split("VPC", "name", "VPC Name", "VPC")
     # sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
 #    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
-    sas.add_vm_info("Public IP", None, "hide_pubip")
-    sas.add_vm_info("<br/>Public Name", None, "hide_pubdn")
+    sas.add_vm_info("Public IP", "hide_pubip")
+    sas.add_vm_info("<br/>Public Name", "hide_pubdn")
 
     context = DB()
     clouds = context.get_clouds()
