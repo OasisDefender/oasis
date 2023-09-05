@@ -37,7 +37,11 @@ class links_by_rules:
             for node in nodes:
                 if self.is_node_in_sg(node, sg):
                     nodes_by_sg[sg].append(node)
-        # links host -> host
+            for subnet in subnets:
+                if self.subnet_in_sg(subnet, sg):
+                    nodes_by_sg[sg] = nodes_by_sg[sg] + \
+                        self.get_subnet_nodelist(subnet, nodes)
+        # links host(subnet) -> host(subnet)
         for (srv_sg, srv_r) in r_compat:
             r_list = r_compat[(srv_sg, srv_r)]
             for n in r_list:
@@ -66,6 +70,9 @@ class links_by_rules:
 
     def is_node_in_sg(self, node: OneNode, sg: RuleGroup):
         return node.if_id == sg.if_id
+
+    def subnet_in_sg(self, subnet: Subnet, sg: RuleGroup):
+        return subnet.id == sg.subnet_id
 
     def find_clients_r_for_server_r(self, srv_r: Rule):
         res = []
@@ -99,6 +106,9 @@ class links_by_rules:
         res = list(set(r1_list).intersection(set(r2_list)))
         return res
 
+    def get_subnet_nodelist(self, subnet: Subnet, nodes: list[OneNode]):
+        return [n for n in nodes if n.subnet_id == subnet.id]
+
     def filter_by_addr(self, r: Rule, nl: list[OneNode]):
         # special cases
         if self.is_any_addr(r.naddr):
@@ -109,11 +119,13 @@ class links_by_rules:
         r_addr = ip_network(r.naddr)
         res = []
         for n in nl:
-            if n.privip == "" or n.privip == "None":
-                # XXX may be we need check node subnet addr here?
-                continue
-            if ip_network(n.privip).overlaps(r_addr):
-                res.append(n)
+            if n.privip != "" and n.privip != "None":
+                if ip_network(n.privip).overlaps(r_addr):
+                    res.append(n)
+                    continue
+            if n.pubip != "" and n.pubip != "None" and n.pubip != None:
+                if ip_network(n.pubip).overlaps(r_addr):
+                    res.append(n)
         return res
 
     def add_links(self, srv: list[OneNode], cln: list[OneNode], ports: list[int], srv_sg: RuleGroup, srv_r: Rule, cln_sg: RuleGroup, cln_r: Rule):
@@ -147,6 +159,7 @@ class links_by_rules:
     def dump_links(self, idlist_by_node: dict):
         res = []
         i = 0
+        # two sided
         for (srv, cln) in self.links:
             for sn_id in idlist_by_node[srv]:
                 for cn_id in idlist_by_node[cln]:
@@ -154,17 +167,18 @@ class links_by_rules:
                     res.append({"id": i, "dst": sn_id, "src": cn_id,
                                "dstTooltip": tooltip_srv, "srcTooltip": tooltip_cln})
                     i += 1
+        # one sided
         for (srv, cln) in self.onesided_links:
             if srv != None:
                 for sn_id in idlist_by_node[srv]:
                     tooltip = self.make_onesided_tooltip(srv, None)
-                    res.append({"id": i, "dst": sn_id, "src": "",
+                    res.append({"id": i, "dst": sn_id, "src": "0",
                                "dstTooltip": tooltip, "srcTooltip": ""})
                     i += 1
             if cln != None:
                 for cn_id in idlist_by_node[cln]:
                     tooltip = self.make_onesided_tooltip(None, cln)
-                    res.append({"id": i, "dst": "", "src": cn_id,
+                    res.append({"id": i, "dst": "0", "src": cn_id,
                                "dstTooltip": "", "srcTooltip": tooltip})
                     i += 1
         return res
@@ -190,7 +204,6 @@ class links_by_rules:
                 f"Group: {srv_sg.id}, Proto: {srv_r.proto}, Addr: {srv_r.naddr}, {sp}\n"
             cln_tt = cln_tt + \
                 f"Group: {cln_sg.id}, Proto: {cln_r.proto}, Addr: {cln_r.naddr}, {cp}\n"
-
         return (srv_tt, cln_tt)
 
     def make_onesided_tooltip(self, srv, cln):
