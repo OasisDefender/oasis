@@ -38,7 +38,7 @@ class Destination:
         outbound  = list(set(self.outbound))
         if self.type == "network":
             return {
-                "to": { "type": self.type, "address": self.address},
+                "to": { "type": self.type, "address": self.hide_pubip()}, #self.address},
                 "inbound":  ', '.join(inbound),
                 "outbound": ', '.join(outbound)
             }
@@ -48,6 +48,14 @@ class Destination:
                 "inbound":  ', '.join(inbound),
                 "outbound": ', '.join(outbound)
             }
+
+    def hide_pubip(self):
+        if self.address == '0.0.0.0/0':
+            return self.address
+        if self.address == None or self.address.find(".") == -1:
+            return None
+        l = self.address.rsplit('.', 2)
+        return f"XXX.XXX.{l[1]}.{l[2]}"
 
 
 def destination_encoder(obj):
