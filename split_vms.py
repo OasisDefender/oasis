@@ -47,7 +47,7 @@ class split_vms:
             for n in nodes:
                 olist = o_dict[n][idx]
                 for o in olist:
-                    val = sas.get_val(order, o)
+                    val = sas.get_val_by_order(order, o)
                     self.add_val(n, order, val)
                     info = sas.get_info(order, o)
                     if type(val) is list:
@@ -216,9 +216,8 @@ def run_test():
     sas.add_split("VPC", "name", "VPC Name", "VPC")
     # sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
 #    sas.add_split("RuleGroup", "name", "Security Group Name", "VPC")
-    sas.add_vm_info("<BR>MAC", "mac")
-    sas.add_vm_info("<BR>Name", "note")
-    sas.add_vm_info("<BR>Private IP", "privip")
+    sas.add_vm_info("Public IP", None, "hide_pubip")
+    sas.add_vm_info("<br/>Public Name", None, "hide_pubdn")
 
     context = DB()
     clouds = context.get_clouds()

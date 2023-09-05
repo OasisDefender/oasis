@@ -96,6 +96,18 @@ class OneNode:
         self.if_id: str = n[14]
         self.cloud_id: int = n[15]
 
+    def hide_pubip(self):
+        if self.pubip == None or self.pubip.find(".") == -1:
+            return None
+        l = self.pubip.rsplit('.', 2)
+        return f"XXX.XXX.{l[1]}.{l[2]}"
+
+    def hide_pubdn(self):
+        if self.pubip == None or self.pubdn.find(".") == -1:
+            return None
+        l = self.pubdn.rsplit('.', 3)
+        return f"XXX.XXX.{l[1]}.{l[2]}.{l[3]}"
+
 
 class Nodes:
     def __init__(self, req_res: list[list[str]]):

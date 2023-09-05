@@ -48,7 +48,7 @@ class classifier:
         self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "OneNode",
                           "field": "azone", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
-                          "field": " ", "fn": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": None, "fn": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "OneNode",
                           "field": "pubip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "OneNode",

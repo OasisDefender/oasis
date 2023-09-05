@@ -19,6 +19,7 @@ from rule_group import RuleGroup, get_all_rule_groups
 from rule import Rule, get_all_rules
 from vm import Nodes
 from links_by_rules import links_by_rules
+from global_settings import DEMO_MODE
 
 app = Flask(__name__)
 CORS(app)
@@ -339,10 +340,10 @@ def api_classification_build():
     c.set_selected(sel)
     sas = attr_set(c)
 
-    sas.add_vm_info("Name", "note")
-    sas.add_vm_info("<br/>Priv DNS", "privdn")
-    sas.add_vm_info("<br/>Pub DNS", "pubdn")
-    sas.add_vm_info("<br/>Name", "name")
+    sas.add_vm_info("Name", "note", None)
+    sas.add_vm_info("<br/>Priv DNS", "privdn", None)
+    sas.add_vm_info("<br/>Pub DNS", "pubdn", None)
+    sas.add_vm_info("<br/>Pub IP", "pubip", None)
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
@@ -376,10 +377,16 @@ def api_classification_build2():
     c.set_selected(sel)
     sas = attr_set(c)
 
-    sas.add_vm_info("Name", "note")
-    sas.add_vm_info("<br/>Priv DNS", "privdn")
-    sas.add_vm_info("<br/>Pub DNS", "pubdn")
-    sas.add_vm_info("<br/>Name", "name")
+    if DEMO_MODE:
+        sas.add_vm_info("Name", "note", None)
+        sas.add_vm_info("<br/>Priv DNS", "privdn", None)
+        sas.add_vm_info("<br/>Pub DNS", None, "hide_pubdn")
+        sas.add_vm_info("<br/>Pub IP", None, "hide_pubip")
+    else:
+        sas.add_vm_info("Name", "note", None)
+        sas.add_vm_info("<br/>Priv DNS", "privdn", None)
+        sas.add_vm_info("<br/>Pub DNS", "pubdn", None)
+        sas.add_vm_info("<br/>Pub IP", "pubip", None)
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
@@ -387,7 +394,7 @@ def api_classification_build2():
     idl = t.get_idlist_by_node()
     l = links_by_rules(nodes.nodes, subnets, sgs, rules)
     links = l.dump_links(idl)
-    res = {"scheme": scheme, "lines": { "items": links }}
+    res = {"scheme": scheme, "lines": {"items": links}}
 
     # return it to frontend
     return jsonify(res)
