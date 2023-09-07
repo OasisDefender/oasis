@@ -260,7 +260,7 @@ def api_cloud_add():
             fw.get_topology(cloud.id)
         else:
             context.delete_cloud(save_cloud_id)
-            return f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials?", 500
+            return f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials or permissions?", 500
 
     return cloud.to_dict(), 200
 
