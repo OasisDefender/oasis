@@ -67,7 +67,11 @@ class FW_Azure:
         try:
             for vpc in vpcs:
                 break
-        except:
+        except Exception as inst:
+            print(type(inst))
+            print(inst.args)
+            print(inst)
+            
             self.__cloud_id = 0
 
         return self.__cloud_id

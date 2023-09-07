@@ -260,7 +260,7 @@ def api_cloud_add():
             fw.get_topology(cloud.id)
         else:
             context.delete_cloud(save_cloud_id)
-            return f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials?", 500
+            return f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials or permissions?", 500
 
     return cloud.to_dict(), 200
 
@@ -340,10 +340,10 @@ def api_classification_build():
     c.set_selected(sel)
     sas = attr_set(c)
 
-    sas.add_vm_info("Name", "note", None)
-    sas.add_vm_info("<br/>Priv DNS", "privdn", None)
-    sas.add_vm_info("<br/>Pub DNS", "pubdn", None)
-    sas.add_vm_info("<br/>Pub IP", "pubip", None)
+    sas.add_vm_info("Name", "note")
+    sas.add_vm_info("<br/>Priv DNS", "privdn")
+    sas.add_vm_info("<br/>Pub DNS", "pubdn")
+    sas.add_vm_info("<br/>Pub IP", "pubip")
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
@@ -378,21 +378,22 @@ def api_classification_build2():
     sas = attr_set(c)
 
     if DEMO_MODE:
-        sas.add_vm_info("Name", "note", None)
-        sas.add_vm_info("<br/>Priv DNS", "privdn", None)
-        sas.add_vm_info("<br/>Pub DNS", None, "hide_pubdn")
-        sas.add_vm_info("<br/>Pub IP", None, "hide_pubip")
+        sas.add_vm_info("Name", "note")
+        sas.add_vm_info("<br/>Priv DNS", "privdn")
+        sas.add_vm_info("<br/>Priv IP", "privip")
+        sas.add_vm_info("<br/>Pub DNS", "hide_pubdn")
+        sas.add_vm_info("<br/>Pub IP", "hide_pubip")
     else:
-        sas.add_vm_info("Name", "note", None)
-        sas.add_vm_info("<br/>Priv DNS", "privdn", None)
-        sas.add_vm_info("<br/>Pub DNS", "pubdn", None)
-        sas.add_vm_info("<br/>Pub IP", "pubip", None)
+        sas.add_vm_info("Name", "note")
+        sas.add_vm_info("<br/>Priv DNS", "privdn")
+        sas.add_vm_info("<br/>Pub DNS", "pubdn")
+        sas.add_vm_info("<br/>Pub IP", "pubip")
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
-    scheme = t.dump_tree()
-    idl = t.get_idlist_by_node()
     l = links_by_rules(nodes.nodes, subnets, sgs, rules)
+    scheme = t.dump_tree(l.ext_things)
+    idl = t.get_idlist_by_node()
     links = l.dump_links(idl)
     res = {"scheme": scheme, "lines": {"items": links}}
 

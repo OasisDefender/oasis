@@ -30,33 +30,33 @@ class classifier:
         self.items = []
         self.selected = []
         self.items.append({"name": "Cloud", "description": "split by clouds", "class_name": "Cloud",
-                          "field": "name", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": [{"title": "Type", "attr": "cloud_type", "icon": "IconInfoCircle"}, {"title": "Region", "attr": "aws_region", "icon": "IconInfoCircle"}]})
+                          "field": "name", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": [{"title": "Type", "attr": "cloud_type", "icon": "IconInfoCircle"}, {"title": "Region", "attr": "aws_region", "icon": "IconInfoCircle"}]})
         self.items.append({"name": "Cloud type", "description": "split by cloud type", "class_name": "Cloud",
-                          "field": "cloud_type", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "cloud_type", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "Region", "description": "Region", "class_name": "Cloud",
-                          "field": "aws_region", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "aws_region", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VPC", "description": "Split by VPC/VNet", "class_name": "VPC",
-                          "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": [{"title": "Net Address", "attr": "network"}]})
+                          "field": "name", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": [{"title": "Net Address", "attr": "network"}]})
         self.items.append({"name": "Subnet", "description": "Subnet name", "class_name": "Subnet",
-                          "field": "name", "fn": None, "node_type": "Subnet", "node_icon": "IconInfoCircle", "info": [{"title": "ARN", "attr": "arn"}, {"title": "Address", "attr": "network"}]})
+                          "field": "name", "node_type": "Subnet", "node_icon": "IconInfoCircle", "info": [{"title": "ARN", "attr": "arn"}, {"title": "Address", "attr": "network"}]})
         self.items.append({"name": "VM OS", "description": "Host Operating system", "class_name": "OneNode",
-                          "field": "os", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "os", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM State", "description": "Host current state", "class_name": "OneNode",
-                          "field": "state", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "state", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "Security group", "description": "Security group name", "class_name": "RuleGroup",
-                          "field": "name", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "name", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "Availability Zone", "description": "VM Availability Zone", "class_name": "OneNode",
-                          "field": "azone", "fn": None, "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "azone", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
-                          "field": None, "fn": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "OneNode",
-                          "field": "pubip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "pubip", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "OneNode",
-                          "field": "privip", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "privip", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private DNS Name", "description": "Private DNS Name", "class_name": "OneNode",
-                          "field": "privdn", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "privdn", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Name", "description": "Host Name", "class_name": "OneNode",
-                          "field": "name", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "name", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         '''        self.items.append({"name": "VM", "description": "Host description", "class_name": "OneNode",
                           "field": "note", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle",
                            "info": [
@@ -70,9 +70,9 @@ class classifier:
                            ]})
         '''
         self.items.append({"name": "VM Type", "description": "Host type", "class_name": "OneNode",
-                          "field": "type", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "RuleAddr", "description": "Address in security Rule", "class_name": "Rule",
-                          "field": "naddr", "fn": None, "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+                          "field": "naddr", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle", info=[]):
         self.item = {}
@@ -80,7 +80,6 @@ class classifier:
         self.item["description"] = description
         self.item["class_name"] = class_name
         self.item["field"] = field
-        self.item["fn"] = fn
         self.item["node_type"] = node_type
         self.item["node_icon"] = node_icon
         self.item["info"] = info

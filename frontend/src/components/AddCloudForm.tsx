@@ -10,6 +10,7 @@ import {
     NativeSelect,
     PasswordInput,
     Select,
+    Text,
     TextInput,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -144,7 +145,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                         >
                             How to create an Access Key for Oasis Defender?
                         </Anchor>
-                        <TextInput
+                        <PasswordInput
                             withAsterisk
                             label="Key"
                             placeholder=""
@@ -170,19 +171,19 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                         >
                             How to create an access for Oasis Defender?
                         </Anchor>
-                        <TextInput
+                        <PasswordInput
                             withAsterisk
                             label="Subscription ID"
                             placeholder=""
                             {...form.getInputProps("azure_subscription_id")}
                         />
-                        <TextInput
+                        <PasswordInput
                             withAsterisk
                             label="Tenant ID"
                             placeholder=""
                             {...form.getInputProps("azure_tenant_id")}
                         />
-                        <TextInput
+                        <PasswordInput
                             withAsterisk
                             label="Client ID"
                             placeholder=""
@@ -284,7 +285,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 <List.Item>
                                     Copy the "Access key" and "Secret access
                                     key" into Oasis Defender
-                                    <TextInput
+                                    <PasswordInput
                                         withAsterisk
                                         label="Key"
                                         placeholder=""
@@ -301,9 +302,187 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 </List.Item>
                             </List>
                         </List.Item>
-                    </List>                    
+                    </List>
                 )}
-                <Group position="right" mt="md">                    
+                {form.values.cloud_type === "AZURE" && (
+                    <List type="ordered" w="90%">
+                        <List.Item w="100%">
+                            How to obtain Subscription ID:
+                            <List listStyleType="disc" w="100%">
+                                <List.Item>
+                                    {" "}
+                                    Sign in to the Azure portal{" "}
+                                </List.Item>
+                                <List.Item>
+                                    {" "}
+                                    Navigate to <b>Subscriptions</b>{" "}
+                                </List.Item>
+                                <List.Item>
+                                    {" "}
+                                    Copy <b>Subscription ID</b> into Oazis
+                                    Defender
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                        <PasswordInput
+                            withAsterisk
+                            label="Subscription ID"
+                            placeholder=""
+                            {...form.getInputProps("azure_subscription_id")}
+                        />
+                        <br/>
+                        <List.Item>
+                            Register the application in Azure:
+                            <List listStyleType="disc">
+                                <List.Item>
+                                    Navigate to <b>App registrations</b>
+                                </List.Item>
+                                <List.Item>
+                                    On the <b>App registrations</b> page, select{" "}
+                                    <b>+ New registration</b>
+                                </List.Item>
+                                <List.Item>
+                                    On the <b>Register an application</b> page, fill
+                                    out the form as follows:
+                                    <br />
+                                    for <b>Name</b> enter <i>Oasis Defender</i>,
+                                    <br />
+                                    for <b>
+                                        Supported account types
+                                    </b> select{" "}
+                                    <i>
+                                        Accounts in this organizational
+                                        directory only
+                                    </i>
+                                    .
+                                </List.Item>
+                                <List.Item>
+                                    Select Register to register your app and
+                                    create the application service principal.
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                        <List.Item>
+                            On the App registration page for{" "}
+                            <b>Oasis Defender</b> app copy{" "}
+                            <b>Directory (tenant) ID</b> into:
+                        </List.Item>
+                        <PasswordInput
+                            withAsterisk
+                            label="Tenant ID"
+                            placeholder=""
+                            {...form.getInputProps("azure_tenant_id")}
+                        />
+                        <br/>
+                        <List.Item>
+                            On the App registration page for{" "}
+                            <b>Oasis Defender</b> app copy{" "}
+                            <b>Application (client) ID</b> into:
+                        </List.Item>
+                        <PasswordInput
+                            withAsterisk
+                            label="Client ID"
+                            placeholder=""
+                            {...form.getInputProps("azure_client_id")}
+                        />
+                        <br/>
+                        <List.Item>
+                            Add new client secret:
+                            <List listStyleType="disc">
+                                <List.Item>
+                                    On the <b>Certificates & secrets</b> page
+                                </List.Item>
+                                <List.Item>
+                                    Select <b>+ New client secret</b> the{" "}
+                                    <b>Add a client secret</b> dialog will pop
+                                    out from the right-hand side of the page. In
+                                    this dialog:
+                                    <br />
+                                    for <b>Description</b> enter{" "}
+                                    <i>Oasis Defender app</i>,
+                                    <br />
+                                    for <b>Expires</b> select a value of 24
+                                    months.
+                                </List.Item>
+                                <List.Item>
+                                    Select <b>Add</b> to add the secret.
+                                </List.Item>
+                                <List.Item>
+                                    On the <b>Certificates & secrets</b> page,
+                                    you will be shown the value of the client
+                                    secret. Copy the secret <b>Value</b>, as it
+                                    will be shown only once.
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                        <PasswordInput
+                            withAsterisk
+                            label="Client Secret"
+                            placeholder=""
+                            {...form.getInputProps("azure_client_secret")}
+                        />
+                        <br/>
+                        <List.Item>
+                            Assign roles to the application service principal:
+                            <List listStyleType="disc">
+                                <List.Item>
+                                    Navigate to <b>Resource groups</b>
+                                </List.Item>
+                                <List.Item>
+                                    {" "}
+                                    On the page for the resource group, which
+                                    should be added to Oasis Defender, select{" "}
+                                    <b>Access control (IAM)</b> from the
+                                    left-hand menu
+                                </List.Item>
+                                <List.Item>
+                                    Select the <b>Role assignments</b> tab{" "}
+                                </List.Item>
+                                <List.Item>
+                                    Select <b>+ Add</b> from the top menu and
+                                    then <b>Add role assignment</b> from the
+                                    resulting drop-down menu{" "}
+                                </List.Item>
+                                <List.Item>
+                                    To create <b>ReadOnly</b> account: <br />
+                                    Select role <b>Reader</b> and press{" "}
+                                    <b>Next</b> button.
+                                </List.Item>
+                                <List.Item>
+                                    The Select text box can be used to filter
+                                    the list of users and groups inyour
+                                    subscription. Type <i>Oasis Defender</i>.
+                                </List.Item>
+                                <List.Item>
+                                    Select the service principal associated with{" "}
+                                    <b>Oasis Defender</b> application.
+                                </List.Item>
+                                <List.Item>
+                                    Select <b>Select</b> at the bottom of the
+                                    dialog to continue
+                                </List.Item>
+                                <List.Item>
+                                    The service principal will now show as
+                                    selected on the <b>Add role assignment</b>{" "}
+                                    screen
+                                </List.Item>
+                                <List.Item>
+                                    Select <b>Review + assign</b> to go to the
+                                    final page and then <b>Review + assign</b>{" "}
+                                    again to complete the process.
+                                </List.Item>
+                            </List>
+                        </List.Item>
+                        <br/>
+                        <Text>
+                            For more information, visit the{" "}
+                            <a href="https://learn.microsoft.com/ru-ru/azure/developer/python/sdk/authentication-on-premises-apps?tabs=azure-portal">
+                                Azure Help page
+                            </a>
+                        </Text>
+                    </List>
+                )}
+                <Group position="right" mt="md">
                     <Button color="blue" onClick={closeCloudHelp}>
                         Continue
                     </Button>

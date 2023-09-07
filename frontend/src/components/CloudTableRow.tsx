@@ -10,9 +10,15 @@ interface CloudTableRowProps {
     cloud: ICloudView;
     makeSync?: (cloud: ICloudView) => Promise<void>;
     makeDelete?: (cloud: ICloudView) => Promise<void>;
+    infoShowed: boolean;
 }
 
-export function CloudTableRow({ cloud, makeSync, makeDelete }: CloudTableRowProps) {
+export function CloudTableRow({
+    cloud,
+    makeSync,
+    makeDelete,
+    infoShowed,
+}: CloudTableRowProps) {
     const [syncLoading, setSyncLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -56,18 +62,29 @@ export function CloudTableRow({ cloud, makeSync, makeDelete }: CloudTableRowProp
                 {cloud.cloud_type === "AWS" && (
                     <>
                         <b>aws_region:</b> {cloud.aws_region} <br />
-                        <b>aws_key:</b> {cloud.aws_key}
+                        {infoShowed && (
+                            <>
+                                <b>aws_key:</b> {cloud.aws_key}
+                            </>
+                        )}
                     </>
                 )}
                 {cloud.cloud_type === "AZURE" && (
                     <>
-                        <b>azure_subscription_id:</b>{" "}
-                        {cloud.azure_subscription_id} <br />
-                        <b>azure_tenant_id:</b> {cloud.azure_tenant_id} <br />
-                        <b>azure_client_id:</b> {cloud.azure_client_id}
+                        {infoShowed && (
+                            <>
+                                <b>azure_subscription_id:</b>{" "}
+                                {cloud.azure_subscription_id}
+                                <br />
+                                <b>azure_tenant_id:</b> {cloud.azure_tenant_id}
+                                <br />
+                                <b>azure_client_id:</b> {cloud.azure_client_id}
+                            </>
+                        )}
                     </>
                 )}
             </td>
+
             <td>
                 <Group spacing="xs">
                     <Button
