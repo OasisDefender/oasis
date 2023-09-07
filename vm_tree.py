@@ -32,20 +32,21 @@ class vm_tree:
         if vm not in [leaf_path[-1]]:
             d[leaf_path[-1]].append(vm)
 
-    def dump_tree(self):
+    def dump_tree(self, ext_things: set()):
         c = {}
         c = {
             "children": []
         }
-        # XXX Internet/All ips
-        i = {
-            "id": "0",
-            "type": "Cloud",
-            "label": "0.0.0.0/0",
-            "iconTooltip": "Any IP",
-            "info": []
-        }
-        c["children"].append(i)
+        # XXX Internet/External things
+        for (id, ip) in ext_things:
+            i = {
+                "id": id,
+                "type": "Cloud",
+                "label": ip,
+                "iconTooltip": "External IP",
+                "info": []
+            }
+            c["children"].append(i)
         for child in self.children:
             c["children"].append(self.dump_child(
                 self.children[child], 0, child))
