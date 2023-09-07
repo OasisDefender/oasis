@@ -38,54 +38,55 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
     selectedLineID,
     toogleChildren,
     select,
-    selectLine
+    selectLine,
 }) => {
+    const [linesRerenderNumber, setLinesRerenderNumber] = useState(0);
     let wasRealPanning = false;
     const onPanningStart = (
         ref: ReactZoomPanPinchRef,
         event: TouchEvent | MouseEvent
     ) => {
         wasRealPanning = false;
-    }
+    };
     const onPanning = (
         ref: ReactZoomPanPinchRef,
         event: TouchEvent | MouseEvent
     ) => {
         wasRealPanning = true;
-    }
+    };
     const onPanningStop = (
         ref: ReactZoomPanPinchRef,
         event: TouchEvent | MouseEvent
     ) => {
         if (!wasRealPanning) {
-            // Tap            
+            // Tap
             if (event.target && event.target instanceof Element) {
                 if (event.target.closest(".toogle-children")) {
                     // toogleChildren
                     const item = event.target.closest(".um-item");
                     if (item) {
                         toogleChildren?.(item.id);
+                        setInterval(() => {
+                            setLinesRerenderNumber((old) => old + 1);
+                        });
                     }
-                }
-                else {
+                } else {
                     const line = event.target.closest(".um-line");
-                    if (line) {                                                
+                    if (line) {
                         selectLine?.(line.id);
-                    }                    
-                    else {
+                    } else {
                         // select item
                         const item = event.target.closest(".um-item");
                         if (item) {
                             select?.(item.id);
-                        }
-                        else {
+                        } else {
                             select?.(undefined);
                         }
                     }
                 }
             }
         }
-    }
+    };
 
     const onTransformed = (
         ref: ReactZoomPanPinchRef,
@@ -94,9 +95,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
             positionX: number;
             positionY: number;
         }
-    ) => {
-
-    };
+    ) => {};
 
     return (
         <>
@@ -122,7 +121,12 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                         toogleChildren={toogleChildren}
                         selectedID={selectedID}
                     />
-                    <UniversalMapLines lines={lines} styles={lineStyles} selectedID={selectedLineID} />
+                    <UniversalMapLines
+                        lines={lines}
+                        styles={lineStyles}
+                        selectedID={selectedLineID}
+                        rerenderNumber={linesRerenderNumber}
+                    />
                 </TransformComponent>
             </TransformWrapper>
         </>

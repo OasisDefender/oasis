@@ -139,12 +139,14 @@ interface UniversalMapLinesProps {
     lines?: LineInfo;
     styles?: LineStyles;
     selectedID?: string;
+    rerenderNumber?: number;
 }
 
 const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({
     lines,
     styles,
     selectedID,
+    rerenderNumber
 }) => {
     const [, setRenderState] = useState(0);
     const ref = useRef<SVGSVGElement | null>(null);
