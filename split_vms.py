@@ -234,10 +234,12 @@ def run_test():
     subnets = [*set(s)]
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
+    for rule in rules:
+        print(vars(rule))
     t = vms.build_vms_tree(sas)
-    res = t.dump_tree()
-    idl = t.get_idlist_by_node()
     l = links_by_rules(nodes.nodes, subnets, sgs, rules)
+    res = t.dump_tree(l.ext_things)
+    idl = t.get_idlist_by_node()
     links = l.dump_links(idl)
 
     print(links)
