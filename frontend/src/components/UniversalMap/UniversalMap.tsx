@@ -66,7 +66,7 @@ const UniversalMap: React.FC<UniversalMapProps> = ({
                     const item = event.target.closest(".um-item");
                     if (item) {
                         toogleChildren?.(item.id);
-                        setInterval(() => {
+                        setTimeout(() => {
                             setLinesRerenderNumber((old) => old + 1);
                         });
                     }
