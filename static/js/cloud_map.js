@@ -460,7 +460,7 @@ function recalculateLinks() {
         let maxGap = 0.0;
         let maxGapPos = 0.0;
         if (links.length > 1) {
-            maxGap = links[0].calculated.srcAngle + (2 * Math.PI - links[links.length - 1].calculated.srcAngle);
+            maxGap = links[0].calculated.srcAngle - (2 * Math.PI - links[links.length - 1].calculated.srcAngle);
             maxGapPos = 0;
             for (let i = 1; i < links.length; i++) {            
                 let gap = links[i].calculated.srcAngle - links[i - 1].calculated.srcAngle;

@@ -21,5 +21,16 @@ class Cloud:
         self.azure_tenant_id = azure_tenant_id
         self.azure_client_id = azure_client_id
         self.azure_client_secret = azure_client_secret
-
+        
+    def to_dict(self) -> dict:
+        return { 
+              'id': self.id, 
+              'name': self.name, 
+              'cloud_type': self.cloud_type,
+              'aws_region': self.aws_region,
+              'aws_key': self.aws_key,               
+              'azure_tenant_id': self.azure_tenant_id,
+              'azure_client_id': self.azure_client_id,
+              'azure_subscription_id': self.azure_subscription_id
+            }
 

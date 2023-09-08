@@ -50,6 +50,7 @@ class Destination:
             }
 
 
+
 def destination_encoder(obj):
     if isinstance(obj, Destination):
         return obj.to_dict()

@@ -9,7 +9,6 @@ class InternetNodes:
         for n in self.db.get_internet_nodes():
             self.inodes.append(n[0])
 
-
     def to_dict(self):
         return [obj for obj in self.inodes]
 

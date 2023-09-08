@@ -5,6 +5,7 @@ from azure.identity            import *
 from azure.mgmt.resource       import ResourceManagementClient
 from azure.mgmt.compute        import ComputeManagementClient
 from azure.mgmt.network        import NetworkManagementClient
+from azure.mgmt.sql            import SqlManagementClient
 from azure.mgmt.network.models import SecurityRule
 from azure.core.exceptions     import *
 
@@ -22,8 +23,9 @@ class FW_Azure:
         self.__db              = DB()
 
         self.__resource_client = None
-        self.__compute_client = None
-        self.__network_client = None
+        self.__compute_client  = None
+        self.__network_client  = None
+        self.__sql_client      = None
 
 
     def __get_unique_priority(self, resource_group_name, nsg_name) -> int:
@@ -56,6 +58,7 @@ class FW_Azure:
             self.__resource_client = ResourceManagementClient(credential, cred[3])
             self.__compute_client  = ComputeManagementClient (credential, cred[3])
             self.__network_client  = NetworkManagementClient (credential, cred[3])
+            self.__sql_client      = SqlManagementClient(credential, cred[3], api_version='2023-07-01-preview')
             self.__cloud_id        = cloud_id
             break
 
@@ -64,14 +67,36 @@ class FW_Azure:
         try:
             for vpc in vpcs:
                 break
-        except:
+        except Exception as inst:
+            print(type(inst))
+            print(inst.args)
+            print(inst)
+            
             self.__cloud_id = 0
 
         return self.__cloud_id
 
 
+    #def get_app_security_groups(self, cloud_id: int):
+    #    db = DB()
+    #    g:RuleGroup = None
+    #    resources = self.__resource_client.resource_groups.list()
+    #    for resource in resources:
+    #        asgs = self.__network_client.application_security_groups.list(resource.name)
+    #        for asg in asgs:
+    #            print(f"res: {resource.name}, asg {asg}")
+    #            g = RuleGroup(id=None,
+    #                          if_id='',
+    #                          name=asg.id.split('/')[-1],
+    #                          type='ASG',
+    #                          cloud_id=cloud_id)
+    #            g.id = db.add_rule_group(rule_group=g.to_sql_values())
+    #    return
+
+
     def get_topology(self, cloud_id: int):
         db = DB()
+
         # Load VPC's
         vpcs = self.__network_client.virtual_networks.list_all()
         for vpc in vpcs:
@@ -82,6 +107,17 @@ class FW_Azure:
                 s = Subnet(subnet=None, name=subnet.name, arn=subnet.id, network=subnet.address_prefix,
                                 azone='', note=subnet.name, vpc_id=vpc.name, cloud_id=cloud_id)
                 s.id = db.add_subnet(subnet=s.to_sql_values())
+                # Load subnet security group
+                if subnet.network_security_group:
+                    subnet_rg = RuleGroup(id=None,
+                                    subnet_id=subnet.name,
+                                    name=subnet.network_security_group.id,
+                                    type='NSG',
+                                    cloud_id=cloud_id)
+                    subnet_rg.id = db.add_rule_group(rule_group=subnet_rg.to_sql_values())
+                    # Load rules for current rule group
+                    self.get_group_rules(cloud_id, subnet.network_security_group.id)
+
         # Load VM's
         vms = self.__compute_client.virtual_machines.list_all()
         for vm in vms:
@@ -127,15 +163,224 @@ class FW_Azure:
                     if_id=if_id,
                     cloud_id=cloud_id)
             v.id = db.add_instance(instance=v.to_sql_values())
-            # Load Rule Group's
+
+            # Load application security groups for VM
+            if nic.ip_configurations[0].application_security_groups:
+                for asg in nic.ip_configurations[0].application_security_groups:
+                    g = RuleGroup(id=None,
+                                if_id=if_id,
+                                name=asg.id,
+                                type='ASG',
+                                cloud_id=cloud_id)
+                    g.id = db.add_rule_group(rule_group=g.to_sql_values())
+
+            # Load Network Security Rule Group's
             if nic.network_security_group:
                 rg = RuleGroup(id=None,
-                                if_id=vm.network_profile.network_interfaces[0].id.split('/')[-1],
+                                if_id=if_id,
                                 name=nic.network_security_group.id,
+                                type='NSG',
                                 cloud_id=cloud_id)
                 rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
+                
                 # Load rules for current rule group
                 self.get_group_rules(cloud_id, nic.network_security_group.id)
+        
+        # Load AIGs, Use nodes table for store
+        resources = self.__resource_client.resource_groups.list()
+        for resource in resources:
+            igws = self.__network_client.virtual_network_gateways.list(resource.name)
+            for igw in igws:
+                igw_object  = self.__network_client.virtual_network_gateways.get(resource.name, igw.name)
+                subnet_id   = igw_object.ip_configurations[0].subnet.id
+                vpc       = self.__network_client.virtual_networks.get(resource.name, subnet_id.split('/')[-3])
+                vpc_id    = vpc.name
+                i = VM(vm=None, type='IGW',
+                    vpc_id=vpc_id,
+                    azone=igw_object.location,
+                    subnet_id='',
+                    name=igw.id,
+                    privdn='',
+                    privip='',
+                    pubdn='',
+                    pubip='',
+                    note=igw.name,
+                    os='',
+                    state=igw_object.provisioning_state,
+                    mac='',
+                    if_id='',
+                    cloud_id=cloud_id)
+                i.id = db.add_instance(instance=i.to_sql_values())
+
+        # Load NATs. Use nodes table for store
+        nats = self.__network_client.nat_gateways.list_all()
+        for nat in nats:
+            nat_gateway_id_parts = nat.id.split("/")
+            resource_group_name = nat_gateway_id_parts[nat_gateway_id_parts.index("resourceGroups") + 1]
+            try:
+                for subnet in nat.subnets:
+                    subnet_id = subnet.id
+                    subnet_id_parts  = subnet_id.split('/')
+                    subnet_vnet_name = subnet_id_parts[-3]
+                    vpc              = self.__network_client.virtual_networks.get(resource_group_name, subnet_vnet_name)
+                    vpc_id           = vpc.name
+                    subnet_id_parts      = subnet_id.split("/")
+                    virtual_network_name = subnet_id_parts[subnet_id_parts.index("virtualNetworks") + 1]
+                    subnet_name          = subnet_id_parts[subnet_id_parts.index("subnets") + 1]
+                    subnet = self.__network_client.subnets.get(resource_group_name, virtual_network_name, subnet_name)
+                    privip = subnet.address_prefix
+                    break
+            except:
+                print(f"NAT: {nat.name} - not bound to any Subnet")
+            for pubip in nat.public_ip_addresses:
+                public_ip_id_parts = pubip.id.split("/")
+                public_ip_name     = public_ip_id_parts[public_ip_id_parts.index("publicIPAddresses") + 1]
+                pubip_object       = self.__network_client.public_ip_addresses.get(resource_group_name, public_ip_name)
+                if pubip_object.ip_address:
+                    pubip = pubip_object.ip_address
+                else:
+                    if pubip_object.public_ip_prefix:
+                        pubip = pubip_object.public_ip_prefix
+                break
+            i = VM(vm=None, type='NAT',
+                vpc_id=vpc_id,
+                azone=nat.location,
+                subnet_id=subnet_id.split('/')[-1],
+                name=nat.id,
+                privdn='',
+                privip=privip,
+                pubdn='',
+                pubip=pubip,
+                note=nat.name,
+                os='',
+                state=nat.provisioning_state,
+                mac='',
+                if_id='',
+                cloud_id=cloud_id)
+            i.id = db.add_instance(instance=i.to_sql_values())
+
+        # Load ELBs. Use nodes table for store
+        elbs = self.__network_client.load_balancers.list_all()
+        for elb in elbs:
+            public_ip:str = ''
+            for frontend_ip_configuration in elb.frontend_ip_configurations:
+                ip_name   = frontend_ip_configuration.public_ip_address.id.split('/')[-1]
+                ip_resg   = frontend_ip_configuration.public_ip_address.id.split('/')[4]
+                public_ip = self.__network_client.public_ip_addresses.get(ip_resg, ip_name)
+                break
+            for backend_address_pool in elb.backend_address_pools:
+                for load_balancer_backend_address in backend_address_pool.load_balancer_backend_addresses:
+                    b_nface_name   = load_balancer_backend_address.network_interface_ip_configuration.id.split('/')[-1]
+                    b_nface_resg   = load_balancer_backend_address.network_interface_ip_configuration.id.split('/')[4]
+                    n_face         = self.__network_client.network_interfaces.get(b_nface_resg, b_nface_name)
+                    subnet         = n_face.ip_configurations[0].subnet.id.split('/')[-1]
+                    vpc            = n_face.ip_configurations[0].subnet.id.split('/')[-3]
+                    i = VM(vm=None, type='ELB',
+                            vpc_id    = vpc,
+                            azone     = elb.location,
+                            subnet_id = subnet,
+                            name      = elb.id.split('/')[-1],
+                            privdn    = '',
+                            privip    = n_face.ip_configurations[0].private_ip_address,
+                            pubdn     = '',
+                            pubip     = public_ip.ip_address,
+                            note      = elb.type,
+                            os        = '',
+                            state     = elb.provisioning_state,
+                            mac       = '',
+                            if_id     = n_face.name,
+                            cloud_id  = cloud_id)
+                    i.id = db.add_instance(instance=i.to_sql_values())
+
+        # Load RDSs. Use nodes table for store
+        resources = self.__resource_client.resource_groups.list()
+        for resource in resources:
+            rdses = self.__sql_client.servers.list_by_resource_group(resource.name)
+            for rds in rdses:
+                if rds.private_endpoint_connections == []:
+                    if rds.public_network_access == False:
+                        i = VM(vm=None,
+                                type      = 'RDS',
+                                vpc_id    = '',
+                                azone     = rds.location,
+                                subnet_id = '',
+                                name      = rds.id.split('/')[-1],
+                                privdn    = rds.fully_qualified_domain_name,
+                                privip    = '',
+                                pubdn     = '',
+                                pubip     = '',
+                                note      = rds.name,
+                                os        = f"{rds.type}: {rds.version}",
+                                state     = rds.state,
+                                mac       = '',
+                                if_id     = '',
+                                cloud_id  = cloud_id)
+                    else:
+                        i = VM(vm=None,
+                                type      = 'RDS',
+                                vpc_id    = '',
+                                azone     = rds.location,
+                                subnet_id = '',
+                                name      = rds.id.split('/')[-1],
+                                privdn    = '',
+                                privip    = '',
+                                pubdn     = rds.fully_qualified_domain_name,
+                                pubip     = '',
+                                note      = rds.name,
+                                os        = f"{rds.type}: {rds.version}",
+                                state     = rds.state,
+                                mac       = '',
+                                if_id     = '',
+                                cloud_id  = cloud_id)
+                    i.id = db.add_instance(instance=i.to_sql_values())
+                else:
+                    for ep_conn in rds.private_endpoint_connections:
+                        i:VM        = None
+                        p_ep_name   = ep_conn.properties.private_endpoint.id.split('/')[-1]
+                        p_ep_resg   = ep_conn.properties.private_endpoint.id.split('/')[4]
+                        endpoint    = self.__network_client.private_endpoints.get(p_ep_resg, p_ep_name)
+                        if_name:str = ''
+                        for iface in endpoint.network_interfaces:
+                            if_name = iface.id.split('/')[-1]
+                            break
+                        if rds.public_network_access == False:
+                            i = VM(vm=None,
+                                    type      = 'RDS',
+                                    vpc_id    = endpoint.subnet.id.split('/')[8],
+                                    azone     = rds.location,
+                                    subnet_id = endpoint.subnet.id.split('/')[-1],
+                                    name      = rds.id.split('/')[-1],
+                                    privdn    = rds.fully_qualified_domain_name,
+                                    privip    = '',
+                                    pubdn     = '',
+                                    pubip     = '',
+                                    note      = rds.name,
+                                    os        = f"{rds.type}: {rds.version}",
+                                    state     = rds.state,
+                                    mac       = '',
+                                    if_id     = if_name,
+                                    cloud_id  = cloud_id)
+                        else:
+                            i = VM(vm=None,
+                                    type      = 'RDS',
+                                    vpc_id    = endpoint.subnet.id.split('/')[8],
+                                    azone     = rds.location,
+                                    subnet_id = endpoint.subnet.id.split('/')[-1],
+                                    name      = rds.id.split('/')[-1],
+                                    privdn    = '',
+                                    privip    = '',
+                                    pubdn     = rds.fully_qualified_domain_name,
+                                    pubip     = '',
+                                    note      = rds.name,
+                                    os        = f"{rds.type}: {rds.version}",
+                                    state     = rds.state,
+                                    mac       = '',
+                                    if_id     = if_name,
+                                    cloud_id  = cloud_id)
+                        i.id = db.add_instance(instance=i.to_sql_values())
+
+        # TODO: Load Amazon Blob Storage
+
         return 0
 
 
@@ -149,33 +394,78 @@ class FW_Azure:
             try:
                 for rule in rules:
                     if rule.direction == 'Inbound': # Inbound rules
-                        r = Rule(id=None,
-                                group_id=group_id,
-                                rule_id=rule.id,
-                                egress='False',
-                                proto=rule.protocol.upper().replace("-1", "ANY"),
-                                port_from=rule.destination_port_range,
-                                port_to='',
-                                naddr=rule.source_address_prefix.replace("*", "0.0.0.0/0"),
-                                cloud_id=cloud_id,
-                                ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol)
-                            )
+                        if rule.source_application_security_groups == None:
+                            r = Rule(id=None,
+                                        group_id=group_id,
+                                        rule_id=rule.id,
+                                        egress='False',
+                                        proto=rule.protocol.upper().replace("-1", "ANY"),
+                                        port_from=rule.destination_port_range,
+                                        port_to='',
+                                        naddr=rule.source_address_prefix.replace("*", "0.0.0.0/0"),
+                                        cloud_id=cloud_id,
+                                        ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                        action=rule.access.lower(),
+                                        priority=rule.priority)
+                            r.id = db.add_rule(rule=r.to_sql_values())
+                        else:
+                            for asg in rule.source_application_security_groups:
+                                asg_ips = db.get_asg_nodes(asg.id, cloud_id)
+                                for ip in asg_ips:
+                                    r = Rule(id=None,
+                                             group_id=group_id,
+                                             rule_id=rule.id,
+                                             egress='False',
+                                             proto=rule.protocol.upper().replace("-1", "ANY"),
+                                             port_from=rule.destination_port_range,
+                                             port_to='',
+                                             # .replace("*", "0.0.0.0/0"),
+                                             naddr=ip[0],
+                                             cloud_id=cloud_id,
+                                             ports=make_ports_string(
+                                                 rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                             action=rule.access.lower(),
+                                             priority=rule.priority)
+                                    r.id = db.add_rule(rule=r.to_sql_values())
                     else:                           # Outbound rules
-                        r = Rule(id=None,
-                                group_id=group_id,
-                                rule_id=rule.id,
-                                egress='True',
-                                proto=rule.protocol.upper().replace("-1", "ANY"),
-                                port_from=rule.destination_port_range,
-                                port_to='',
-                                naddr=rule.destination_address_prefix.replace("*", "0.0.0.0/0"),
-                                cloud_id=cloud_id,
-                                ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol)
-                            )
-                    r.id = db.add_rule(rule=r.to_sql_values())
-                    #print(r.to_gui_dict())
-            except:
-                pass #print(f"no rules in {resource_group_name}/{group_id.split('/')[-1]}")
+                        if rule.destination_application_security_groups == None:
+                            r = Rule(id=None,
+                                     group_id=group_id,
+                                     rule_id=rule.id,
+                                     egress='True',
+                                     proto=rule.protocol.upper().replace("-1", "ANY"),
+                                     port_from=rule.destination_port_range,
+                                     port_to='',
+                                     naddr=rule.destination_address_prefix.replace(
+                                         "*", "0.0.0.0/0"),
+                                     cloud_id=cloud_id,
+                                     ports=make_ports_string(
+                                         rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                     action=rule.access.lower(),
+                                     priority=rule.priority)
+                            r.id = db.add_rule(rule=r.to_sql_values())
+                        else:
+                            for asg in rule.destination_application_security_groups:
+                                asg_ips = db.get_asg_nodes(asg.id, cloud_id)
+                                for ip in asg_ips:
+                                    r = Rule(id=None,
+                                             group_id=group_id,
+                                             rule_id=rule.id,
+                                             egress='True',
+                                             proto=rule.protocol.upper().replace("-1", "ANY"),
+                                             port_from=rule.destination_port_range,
+                                             port_to='',
+                                             # .replace("*", "0.0.0.0/0"),
+                                             naddr=ip[0],
+                                             cloud_id=cloud_id,
+                                             ports=make_ports_string(
+                                                 rule.destination_port_range, rule.destination_port_range, rule.protocol),
+                                             action=rule.access.lower(),
+                                             priority=rule.priority)
+                                    r.id = db.add_rule(rule=r.to_sql_values())
+
+            except ResourceNotFoundError:
+                pass #print(f"INFO: No rules in: {resource_group_name}/{group_id.split('/')[-1]}")
 
 
 
