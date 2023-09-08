@@ -366,6 +366,7 @@ class FW_AWS:
                                 break
                         if naddr != None: # TODO: remove for many network interfaces support
                             break
+                continue
             except KeyError:
                 pass
 
