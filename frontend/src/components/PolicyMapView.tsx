@@ -72,6 +72,8 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                         border: "1px solid gray",
                         padding: "1rem",
                     },
+                    horizontalGap: "1.5rem",
+                    verticalGap: "1.5rem",
                 },
                 layoutSelected: {
                     childrenContainerStyle: {
@@ -95,6 +97,8 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                         border: "1px solid gray",
                         padding: "1rem",
                     },
+                    horizontalGap: "1.5rem",
+                    verticalGap: "1.5rem",
                 },
                 layoutSelected: {
                     childrenContainerStyle: {
@@ -121,6 +125,8 @@ const PolicyMapView: React.FC<PolicyMapViewProps> = ({
                         border: "1px solid gray",
                         padding: "1rem",
                     },
+                    horizontalGap: "3rem",
+                    verticalGap: "3rem",
                 },
                 layoutSelected: {
                     childrenContainerStyle: {
