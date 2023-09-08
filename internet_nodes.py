@@ -9,16 +9,8 @@ class InternetNodes:
         for n in self.db.get_internet_nodes():
             self.inodes.append(n[0])
 
-    def hide_pubip(self, ip_str: str):
-        if ip_str == '0.0.0.0/0':
-            return ip_str
-        if ip_str == None or ip_str.find(".") == -1:
-            return None
-        l = ip_str.rsplit('.', 2)
-        return f"XXX.XXX.{l[1]}.{l[2]}"
-
     def to_dict(self):
-        return [self.hide_pubip(obj) for obj in self.inodes]
+        return [obj for obj in self.inodes]
 
 
 def internet_nodes_encoder(obj):

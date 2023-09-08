@@ -45,7 +45,7 @@ class VM:
             'id': self.id,
             'name': self.note,
             'privateIP': self.privip,
-            'publicIP': self.hide_pubip() #self.pubip
+            'publicIP': self.pubip
         }
 
     def to_sql_values(self) -> dict:
@@ -67,12 +67,6 @@ class VM:
             'if_id': self.if_id,
             'cloud_id': self.cloud_id
         }
-    
-    def hide_pubip(self):
-        if self.pubip == None or self.pubip.find(".") == -1:
-            return None
-        l = self.pubip.rsplit('.', 2)
-        return f"XXX.XXX.{l[1]}.{l[2]}"
 
 
 def vm_encoder(obj):
