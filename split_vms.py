@@ -6,7 +6,7 @@ from cloud_map import CloudMap, cloud_map_encoder
 from vpc import VPC
 from subnet import Subnet
 from vm import VM, Nodes, OneNode
-from rule_group import RuleGroup, get_all_rule_groups
+from rule_group import RuleGroup, get_all_rule_groups, convert_RuleGroup_to_NG, RuleGroupNG
 from rule import Rule, get_all_rules
 from links_by_rules import links_by_rules
 from classifier_attr_set import attr_set
@@ -233,15 +233,28 @@ def run_test():
         s = s + v.subnets
     subnets = [*set(s)]
 
+    ng = convert_RuleGroup_to_NG(sgs, rules)
+    rcount = 0
+    for s in ng:
+        rcount = rcount + len(s.rules)
+    print(rcount)
+
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     for rule in rules:
         print(vars(rule))
+    # for s in subnets:
+    #    print(vars(s))
+    # for n in nodes.nodes:
+    #    print(vars(n))
     t = vms.build_vms_tree(sas)
     l = links_by_rules(nodes.nodes, subnets, sgs, rules)
+    l.make_links()
     res = t.dump_tree(l.ext_things)
     idl = t.get_idlist_by_node()
     links = l.dump_links(idl)
-
+    l.analyze_links()
+    ar = l.dump_analize_rezults()
+    print(ar)
     print(links)
     print(res)
 

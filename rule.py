@@ -135,8 +135,30 @@ class Rule:
 
         return [*set(res),]
 
+    def server_type1(self):
+        if self.egress == "True":
+            clientserver = "Client"
+        else:
+            clientserver = "Server"
+        if self.is_all_ports():
+            return [f"{clientserver}: All Ports"]
+        if self.proto == "ICMP":
+            return [f"{clientserver}: ICMP"]
+
+        res = ""
+        port_list = self.get_port_list()
+        if len(port_list) == 1:
+            res = f"{clientserver}: {str(port_list[0])}/{str(self.proto)}"
+        else:
+            res = f" {clientserver}: {self.port_from}-{self.port_to}/{str(self.proto)}"
+
+        return [res]
+
     def is_all_ports(self):
         return (self.ports in ["0", "*", "Any", "ALL", ""]) or (self.port_from == "*") or (self.port_to == "*")
+
+    def is_any_addr(self):
+        return self.naddr == "0.0.0.0/0"
 
     def get_port_list(self):
         if self.is_all_ports():
