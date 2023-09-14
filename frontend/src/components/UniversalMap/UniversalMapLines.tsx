@@ -8,7 +8,7 @@ import {
 } from "./UniversalMapData";
 import { useLayoutEffect, useRef, useState } from "react";
 
-const DEFAULT_GRAVITY = 150;
+const DEFAULT_GRAVITY = 75;
 const DEFAULT_STROKE = "cornflowerblue";
 const DEFAULT_STROKE_WIDTH = 4;
 const DEFAULT_STROKE_OPACITY = 0.6;
@@ -209,12 +209,14 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({
             if (dstAngle >= 2 * Math.PI) {
                 dstAngle -= 2 * Math.PI;
             }
-
+            
+            /*
             if (dist2 < px("15rem") * px("15rem")) {
                 // rem in pixels
                 dstAngle = srcAngle + Math.PI / 4;
                 srcAngle += (3 * Math.PI) / 4;
             }
+            */
 
             if (srcElem.contains(dstElem)) {
                 srcAngle = Math.PI / 2 + Math.PI / 4;
@@ -314,7 +316,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({
 
             if (minGap <= Math.PI / 72) {
                 // need to place arrows by equal intervals
-                let newGap = maxGap / 2;
+                let newGap = maxGap / 1.5;
 
                 if (
                     2 * Math.PI - maxGap >

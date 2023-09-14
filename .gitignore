@@ -11,4 +11,5 @@ db.sqlite3
 *.mov
 .*.swp
 
+frontend/.vscode/launch.json
 frontend/package-lock.json

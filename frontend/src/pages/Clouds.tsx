@@ -10,7 +10,6 @@ import {
     Space,
     Table,
     Text,
-    useMantineTheme,
 } from "@mantine/core";
 import {
     IconAlertTriangle,
@@ -27,8 +26,7 @@ import { AddCloudForm } from "../components/AddCloudForm";
 import { ShowModalError } from "../core/oasiserror";
 import { AxiosError } from "axios";
 
-export function Clouds() {
-    const theme = useMantineTheme();
+export function Clouds() {    
     const {
         loading: cloudsLoading,
         error: cloudsError,
