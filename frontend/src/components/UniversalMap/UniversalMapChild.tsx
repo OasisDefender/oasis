@@ -1,4 +1,4 @@
-import { Box, Tooltip, UnstyledButton } from "@mantine/core";
+import { Box, UnstyledButton } from "@mantine/core";
 import {
     ChildItem,
     DEFAULT_COLLAPSED,
@@ -47,8 +47,9 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
     const containSelected = selectedID
         ? hasChildWithId(data, selectedID)
         : false;
+    const containSelectedForMemo = containSelected ? selectedID : undefined;
     return useMemo(() => {
-        const isSelected = data.id === selectedID;
+        const isSelected = data.id === containSelectedForMemo;
         let style: TypedStyle | undefined;
 
         let layoutStyle: LayoutStyle | undefined;
@@ -154,7 +155,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                         data={data}
                         style={layoutStyle}
                         styles={styles}
-                        selectedID={selectedID}
+                        selectedID={containSelectedForMemo}
                         toogleChildren={toogleChildren}
                     />
                 )}
@@ -164,7 +165,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
         data,
         styles,
         toogleChildren,
-        containSelected ? selectedID : undefined,
+        containSelectedForMemo,
     ]);
 };
 
