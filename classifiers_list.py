@@ -49,6 +49,12 @@ class classifier:
                           "field": "azone", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Functional Type", "description": "Functional type based on security rules", "class_name": "Rule",
                           "field": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+        self.items.append({"name": "VM Functional Type 1", "description": "Functional type based on security rules", "class_name": "Rule",
+                          "field": "server_type1", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+        self.items.append({"name": "Rule direction", "description": "Security rule direction", "class_name": "Rule",
+                          "field": "egress", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
+        self.items.append({"name": "Rule proto", "description": "Security rule protocol", "class_name": "Rule",
+                          "field": "proto", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Public IP", "description": "Interface Public Address", "class_name": "OneNode",
                           "field": "pubip", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "OneNode",

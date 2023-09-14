@@ -1,97 +1,284 @@
 from subnet import Subnet
 from vm import OneNode
-from rule_group import RuleGroup
+from rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
 from rule import Rule
 from classifiers_list import classifier, vminfo
 from ipaddress import ip_network, ip_address
 
 
 class links_by_rules:
-    def __init__(self, nodes: list[OneNode], subnets: list[Subnet], sgs: list[RuleGroup], rules: list[Rule]):
+    def __init__(self, nodes: list[OneNode], subnets: list[Subnet], sgs1: list[RuleGroup], rules: list[Rule]):
+        self.sgs_NG = convert_RuleGroup_to_NG(sgs1, rules)
+        self.nodes = nodes
+        self.subnets = subnets
+        self.rules = rules
         self.links = set()
         self.links_info = {}
         self.onesided_links = set()
         self.onesided_links_info = {}
         self.used_r = set()
         self.ext_things = set()
-        (self.servers, self.clients) = self.build_servers_clients_rule_dict(sgs, rules)
-        r_compat = self.build_r_compat_dict(self.servers, self.clients)
-        nodes_by_sg = self.build_nodes_by_sg_dict(nodes, subnets, sgs)
+        self.analyze_results = []
+        (self.servers, self.clients) = self.build_servers_clients_rule_dict(
+            self.sgs_NG, rules)
+        self.nodes_by_sg = self.build_nodes_by_sg_dict()
+        self.sglist_by_node = self.build_sglist_by_node_dict()
+
+    def make_links(self):
         # links host(subnet) -> host(subnet)
+        self.make_host_host_links()
+        # links host -> ALL and ALL -> host
+        self.make_host_all_links()
+        # links host -> EXTERNAL and EXTERNAL -> host
+        self.make_host_ext_links()
+
+    def make_host_host_links(self):
+        # links host(subnet) -> host(subnet)
+        r_compat = self.build_r_compat_dict(self.servers, self.clients)
         for (srv_sg, srv_r) in r_compat:
             r_list = r_compat[(srv_sg, srv_r)]
             for n in r_list:
                 cln_sg = n["cln_sg"]
                 cln_r = n["cln_r"]
                 ports = n["ports"]
-                clients = self.filter_by_addr(srv_r, nodes_by_sg[cln_sg])
-                servers = self.filter_by_addr(cln_r, nodes_by_sg[srv_sg])
+                clients = self.filter_by_addr(srv_r, self.nodes_by_sg[cln_sg])
+                servers = self.filter_by_addr(cln_r, self.nodes_by_sg[srv_sg])
                 if len(servers) != 0 and len(clients) != 0:
                     self.add_links(servers, clients, ports,
                                    srv_sg, srv_r, cln_sg, cln_r)
                     self.used_r.add(srv_r)
                     self.used_r.add(cln_r)
+                # else:
+                #    self.bad_asymetric_rules_add(servers, clients, ports,
+                #                                srv_sg, srv_r, cln_sg, cln_r)
 
-        # links host -> ALL and ALL -> host
+    def make_host_all_links(self):
         for sg in self.servers:
             for r in self.servers[sg]:
-                if self.is_any_addr(r.naddr):
+                if r.is_any_addr():
                     id = "ANY_ADDR_ID"
                     self.ext_things.add((id, r.naddr))
                     self.add_onesided_in_links(
-                        nodes_by_sg[sg], r.get_port_list(), sg, r, id)
+                        self.nodes_by_sg[sg], r.get_port_list(), sg, r, id)
                     self.used_r.add(r)
         for sg in self.clients:
             for r in self.clients[sg]:
-                if self.is_any_addr(r.naddr):
+                if r.is_any_addr():
                     id = "ANY_ADDR_ID"
                     self.ext_things.add((id, r.naddr))
                     self.add_onesided_out_links(
-                        nodes_by_sg[sg], r.get_port_list(), sg, r, id)
+                        self.nodes_by_sg[sg], r.get_port_list(), sg, r, id)
                     self.used_r.add(r)
-        # links host -> EXTERNAL and EXTERNAL -> host
+
+    def make_host_ext_links(self):
         id_count = 0
-        unused_rules_set = set(rules).difference(self.used_r)
+        unused_rules_set = self.build_unused_rules_set(self.rules, self.used_r)
         tmp_d = {}
         for r in unused_rules_set:
-            sg = self.sg_by_r(sgs, r)
-            if self.is_any_addr(r.naddr):
+            sg = self.sg_by_r(self.sgs_NG, r)
+            if r.is_any_addr():
                 # XXX unused 0.0.0.0/0 rule - strange
                 # add it to BAD list
                 continue
-            n = self.is_known_address(r.naddr, nodes)
-            if n != None:
+            n = self.is_known_address(r, self.nodes)
+            if len(n) != 0:
                 # XXX bad link with one direction rule only
                 # add it to BAD list
                 continue
-            nl = nodes_by_sg[sg]
+            nl = self.nodes_by_sg[sg]
             id = tmp_d.get(r.naddr, f"EXT_{id_count}")
             tmp_d[r.naddr] = id
             id_count += 1
             self.ext_things.add((id, r.naddr))
             if r.egress == 'True':
-                self.add_onesided_in_links(nl, r.get_port_list(), sg, r, id)
+                self.add_onesided_in_links(
+                    nl, r.get_port_list(), sg, r, id)
             else:
-                self.add_onesided_in_links(nl, r.get_port_list(), sg, r, id)
+                self.add_onesided_out_links(
+                    nl, r.get_port_list(), sg, r, id)
             self.used_r.add(r)
 
-    def is_known_address(self, addr, nodes: list[OneNode]):
-        a1 = ip_network(addr)
+    def analyze_links(self):
+        # find ANY PORTS and ANY ADDRs links
+        self.detect_ANY()
+        self.detect_duplicate()
+        self.detect_asymetric()
+        # XXX detect isolated nodes
+        # XXX detect security groups without nodes
+
+    def detect_ANY(self):
+        # ANY ports and Addrs
+        # nodes_by_sg = self.build_nodes_by_sg_dict(self, nodes, subnets, sgs_NG)
+        for r in self.rules:
+            if r.action != 'allow':
+                continue
+            if r.proto != "ICMP" and r.is_all_ports():
+                sg = self.sg_by_r(self.sgs_NG, r)
+                reason = "All ports rule"
+                nlist = self.nodes_by_sg[sg]
+                if len(nlist) > 0:
+                    self.add_bad_rules([r], reason, nlist)
+            if r.is_any_addr():
+                sg = self.sg_by_r(self.sgs_NG, r)
+                reason = "All addr rule"
+                nlist = self.nodes_by_sg[sg]
+                if len(nlist) > 0:
+                    self.add_bad_rules([r], reason, nlist)
+
+    def detect_duplicate(self):
+        # duplicate rules
+        duplicates = {}
+        for r1 in self.rules:
+            if r1.action != 'allow':
+                continue
+            if r1.is_all_ports():
+                continue
+            for r2 in self.rules:
+                if r2.action != 'allow':
+                    continue
+                if r1.id == r2.id:
+                    continue
+                if r1.egress != r2.egress:
+                    continue
+                plist1 = r1.get_port_list()
+                plist2 = r2.get_port_list()
+                if r1.is_all_ports():
+                    # ports = set(plist2)
+                    continue
+                else:
+                    if r2.is_all_ports():
+                        ports = set(plist1)
+                    else:
+                        ports = set(plist1).intersection(set(plist2))
+                if len(ports) == 0:
+                    continue
+                a1 = ip_network(r1.naddr)
+                a2 = ip_network(r2.naddr)
+                if r1.cloud_id == r2.cloud_id and a1.overlaps(a2):
+                    sg1 = self.sg_by_r(self.sgs_NG, r1)
+                    sg2 = self.sg_by_r(self.sgs_NG, r2)
+                    nset1 = set(self.nodes_by_sg[sg1])
+                    nset2 = set(self.nodes_by_sg[sg2])
+                    ncommon = nset1.intersection(nset2)
+                    if len(ncommon) > 0:
+                        if duplicates.get(r1, None) == None:
+                            duplicates[r1] = set([r1])
+                        duplicates[r1].add(r2)
+        keys_for_remove = set()
+        for r in duplicates:
+            for t in duplicates:
+                if r == t:
+                    continue
+                if duplicates[r] == duplicates[t]:
+                    keys_for_remove.add(t)
+        for key in keys_for_remove:
+            del duplicates[key]
+        for r in duplicates:
+            reason = f"Duplicate rules for ports {ports}"
+            # sglist = set()
+            # for t in duplicates[r]:
+            #     sglist.add(self.sg_by_r(t))
+            self.add_bad_rules(duplicates[r], reason, ncommon)
+
+    def detect_asymetric(self):
+        # one-sided rules
+        for r1 in self.rules:
+            if r1.is_all_ports():
+                continue
+            if r1.is_any_addr():
+                continue
+            sg1 = self.sg_by_r(self.sgs_NG, r1)
+            r1nodes = self.nodes_by_sg[sg1]
+            nlist1 = self.is_known_address(r1, self.nodes)
+            if len(nlist1) == 0:
+                # external thing
+                continue
+            sglist2 = []
+            for n in nlist1:
+                sglist2 = sglist2 + self.sglist_by_node[n]
+            rlist2 = []
+            for sg in sglist2:
+                rlist2 = rlist2 + sg.rules
+            plist1 = r1.get_port_list()
+            remain_plist1 = plist1
+            for r2 in rlist2:
+                if r2.egress == r1.egress:
+                    continue
+                plist2 = r2.get_port_list()
+                common_ports = set(plist2).intersection(remain_plist1)
+                if not r2.is_all_ports() and len(common_ports) == 0:
+                    continue
+                nlist2 = self.is_known_address(r2, self.nodes)
+                common_nodes = set(r1nodes).intersection(set(nlist2))
+                if len(common_nodes) == 0:
+                    continue
+                remain_plist1 = list(
+                    set(remain_plist1).difference(common_ports))
+            if len(remain_plist1) == 0:
+                continue
+            reason = f"Assymetrical rule for ports {remain_plist1}"
+            self.add_bad_rules([r1], reason, r1nodes)
+
+    def add_bad_rules(self, affected_rules: list[Rule], reason: str, affected_nodes: list[OneNode]):
+        res = {"Rules": affected_rules,
+               "Reason": reason, "Nodes": affected_nodes}
+        self.analyze_results.append(res)
+
+    def dump_analize_rezults(self):
+        return self.analyze_results
+
+    def build_sglist_by_node_dict(self):
+        res = {}
+        for n in self.nodes:
+            res[n] = []
+            subnet = self.get_subnet_by_node(n)
+            for sg in self.sgs_NG:
+                if self.is_node_in_sg(n, sg):
+                    res[n].append(sg)
+                    continue
+                if subnet != None and self.is_subnet_in_sg(subnet, sg):
+                    res[n].append(sg)
+        return res
+
+    def get_subnet_by_node(self, n: OneNode):
+        for s in self.subnets:
+            if n.cloud_id == s.cloud_id and n.vpc_id == s.vpc_id and n.subnet_id == s.name:
+                return s
+        return None
+
+    def build_unused_rules_set(self, rules: list[Rule], used_rules):
+        s1 = set()
+        s2 = set()
+        for r in rules:
+            s1.add(r.id)
+        for r in used_rules:
+            s2.add(r.id)
+        s3 = s1.difference(s2)
+        res = set()
+        for r in rules:
+            if r.id in s3:
+                res.add(r)
+        return res
+
+    def is_known_address(self, r: Rule, nodes: list[OneNode]):
+        a1 = ip_network(r.naddr)
+        nl = []
         for n in nodes:
+            if r.cloud_id != n.cloud_id:
+                continue
             if n.privip != None and n.privip != '':
                 a2 = ip_network(n.privip)
                 if a1.overlaps(a2):
-                    return n
+                    nl.append(n)
             if n.pubip != None and n.pubip != '':
                 a2 = ip_network(n.pubip)
                 if a1.overlaps(a2):
-                    return n
+                    nl.append(n)
+        return nl
 
-        return None
-
-    def sg_by_r(self, sgs: list[RuleGroup], r: Rule):
+    def sg_by_r(self, sgs_NG: list[RuleGroupNG], r: Rule):
         res = None
-        for sg in sgs:
+        for sg in sgs_NG:
             if sg.name == r.group_id and sg.cloud_id == r.cloud_id:
                 res = sg
                 break
@@ -105,15 +292,14 @@ class links_by_rules:
                     r, clients)
         return r_compat
 
-    def build_servers_clients_rule_dict(self, sgs: list[RuleGroup], rules: list[Rule]):
+    def build_servers_clients_rule_dict(self, sgs_NG: list[RuleGroupNG], rules: list[Rule]):
         servers = {}
         clients = {}
-        for sg in sgs:
+        sg: RuleGroupNG
+        for sg in sgs_NG:
             servers[sg] = []
             clients[sg] = []
-            for r in rules:
-                if r.group_id != sg.name:
-                    continue
+            for r in sg.rules:
                 if r.action != "allow":
                     continue
                 if r.egress == "True":
@@ -122,27 +308,24 @@ class links_by_rules:
                     clients[sg].append(r)
         return (servers, clients)
 
-    def build_nodes_by_sg_dict(self, nodes: list[OneNode], subnets: list[Subnet], sgs: list[RuleGroup]):
+    def build_nodes_by_sg_dict(self):
         nodes_by_sg = {}
-        for sg in sgs:
+        for sg in self.sgs_NG:
             nodes_by_sg[sg] = []
-            for node in nodes:
+            for node in self.nodes:
                 if self.is_node_in_sg(node, sg):
                     nodes_by_sg[sg].append(node)
-            for subnet in subnets:
-                if self.subnet_in_sg(subnet, sg):
+            for subnet in self.subnets:
+                if self.is_subnet_in_sg(subnet, sg):
                     nodes_by_sg[sg] = nodes_by_sg[sg] + \
-                        self.get_subnet_nodelist(subnet, nodes)
+                        self.get_subnet_nodelist(subnet, self.nodes)
         return nodes_by_sg
 
-    def is_any_addr(self, a):
-        return a == "0.0.0.0/0"
+    def is_node_in_sg(self, node: OneNode, sg: RuleGroupNG):
+        return node.if_id in sg.if_ids
 
-    def is_node_in_sg(self, node: OneNode, sg: RuleGroup):
-        return node.if_id == sg.if_id
-
-    def subnet_in_sg(self, subnet: Subnet, sg: RuleGroup):
-        return subnet.id == sg.subnet_id
+    def is_subnet_in_sg(self, subnet: Subnet, sg: RuleGroupNG):
+        return subnet.name in sg.subnet_ids
 
     def find_clients_r_for_server_r(self, srv_r: Rule, clients):
         res = []
@@ -177,11 +360,11 @@ class links_by_rules:
         return res
 
     def get_subnet_nodelist(self, subnet: Subnet, nodes: list[OneNode]):
-        return [n for n in nodes if n.subnet_id == subnet.id]
+        return [n for n in nodes if n.subnet_id == subnet.name]
 
     def filter_by_addr(self, r: Rule, nl: list[OneNode]):
         # special cases
-        if self.is_any_addr(r.naddr):
+        if r.is_any_addr():
             return []
             # res = []
             # for n in nl:
@@ -203,7 +386,7 @@ class links_by_rules:
                     res.append(n)
         return res
 
-    def add_links(self, srv: list[OneNode], cln: list[OneNode], ports: list[int], srv_sg: RuleGroup, srv_r: Rule, cln_sg: RuleGroup, cln_r: Rule):
+    def add_links(self, srv: list[OneNode], cln: list[OneNode], ports: list[int], srv_sg: RuleGroupNG, srv_r: Rule, cln_sg: RuleGroupNG, cln_r: Rule):
         for sn in srv:
             for cn in cln:
                 key = (sn, cn)
@@ -212,20 +395,20 @@ class links_by_rules:
                 self.links_info[key].append((srv_sg, srv_r, cln_sg, cln_r))
                 self.links.add(key)
 
-    def add_onesided_out_links(self, cln: list[OneNode], ports: list[int], sg: RuleGroup, r: Rule, second_id):
+    def add_onesided_out_links(self, cln: list[OneNode], ports: list[int], sglist: list[RuleGroupNG], r: Rule, second_id):
         for cn in cln:
             key = (None, cn, second_id)
             if self.onesided_links_info.get(key, None) == None:
                 self.onesided_links_info[key] = []
-            self.onesided_links_info[key].append((sg, r))
+            self.onesided_links_info[key].append(r)
             self.onesided_links.add(key)
 
-    def add_onesided_in_links(self, srv: list[OneNode], ports: list[int], sg: RuleGroup, r: Rule, second_id):
+    def add_onesided_in_links(self, srv: list[OneNode], ports: list[int], sglist: list[RuleGroupNG], r: Rule, second_id):
         for sn in srv:
             key = (sn, None, second_id)
             if self.onesided_links_info.get(key, None) == None:
                 self.onesided_links_info[key] = []
-            self.onesided_links_info[key].append((sg, r))
+            self.onesided_links_info[key].append(r)
             self.onesided_links.add(key)
 
     def get_links(self):
@@ -263,10 +446,12 @@ class links_by_rules:
         l = self.links_info[key]
         srv_tt = ""
         cln_tt = ""
-        srv_sg: RuleGroup
-        cln_sg: RuleGroup
+        srv_sg: RuleGroupNG
+        cln_sg: RuleGroupNG
         srv_r: Rule
         cln_r: Rule
+        cln_tmp = set()
+        srv_tmp = set()
         for (srv_sg, srv_r, cln_sg, cln_r) in l:
             if srv_r.proto == "ICMP":
                 sp = srv_r.ports
@@ -274,24 +459,30 @@ class links_by_rules:
             else:
                 sp = f"Ports: {srv_r.ports}"
                 cp = f"Ports: {cln_r.ports}"
+            srv_tmp.add(
+                f"Group: {srv_sg.name}, Proto: {srv_r.proto}, Addr: {srv_r.naddr}, {sp}\n")
+            cln_tmp.add(
+                f"Group: {cln_sg.name}, Proto: {cln_r.proto}, Addr: {cln_r.naddr}, {cp}\n")
+        for s in srv_tmp:
+            srv_tt = srv_tt + s
+        for s in cln_tmp:
+            cln_tt = cln_tt + s
 
-            srv_tt = srv_tt + \
-                f"Group: {srv_sg.id}, Proto: {srv_r.proto}, Addr: {srv_r.naddr}, {sp}\n"
-            cln_tt = cln_tt + \
-                f"Group: {cln_sg.id}, Proto: {cln_r.proto}, Addr: {cln_r.naddr}, {cp}\n"
         return (srv_tt, cln_tt)
 
     def make_onesided_tooltip(self, srv, cln, second_id):
         key = (srv, cln, second_id)
         l = self.onesided_links_info[key]
         tt = ""
-        sg: RuleGroup
+        sg: RuleGroupNG
         r: Rule
-        for (sg, r) in l:
+        tmp = set()
+        for r in l:
             if r.proto == "ICMP":
                 p = r.ports
             else:
                 p = f"Ports:{r.ports}"
-            tt = tt + \
-                f"Group: {sg.id}, Proto: {r.proto}, {p}\n"
+            tmp.add(f"Proto: {r.proto}, {p}\n")
+        for s in tmp:
+            tt = tt + s
         return tt
