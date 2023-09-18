@@ -27,7 +27,7 @@ class links_by_rules:
         self.duplicate_rules = []
         self.asymetruc_rules = []
         self.alone_nodes = []
-        self.alone_sg = []
+        self.unused_sgs = []
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
             self.sgs_NG, rules)
         self.nodes_by_sg = self.build_nodes_by_sg_dict()
@@ -113,7 +113,7 @@ class links_by_rules:
         self.detect_duplicate()
         self.detect_asymetric()
         # XXX detect isolated nodes
-        # XXX detect security groups without nodes
+        self.detect_unused_sg()
 
     def detect_ANY(self):
         # ANY ports and Addrs
@@ -218,6 +218,26 @@ class links_by_rules:
             reason = f"Assymetrical rule for ports {remain_plist1}"
             self.add_asymetric_rules(r1, remain_plist1, r1nodes)
 
+    def detect_unused_sg(self):
+        for sg in self.sgs_NG:
+            nlist = self.nodes_by_sg[sg]
+            if len(nlist) == 0:
+                self.add_unused_sgs(sg)
+
+    def add_unused_sgs(self, sg: RuleGroupNG):
+        self.unused_sgs.append(sg)
+
+    def dump_unused_sgs(self):
+        data = []
+        sg: RuleGroupNG
+        for sg in self.unused_sgs:
+            t = []
+            t = t + self.int_dump_cloud(sg.cloud_id) + \
+                [{"attr": "Security Group", "val": [f"{sg.name}"]}]
+            data.append(t)
+        res = {"label": "Unused security groups", "data": data}
+        return res
+
     def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
         self.all_ports_rules.append(i)
@@ -226,10 +246,10 @@ class links_by_rules:
         data = []
         r: Rule
         for (r, nlist) in self.all_ports_rules:
-            data = data + self.int_dump_cloud_by_r(r)
-            data = data + self.int_dump_sg_by_r(r)
-            data = data + self.int_dump_rule(r)
-            data = data + self.int_dump_afected_nodes(nlist)
+            t = []
+            t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
+                r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nlist)
+            data.append(t)
         res = {"label": "Rules to/from ANY ports", "data": data}
         return res
 
@@ -241,55 +261,44 @@ class links_by_rules:
         data = []
         r: Rule
         for (r, nlist) in self.all_ip_rules:
-            data = data + self.int_dump_cloud_by_r(r)
-            data = data + self.int_dump_sg_by_r(r)
-            data = data + self.int_dump_rule(r)
-            data = data + self.int_dump_afected_nodes(nlist)
+            t = []
+            t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
+                r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nlist)
+            data.append(t)
         res = {"label": "Rules to/from ANY IPs", "data": data}
         return res
 
     def int_dump_afected_nodes(self, nlist: list[OneNode]):
-        data = []
         t = []
         n: OneNode
         for n in nlist:
             t.append(f"{n.name}")
         i = {"attr": "Affected Nodes", "val": t}
-        data.append(i)
-        return data
+        return [i]
 
     def int_dump_rulelist(self, rlist: list[Rule]):
-        data = []
         t = []
         r: Rule
         for r in rlist:
             t.append(self.int_dump_rule(r))
         i = {"attr": "Rules", "val": t}
-        data.append(i)
-        return data
+        return [i]
 
     def int_dump_portlist(self, portlist: list[int]):
-        data = []
         i = {"attr": "Ports", "val": portlist}
-        data.append(i)
-        return data
+        return [i]
 
     def int_dump_sg_by_r(self, r: Rule):
-        data = []
         sg = self.sg_by_r(self.sgs_NG, r)
         i = {"attr": "Security Group", "val": [f"{sg.name}"]}
-        data.append(i)
-        return data
+        return [i]
 
-    def int_dump_cloud_by_r(self, r: Rule):
-        data = []
+    def int_dump_cloud(self, cloud_id):
         cl: Cloud
-        cl = self.get_cloud_by_id(r.cloud_id)
-        i = {"attr": "Cloud type", "val": [f"{cl.cloud_type}"]}
-        data.append(i)
-        i = {"attr": "Cloud name", "val": [f"{cl.name}"]}
-        data.append(i)
-        return data
+        cl = self.get_cloud_by_id(cloud_id)
+        i1 = {"attr": "Cloud type", "val": [f"{cl.cloud_type}"]}
+        i2 = {"attr": "Cloud name", "val": [f"{cl.name}"]}
+        return [i1, i2]
 
     def int_dump_rule(self, r: Rule):
         data = []
@@ -305,10 +314,10 @@ class links_by_rules:
     def dump_duplicate_rules(self):
         data = []
         for (rlist, ports, affected_nodes) in self.duplicate_rules:
-            data = data + self.int_dump_cloud_by_r(rlist[0])
-            data = data + self.int_dump_rulelist(rlist)
-            data = data + self.int_dump_portlist(ports)
-            data = data + self.int_dump_afected_nodes(affected_nodes)
+            t = []
+            t = t + self.int_dump_cloud(rlist[0].cloud_id) + self.int_dump_rulelist(
+                rlist) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+            data.append(t)
         res = {"label": "Rules grants duplicate permissions", "data": data}
         return res
 
@@ -319,10 +328,10 @@ class links_by_rules:
     def dump_asymetric_rules(self):
         data = []
         for (r, ports, affected_nodes) in self.asymetruc_rules:
-            data = data + self.int_dump_cloud_by_r(r)
-            data = data + self.int_dump_sg_by_r(r)
-            data = data + self.int_dump_portlist(ports)
-            data = data + self.int_dump_afected_nodes(affected_nodes)
+            t = []
+            t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
+                r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+            data.append(t)
         res = {"label": "Rules with one-side permissions", "data": data}
         return res
 
@@ -343,6 +352,8 @@ class links_by_rules:
         t = self.dump_asymetric_rules()
         res.append(t)
         t = self.dump_duplicate_rules()
+        res.append(t)
+        t = self.dump_unused_sgs()
         res.append(t)
 
         return res
