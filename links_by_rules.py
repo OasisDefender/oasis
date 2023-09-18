@@ -4,11 +4,14 @@ from rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
 from rule import Rule
 from classifiers_list import classifier, vminfo
 from ipaddress import ip_network, ip_address
+from cloud import Cloud
+from vpc import VPC
 
 
 class links_by_rules:
-    def __init__(self, nodes: list[OneNode], subnets: list[Subnet], sgs1: list[RuleGroup], rules: list[Rule]):
+    def __init__(self, clouds: list[Cloud], nodes: list[OneNode], subnets: list[Subnet], sgs1: list[RuleGroup], rules: list[Rule]):
         self.sgs_NG = convert_RuleGroup_to_NG(sgs1, rules)
+        self.clouds = clouds
         self.nodes = nodes
         self.subnets = subnets
         self.rules = rules
@@ -19,6 +22,12 @@ class links_by_rules:
         self.used_r = set()
         self.ext_things = set()
         self.analyze_results = []
+        self.all_ports_rules = []
+        self.all_ip_rules = []
+        self.duplicate_rules = []
+        self.asymetruc_rules = []
+        self.alone_nodes = []
+        self.alone_sg = []
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
             self.sgs_NG, rules)
         self.nodes_by_sg = self.build_nodes_by_sg_dict()
@@ -114,16 +123,14 @@ class links_by_rules:
                 continue
             if r.proto != "ICMP" and r.is_all_ports():
                 sg = self.sg_by_r(self.sgs_NG, r)
-                reason = "All ports rule"
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_bad_rules([r], reason, nlist)
+                    self.add_ALL_PORTS_rules(r, nlist)
             if r.is_any_addr():
                 sg = self.sg_by_r(self.sgs_NG, r)
-                reason = "All addr rule"
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_bad_rules([r], reason, nlist)
+                    self.add_ALL_IP_rules(r, nlist)
 
     def detect_duplicate(self):
         # duplicate rules
@@ -174,11 +181,10 @@ class links_by_rules:
         for key in keys_for_remove:
             del duplicates[key]
         for r in duplicates:
-            reason = f"Duplicate rules for ports {ports}"
             # sglist = set()
             # for t in duplicates[r]:
             #     sglist.add(self.sg_by_r(t))
-            self.add_bad_rules(duplicates[r], reason, ncommon)
+            self.add_duplicate_rules(duplicates[r], ports, ncommon)
 
     def detect_asymetric(self):
         # one-sided rules
@@ -217,15 +223,104 @@ class links_by_rules:
             if len(remain_plist1) == 0:
                 continue
             reason = f"Assymetrical rule for ports {remain_plist1}"
-            self.add_bad_rules([r1], reason, r1nodes)
+            self.add_asymetric_rules(r1, remain_plist1, r1nodes)
 
-    def add_bad_rules(self, affected_rules: list[Rule], reason: str, affected_nodes: list[OneNode]):
-        res = {"Rules": affected_rules,
-               "Reason": reason, "Nodes": affected_nodes}
-        self.analyze_results.append(res)
+    def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
+        i = (r, affected_nodes)
+        self.all_ports_rules.append(i)
+
+    def dump_ALL_PORTS_rules(self):
+        data = []
+        r: Rule
+        for (r, nlist) in self.all_ports_rules:
+            data = data + self.int_dump_cloud_by_r(r)
+            data = data + self.int_dump_sg_by_r(r)
+            data = data + self.int_dump_rule(r)
+            data = data + self.int_dump_afected_nodes(nlist)
+        res = {"label": "Rules to/from ANY ports", "data": data}
+        return res
+
+    def add_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
+        i = (r, affected_nodes)
+        self.all_ip_rules.append(i)
+
+    def dump_ALL_IP_rules(self):
+        data = []
+        r: Rule
+        for (r, nlist) in self.all_ip_rules:
+            data = data + self.int_dump_cloud_by_r(r)
+            data = data + self.int_dump_sg_by_r(r)
+            data = data + self.int_dump_rule(r)
+            data = data + self.int_dump_afected_nodes(nlist)
+        res = {"label": "Rules to/from ANY IPs", "data": data}
+        return res
+
+    def int_dump_afected_nodes(self, nlist: list[OneNode]):
+        data = []
+        t = []
+        n: OneNode
+        for n in nlist:
+            t.append(f"{n.name}")
+        i = {"attr": "Affected Nodes", "val": t}
+        data.append(i)
+        return data
+
+    def int_dump_sg_by_r(self, r: Rule):
+        data = []
+        sg = self.sg_by_r(self.sgs_NG, r)
+        i = {"attr": "Security Group", "val": [f"{sg.name}"]}
+        data.append(i)
+        return data
+
+    def int_dump_cloud_by_r(self, r: Rule):
+        data = []
+        cl: Cloud
+        cl = self.get_cloud_by_id(r.cloud_id)
+        i = {"attr": "Cloud type", "val": [f"{cl.cloud_type}"]}
+        data.append(i)
+        i = {"attr": "Cloud name", "val": [f"{cl.name}"]}
+        data.append(i)
+        return data
+
+    def int_dump_rule(self, r: Rule):
+        data = []
+        i = {"attr": "Rule",
+             "val": [f"id: {r.id}, ports: {r.ports}, egress: {r.egress} proto: {r.proto}"]}
+        data.append(i)
+        return data
+
+    def add_duplicate_rules(self, rlist: list[Rule], ports: list[int], affected_nodes: list[OneNode]):
+        i = (rlist, ports, affected_nodes)
+        self.duplicate_rules.append(i)
+
+    def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
+        i = (r, ports, affected_nodes)
+        self.asymetruc_rules.append(i)
+
+    def add_alone_node(self, affected_node: OneNode):
+        self.alone_nodes.append(affected_node)
+
+    def add_alone_sg(self, affected_sg: RuleGroupNG):
+        self.alone_sg.append(affected_sg)
 
     def dump_analize_rezults(self):
-        return self.analyze_results
+        res = []
+        # res = [{"label": label, "size": size,  "data": data}]
+        # data = [{"attr": attr, "type": type, "value": value}]
+        t = self.dump_ALL_PORTS_rules()
+        res.append(t)
+        t = self.dump_ALL_IP_rules()
+        res.append(t)
+
+        return res
+
+    def get_cloud_by_id(self, cloud_id):
+        res = None
+        for cl in self.clouds:
+            if cl.id == cloud_id:
+                res = cl
+                break
+        return res
 
     def build_sglist_by_node_dict(self):
         res = {}

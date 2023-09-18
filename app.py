@@ -402,5 +402,28 @@ def api_classification_build2():
     return jsonify(res)
 
 
+@app.route('/api/analyzation', methods=['GET'])
+def api_analyze_links():
+    context = DB()
+    clouds = context.get_clouds()
+    map = CloudMap()
+    map.get()
+    vpcs = map.vpcs
+
+    sgs = get_all_rule_groups()
+    rules = get_all_rules()
+    nodes = Nodes(context.get_all_nodes_info())
+    s = []
+    for v in vpcs:
+        s = s + v.subnets
+    subnets = [*set(s)]
+
+    l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
+    l.make_links()
+    l.analyze_links()
+    ar = l.dump_analize_rezults()
+    return jsonify(ar)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
