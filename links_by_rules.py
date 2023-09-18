@@ -147,6 +147,8 @@ class links_by_rules:
                     continue
                 if r1.egress != r2.egress:
                     continue
+                if r1.is_any_addr() or r2.is_any_addr():
+                    continue
                 plist1 = r1.get_port_list()
                 plist2 = r2.get_port_list()
                 if r1.is_all_ports():
@@ -168,23 +170,14 @@ class links_by_rules:
                     nset2 = set(self.nodes_by_sg[sg2])
                     ncommon = nset1.intersection(nset2)
                     if len(ncommon) > 0:
-                        if duplicates.get(r1, None) == None:
-                            duplicates[r1] = set([r1])
-                        duplicates[r1].add(r2)
-        keys_for_remove = set()
-        for r in duplicates:
-            for t in duplicates:
-                if r == t:
-                    continue
-                if duplicates[r] == duplicates[t]:
-                    keys_for_remove.add(t)
-        for key in keys_for_remove:
-            del duplicates[key]
-        for r in duplicates:
+                        if duplicates.get((r1, r2), None) == None and duplicates.get((r2, r1), None) == None:
+                            duplicates[(r1, r2)] = (list(ports), list(ncommon))
+        for (r1, r2) in duplicates:
             # sglist = set()
             # for t in duplicates[r]:
             #     sglist.add(self.sg_by_r(t))
-            self.add_duplicate_rules(duplicates[r], ports, ncommon)
+            (p, n) = duplicates[(r1, r2)]
+            self.add_duplicate_rules([r1, r2], p, n)
 
     def detect_asymetric(self):
         # one-sided rules
@@ -265,6 +258,22 @@ class links_by_rules:
         data.append(i)
         return data
 
+    def int_dump_rulelist(self, rlist: list[Rule]):
+        data = []
+        t = []
+        r: Rule
+        for r in rlist:
+            t.append(self.int_dump_rule(r))
+        i = {"attr": "Rules", "val": t}
+        data.append(i)
+        return data
+
+    def int_dump_portlist(self, portlist: list[int]):
+        data = []
+        i = {"attr": "Ports", "val": portlist}
+        data.append(i)
+        return data
+
     def int_dump_sg_by_r(self, r: Rule):
         data = []
         sg = self.sg_by_r(self.sgs_NG, r)
@@ -293,9 +302,29 @@ class links_by_rules:
         i = (rlist, ports, affected_nodes)
         self.duplicate_rules.append(i)
 
+    def dump_duplicate_rules(self):
+        data = []
+        for (rlist, ports, affected_nodes) in self.duplicate_rules:
+            data = data + self.int_dump_cloud_by_r(rlist[0])
+            data = data + self.int_dump_rulelist(rlist)
+            data = data + self.int_dump_portlist(ports)
+            data = data + self.int_dump_afected_nodes(affected_nodes)
+        res = {"label": "Rules grants duplicate permissions", "data": data}
+        return res
+
     def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
         i = (r, ports, affected_nodes)
         self.asymetruc_rules.append(i)
+
+    def dump_asymetric_rules(self):
+        data = []
+        for (r, ports, affected_nodes) in self.asymetruc_rules:
+            data = data + self.int_dump_cloud_by_r(r)
+            data = data + self.int_dump_sg_by_r(r)
+            data = data + self.int_dump_portlist(ports)
+            data = data + self.int_dump_afected_nodes(affected_nodes)
+        res = {"label": "Rules with one-side permissions", "data": data}
+        return res
 
     def add_alone_node(self, affected_node: OneNode):
         self.alone_nodes.append(affected_node)
@@ -310,6 +339,10 @@ class links_by_rules:
         t = self.dump_ALL_PORTS_rules()
         res.append(t)
         t = self.dump_ALL_IP_rules()
+        res.append(t)
+        t = self.dump_asymetric_rules()
+        res.append(t)
+        t = self.dump_duplicate_rules()
         res.append(t)
 
         return res
