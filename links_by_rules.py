@@ -4,11 +4,14 @@ from rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
 from rule import Rule
 from classifiers_list import classifier, vminfo
 from ipaddress import ip_network, ip_address
+from cloud import Cloud
+from vpc import VPC
 
 
 class links_by_rules:
-    def __init__(self, nodes: list[OneNode], subnets: list[Subnet], sgs1: list[RuleGroup], rules: list[Rule]):
+    def __init__(self, clouds: list[Cloud], nodes: list[OneNode], subnets: list[Subnet], sgs1: list[RuleGroup], rules: list[Rule]):
         self.sgs_NG = convert_RuleGroup_to_NG(sgs1, rules)
+        self.clouds = clouds
         self.nodes = nodes
         self.subnets = subnets
         self.rules = rules
@@ -19,6 +22,12 @@ class links_by_rules:
         self.used_r = set()
         self.ext_things = set()
         self.analyze_results = []
+        self.all_ports_rules = []
+        self.all_ip_rules = []
+        self.duplicate_rules = []
+        self.asymetruc_rules = []
+        self.alone_nodes = []
+        self.unused_sgs = []
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
             self.sgs_NG, rules)
         self.nodes_by_sg = self.build_nodes_by_sg_dict()
@@ -104,7 +113,7 @@ class links_by_rules:
         self.detect_duplicate()
         self.detect_asymetric()
         # XXX detect isolated nodes
-        # XXX detect security groups without nodes
+        self.detect_unused_sg()
 
     def detect_ANY(self):
         # ANY ports and Addrs
@@ -114,16 +123,14 @@ class links_by_rules:
                 continue
             if r.proto != "ICMP" and r.is_all_ports():
                 sg = self.sg_by_r(self.sgs_NG, r)
-                reason = "All ports rule"
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_bad_rules([r], reason, nlist)
+                    self.add_ALL_PORTS_rules(r, nlist)
             if r.is_any_addr():
                 sg = self.sg_by_r(self.sgs_NG, r)
-                reason = "All addr rule"
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_bad_rules([r], reason, nlist)
+                    self.add_ALL_IP_rules(r, nlist)
 
     def detect_duplicate(self):
         # duplicate rules
@@ -136,9 +143,11 @@ class links_by_rules:
             for r2 in self.rules:
                 if r2.action != 'allow':
                     continue
-                if r1.id == r2.id:
+                if r1.rule_id == r2.rule_id:
                     continue
                 if r1.egress != r2.egress:
+                    continue
+                if r1.is_any_addr() or r2.is_any_addr():
                     continue
                 plist1 = r1.get_port_list()
                 plist2 = r2.get_port_list()
@@ -161,24 +170,14 @@ class links_by_rules:
                     nset2 = set(self.nodes_by_sg[sg2])
                     ncommon = nset1.intersection(nset2)
                     if len(ncommon) > 0:
-                        if duplicates.get(r1, None) == None:
-                            duplicates[r1] = set([r1])
-                        duplicates[r1].add(r2)
-        keys_for_remove = set()
-        for r in duplicates:
-            for t in duplicates:
-                if r == t:
-                    continue
-                if duplicates[r] == duplicates[t]:
-                    keys_for_remove.add(t)
-        for key in keys_for_remove:
-            del duplicates[key]
-        for r in duplicates:
-            reason = f"Duplicate rules for ports {ports}"
+                        if duplicates.get((r1, r2), None) == None and duplicates.get((r2, r1), None) == None:
+                            duplicates[(r1, r2)] = (list(ports), list(ncommon))
+        for (r1, r2) in duplicates:
             # sglist = set()
             # for t in duplicates[r]:
             #     sglist.add(self.sg_by_r(t))
-            self.add_bad_rules(duplicates[r], reason, ncommon)
+            (p, n) = duplicates[(r1, r2)]
+            self.add_duplicate_rules([r1, r2], p, n)
 
     def detect_asymetric(self):
         # one-sided rules
@@ -217,15 +216,201 @@ class links_by_rules:
             if len(remain_plist1) == 0:
                 continue
             reason = f"Assymetrical rule for ports {remain_plist1}"
-            self.add_bad_rules([r1], reason, r1nodes)
+            self.add_asymetric_rules(r1, remain_plist1, r1nodes)
 
-    def add_bad_rules(self, affected_rules: list[Rule], reason: str, affected_nodes: list[OneNode]):
-        res = {"Rules": affected_rules,
-               "Reason": reason, "Nodes": affected_nodes}
-        self.analyze_results.append(res)
+    def detect_unused_sg(self):
+        for sg in self.sgs_NG:
+            nlist = self.nodes_by_sg[sg]
+            if len(nlist) == 0:
+                self.add_unused_sgs(sg)
+
+    def add_unused_sgs(self, sg: RuleGroupNG):
+        self.unused_sgs.append(sg)
+
+    def dump_unused_sgs(self):
+        d = []
+        sg: RuleGroupNG
+        for sg in self.unused_sgs:
+            t = []
+            t = t + self.int_dump_cloud(sg.cloud_id) + \
+                [{"attr": "Security Group", "val": [f"{sg.name}"]}]
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Unused security groups",
+               "caption": caption, "data": data}
+        return res
+
+    def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
+        i = (r, affected_nodes)
+        for (r1, n1) in self.all_ports_rules:
+            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
+                return
+        self.all_ports_rules.append(i)
+
+    def dump_ALL_PORTS_rules(self):
+        d = []
+        caption = []
+        r: Rule
+        for (r, nlist) in self.all_ports_rules:
+            t = []
+            t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
+                r) + self.int_dump_rule_without_ports(r) + self.int_dump_afected_nodes(nlist)
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules to/from ANY ports",
+               "caption": caption, "data": data}
+        return res
+
+    def transfer_av(self, avs: list):
+        caption = []
+        data = []
+        if len(avs) == 0:
+            return (caption, data)
+        for t in avs[0]:
+            caption.append(t["attr"])
+        for l in avs:
+            line = []
+            for av in l:
+                line.append(av["val"])
+            data.append(line)
+        return (caption, data)
+
+    def add_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
+        i = (r, affected_nodes)
+        for (r1, n1) in self.all_ip_rules:
+            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
+                return
+        self.all_ip_rules.append(i)
+
+    def dump_ALL_IP_rules(self):
+        d = []
+        r: Rule
+        for (r, nlist) in self.all_ip_rules:
+            t = []
+            t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
+                r) + self.int_dump_rule_without_addr(r) + self.int_dump_afected_nodes(nlist)
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules to/from ANY IPs",
+               "caption": caption, "data": data}
+        return res
+
+    def int_dump_afected_nodes(self, nlist: list[OneNode]):
+        t = []
+        n: OneNode
+        for n in nlist:
+            t.append(f"{n.name}")
+        i = {"attr": "Affected Nodes", "val": t}
+        return [i]
+
+    def int_dump_rulelist(self, rlist: list[Rule]):
+        t = []
+        r: Rule
+        for r in rlist:
+            t.append(
+                f"id: {r.rule_id}, addr: {r.naddr}, proto: {r.proto}, ports: {r.ports}, egress: {r.egress}")
+        i = {"attr": "Rules", "val": t}
+        return [i]
+
+    def int_dump_portlist(self, portlist: list[int]):
+        i = {"attr": "Ports", "val": portlist}
+        return [i]
+
+    def int_dump_sg_by_r(self, r: Rule):
+        sg = self.sg_by_r(self.sgs_NG, r)
+        i = {"attr": "Security Group", "val": [f"{sg.name}"]}
+        return [i]
+
+    def int_dump_cloud(self, cloud_id):
+        cl: Cloud
+        cl = self.get_cloud_by_id(cloud_id)
+        i1 = {"attr": "Cloud type", "val": [f"{cl.cloud_type}"]}
+        i2 = {"attr": "Cloud name", "val": [f"{cl.name}"]}
+        return [i1, i2]
+
+    def int_dump_rule(self, r: Rule):
+        data = []
+        i = {"attr": "Rule",
+             "val": [f"id: {r.rule_id}", f"proto: {r.proto}", f"remote addr: {r.naddr}", f"ports: {r.ports}", f"egress: {r.egress}"]}
+        data.append(i)
+        return data
+
+    def int_dump_rule_without_addr(self, r: Rule):
+        data = []
+        i = {"attr": "Rule",
+             "val": [f"id: {r.rule_id}", f"proto: {r.proto}", f"ports: {r.ports}", f"egress: {r.egress}"]}
+        data.append(i)
+        return data
+
+    def int_dump_rule_without_ports(self, r: Rule):
+        data = []
+        i = {"attr": "Rule",
+             "val": [f"id: {r.rule_id}", f"addr: {r.naddr}", f"proto: {r.proto}", f"egress: {r.egress}"]}
+        data.append(i)
+        return data
+
+    def add_duplicate_rules(self, rlist: list[Rule], ports: list[int], affected_nodes: list[OneNode]):
+        i = (rlist, ports, affected_nodes)
+        self.duplicate_rules.append(i)
+
+    def dump_duplicate_rules(self):
+        d = []
+        for (rlist, ports, affected_nodes) in self.duplicate_rules:
+            t = []
+            t = t + self.int_dump_cloud(rlist[0].cloud_id) + self.int_dump_rulelist(
+                rlist) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules grants duplicate permissions",
+               "caption": caption, "data": data}
+        return res
+
+    def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
+        i = (r, ports, affected_nodes)
+        self.asymetruc_rules.append(i)
+
+    def dump_asymetric_rules(self):
+        d = []
+        for (r, ports, affected_nodes) in self.asymetruc_rules:
+            t = []
+            t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
+                r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules with one-side permissions",
+               "caption": caption, "data": data}
+        return res
+
+    def add_alone_node(self, affected_node: OneNode):
+        self.alone_nodes.append(affected_node)
+
+    def add_alone_sg(self, affected_sg: RuleGroupNG):
+        self.alone_sg.append(affected_sg)
 
     def dump_analize_rezults(self):
-        return self.analyze_results
+        res = []
+        # res = [{"label": label, "size": size,  "data": data}]
+        # data = [{"attr": attr, "type": type, "value": value}]
+        t = self.dump_ALL_PORTS_rules()
+        res.append(t)
+        t = self.dump_ALL_IP_rules()
+        res.append(t)
+        t = self.dump_asymetric_rules()
+        res.append(t)
+        t = self.dump_duplicate_rules()
+        res.append(t)
+        t = self.dump_unused_sgs()
+        res.append(t)
+
+        return res
+
+    def get_cloud_by_id(self, cloud_id):
+        res = None
+        for cl in self.clouds:
+            if cl.id == cloud_id:
+                res = cl
+                break
+        return res
 
     def build_sglist_by_node_dict(self):
         res = {}

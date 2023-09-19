@@ -253,8 +253,7 @@ export function CloudMap() {
                 style={{
                     width: "100vw",
                     height: `calc(100vh - ${HEADER_HEIGHT})`,
-                    position: "relative",
-                    backgroundColor: dark ? theme.colors.gray[8] : "#F5F5DC",
+                    position: "relative"
                 }}
             >
                 {content}

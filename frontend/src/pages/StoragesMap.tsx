@@ -74,7 +74,6 @@ export function StoragesMap() {
                 width: "100vw",
                 height: `calc(100vh - ${HEADER_HEIGHT})`,
                 position: "relative",
-                backgroundColor: isDark ? theme.colors.gray[8] : "#F5F5DC",
             }}
         >
             {loading && (<Loader

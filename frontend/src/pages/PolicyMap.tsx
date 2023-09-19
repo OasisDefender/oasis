@@ -10,7 +10,6 @@ import {
     Button,
     Loader,
     ScrollArea,
-    useMantineTheme,
 } from "@mantine/core";
 import PolicyMapFilters, {
     IClassifierExt,
@@ -20,9 +19,7 @@ import { IconAlertTriangle } from "@tabler/icons-react";
 import { usePolicyMap } from "../core/hooks/policymap";
 import PolicyMapView from "../components/PolicyMapView";
 
-export function PolicyMap() {
-    const theme = useMantineTheme();
-    const isDark = theme.colorScheme === "dark";
+export function PolicyMap() {    
     const [selected, setSelected] = useState<string | undefined>(undefined);
     const [stage, setStage] = useState<"filters" | "view">("filters");
     const {
@@ -175,7 +172,6 @@ export function PolicyMap() {
                 width: "100vw",
                 height: `calc(100vh - ${HEADER_HEIGHT})`,
                 position: "relative",
-                backgroundColor: isDark ? theme.colors.gray[8] : "#F5F5DC",
                 overflow: "hidden",
             }}
         >
