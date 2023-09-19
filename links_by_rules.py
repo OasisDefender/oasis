@@ -143,7 +143,7 @@ class links_by_rules:
             for r2 in self.rules:
                 if r2.action != 'allow':
                     continue
-                if r1.id == r2.id:
+                if r1.rule_id == r2.rule_id:
                     continue
                 if r1.egress != r2.egress:
                     continue
@@ -322,24 +322,24 @@ class links_by_rules:
         i2 = {"attr": "Cloud name", "val": [f"{cl.name}"]}
         return [i1, i2]
 
-    def int_dump_rule_without_addr(self, r: Rule):
+    def int_dump_rule(self, r: Rule):
         data = []
         i = {"attr": "Rule",
-             "val": [f"id: {r.rule_id}, proto: {r.proto}, remote addr: {r.naddr}, ports: {r.ports}, egress: {r.egress}"]}
+             "val": [f"id: {r.rule_id}", f"proto: {r.proto}", f"remote addr: {r.naddr}", f"ports: {r.ports}", f"egress: {r.egress}"]}
         data.append(i)
         return data
 
     def int_dump_rule_without_addr(self, r: Rule):
         data = []
         i = {"attr": "Rule",
-             "val": [f"id: {r.rule_id}, proto: {r.proto}, ports: {r.ports}, egress: {r.egress}"]}
+             "val": [f"id: {r.rule_id}", f"proto: {r.proto}", f"ports: {r.ports}", f"egress: {r.egress}"]}
         data.append(i)
         return data
 
     def int_dump_rule_without_ports(self, r: Rule):
         data = []
         i = {"attr": "Rule",
-             "val": [f"id: {r.rule_id}, addr: {r.naddr}, proto: {r.proto}, egress: {r.egress}"]}
+             "val": [f"id: {r.rule_id}", f"addr: {r.naddr}", f"proto: {r.proto}", f"egress: {r.egress}"]}
         data.append(i)
         return data
 

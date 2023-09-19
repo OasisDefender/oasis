@@ -391,7 +391,7 @@ def api_classification_build2():
 
     vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
     t = vms.build_vms_tree(sas)
-    l = links_by_rules(nodes.nodes, subnets, sgs, rules)
+    l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
     l.make_links()
     scheme = t.dump_tree(l.ext_things)
     idl = t.get_idlist_by_node()
