@@ -251,7 +251,7 @@ class links_by_rules:
         for (r, nlist) in self.all_ports_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
-                r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nlist)
+                r) + self.int_dump_rule_without_ports(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
         (caption, data) = self.transfer_av(d)
         res = {"label": "Rules to/from ANY ports",
@@ -282,7 +282,7 @@ class links_by_rules:
         for (r, nlist) in self.all_ip_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
-                r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nlist)
+                r) + self.int_dump_rule_without_addr(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
         (caption, data) = self.transfer_av(d)
         res = {"label": "Rules to/from ANY IPs",
@@ -302,7 +302,7 @@ class links_by_rules:
         r: Rule
         for r in rlist:
             t.append(
-                f"id: {r.id}, ports: {r.ports}, egress: {r.egress} proto: {r.proto}")
+                f"id: {r.rule_id}, addr: {r.naddr}, proto: {r.proto}, ports: {r.ports}, egress: {r.egress}")
         i = {"attr": "Rules", "val": t}
         return [i]
 
@@ -322,10 +322,24 @@ class links_by_rules:
         i2 = {"attr": "Cloud name", "val": [f"{cl.name}"]}
         return [i1, i2]
 
-    def int_dump_rule(self, r: Rule):
+    def int_dump_rule_without_addr(self, r: Rule):
         data = []
         i = {"attr": "Rule",
-             "val": [f"id: {r.id}, ports: {r.ports}, egress: {r.egress} proto: {r.proto}"]}
+             "val": [f"id: {r.rule_id}, proto: {r.proto}, remote addr: {r.naddr}, ports: {r.ports}, egress: {r.egress}"]}
+        data.append(i)
+        return data
+
+    def int_dump_rule_without_addr(self, r: Rule):
+        data = []
+        i = {"attr": "Rule",
+             "val": [f"id: {r.rule_id}, proto: {r.proto}, ports: {r.ports}, egress: {r.egress}"]}
+        data.append(i)
+        return data
+
+    def int_dump_rule_without_ports(self, r: Rule):
+        data = []
+        i = {"attr": "Rule",
+             "val": [f"id: {r.rule_id}, addr: {r.naddr}, proto: {r.proto}, egress: {r.egress}"]}
         data.append(i)
         return data
 
