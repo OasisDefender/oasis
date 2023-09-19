@@ -228,14 +228,16 @@ class links_by_rules:
         self.unused_sgs.append(sg)
 
     def dump_unused_sgs(self):
-        data = []
+        d = []
         sg: RuleGroupNG
         for sg in self.unused_sgs:
             t = []
             t = t + self.int_dump_cloud(sg.cloud_id) + \
                 [{"attr": "Security Group", "val": [f"{sg.name}"]}]
-            data.append(t)
-        res = {"label": "Unused security groups", "data": data}
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Unused security groups",
+               "caption": caption, "data": data}
         return res
 
     def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
@@ -243,29 +245,48 @@ class links_by_rules:
         self.all_ports_rules.append(i)
 
     def dump_ALL_PORTS_rules(self):
-        data = []
+        d = []
+        caption = []
         r: Rule
         for (r, nlist) in self.all_ports_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nlist)
-            data.append(t)
-        res = {"label": "Rules to/from ANY ports", "data": data}
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules to/from ANY ports",
+               "caption": caption, "data": data}
         return res
+
+    def transfer_av(self, avs: list):
+        caption = []
+        data = []
+        if len(avs) == 0:
+            return (caption, data)
+        for t in avs[0]:
+            caption.append(t["attr"])
+        for l in avs:
+            line = []
+            for av in l:
+                line.append(av["val"])
+            data.append(line)
+        return (caption, data)
 
     def add_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
         self.all_ip_rules.append(i)
 
     def dump_ALL_IP_rules(self):
-        data = []
+        d = []
         r: Rule
         for (r, nlist) in self.all_ip_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nlist)
-            data.append(t)
-        res = {"label": "Rules to/from ANY IPs", "data": data}
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules to/from ANY IPs",
+               "caption": caption, "data": data}
         return res
 
     def int_dump_afected_nodes(self, nlist: list[OneNode]):
@@ -312,13 +333,15 @@ class links_by_rules:
         self.duplicate_rules.append(i)
 
     def dump_duplicate_rules(self):
-        data = []
+        d = []
         for (rlist, ports, affected_nodes) in self.duplicate_rules:
             t = []
             t = t + self.int_dump_cloud(rlist[0].cloud_id) + self.int_dump_rulelist(
                 rlist) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
-            data.append(t)
-        res = {"label": "Rules grants duplicate permissions", "data": data}
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules grants duplicate permissions",
+               "caption": caption, "data": data}
         return res
 
     def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
@@ -326,13 +349,15 @@ class links_by_rules:
         self.asymetruc_rules.append(i)
 
     def dump_asymetric_rules(self):
-        data = []
+        d = []
         for (r, ports, affected_nodes) in self.asymetruc_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
-            data.append(t)
-        res = {"label": "Rules with one-side permissions", "data": data}
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Rules with one-side permissions",
+               "caption": caption, "data": data}
         return res
 
     def add_alone_node(self, affected_node: OneNode):
