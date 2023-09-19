@@ -301,7 +301,8 @@ class links_by_rules:
         t = []
         r: Rule
         for r in rlist:
-            t.append(self.int_dump_rule(r))
+            t.append(
+                f"id: {r.id}, ports: {r.ports}, egress: {r.egress} proto: {r.proto}")
         i = {"attr": "Rules", "val": t}
         return [i]
 
