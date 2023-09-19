@@ -242,6 +242,9 @@ class links_by_rules:
 
     def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
+        for (r1, n1) in self.all_ports_rules:
+            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
+                return
         self.all_ports_rules.append(i)
 
     def dump_ALL_PORTS_rules(self):
@@ -274,6 +277,9 @@ class links_by_rules:
 
     def add_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
+        for (r1, n1) in self.all_ip_rules:
+            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
+                return
         self.all_ip_rules.append(i)
 
     def dump_ALL_IP_rules(self):
