@@ -395,7 +395,7 @@ class links_by_rules:
         for (r, ports, affected_nodes) in self.asymetruc_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
-                r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+                r) + self.int_dump_rule(r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
             d.append(t)
         (caption, data) = self.transfer_av(d)
         res = {"label": "Rules with one-side permissions",
