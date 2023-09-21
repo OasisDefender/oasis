@@ -143,7 +143,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             pt="xs"
                             onClick={openCloudHelp}
                         >
-                            How to create an Access Key for Oasis Defender?
+                            How can I set up an access for Oasis Defender?
                         </Anchor>
                         <PasswordInput
                             withAsterisk
@@ -169,7 +169,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             pt="xs"
                             onClick={openCloudHelp}
                         >
-                            How to create an access for Oasis Defender?
+                            How can I set up an access for Oasis Defender?
                         </Anchor>
                         <PasswordInput
                             withAsterisk
@@ -208,7 +208,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                 </Group>
             </form>
             <Modal
-                title="How to Connect Your Cloud with Oasis Defender"
+                title="Connect Your Cloud with Oasis Defender"
                 opened={cloudHelpOpened}
                 onClose={closeCloudHelp}
                 zIndex={300}
@@ -218,24 +218,27 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                 {form.values.cloud_type === "AWS" && (
                     <List type="ordered" w="90%">
                         <List.Item>
-                            Create a New IAM User
+                            Creating a New IAM User
                             <List listStyleType="disc">
                                 <List.Item>
-                                    Log in to your AWS Management Console
+                                    Sign in to your{" "}
+                                    <b>AWS Management Console</b>
                                 </List.Item>
                                 <List.Item>
-                                    Navigate to the IAM (Identity and Access
-                                    Management) service
+                                    and go to the{" "}
+                                    <b>IAM (Identity and Access Management)</b>{" "}
+                                    service
                                 </List.Item>
                                 <List.Item>
-                                    Click on "Users" in the left navigation pane
+                                    Select <b>Users</b> in the left navigation
+                                    pane
                                 </List.Item>
                                 <List.Item>
-                                    Click the "Create user" button to create a
-                                    new user
+                                    Click the <b>Create User</b> button to
+                                    create a new user
                                 </List.Item>
                                 <List.Item>
-                                    Provide a username for the new user
+                                    Specify a username for the new user
                                 </List.Item>
                             </List>
                         </List.Item>
@@ -243,48 +246,50 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             Set User Permissions
                             <List listStyleType="disc">
                                 <List.Item>
-                                    Select "Attach policies directly" in the
-                                    "Permissions options"
+                                    Choose <b>Attach policies directly</b> from
+                                    the <b>Permissions options</b>
                                 </List.Item>
                                 <List.Item>
-                                    To create <b>ReadOnly</b> account:
+                                    To create a <b>read-only</b> account:
                                     <List listStyleType="circle">
                                         <List.Item>
-                                            Check policy with the name
-                                            "SecurityAudit"
+                                            Ensure the <b>SecurityAudit</b>{" "}
+                                            policy is selected
                                         </List.Item>
                                     </List>
                                 </List.Item>
                                 <List.Item>
-                                    Review your user's settings and permissions,
-                                    and confirm
+                                    Review the user's settings and permissions,
+                                    then confirm
                                 </List.Item>
                             </List>
                         </List.Item>
                         <List.Item>
-                            Create Access Key
+                            Create the access key
                             <List listStyleType="disc">
                                 <List.Item>
-                                    Click on the name of created user in Users
-                                    list
+                                    Click on the name of the user you created in
+                                    the list of users
                                 </List.Item>
                                 <List.Item>
-                                    Click on the "Create access key" button to
-                                    generate an Access Key
+                                    Then click on the <b>Create access key</b>{" "}
+                                    button to generate an access key
                                 </List.Item>
                                 <List.Item>
-                                    Choose the "Application running outside AWS"
-                                    use case
+                                    Select the{" "}
+                                    <b>Application running outside AWS</b> use
+                                    case
                                 </List.Item>
                                 <List.Item>Create the Access Key</List.Item>
                                 <List.Item>
-                                    After creating the access key, you'll be
-                                    able to download a CSV file containing the
-                                    Access Key ID and Secret Access Key
+                                    <i>Optional:</i> After creating the access
+                                    key, obtain a CSV file with the Access Key
+                                    ID and Secret Access Key
                                 </List.Item>
                                 <List.Item>
-                                    Copy the "Access key" and "Secret access
-                                    key" into Oasis Defender
+                                    Next, copy both the <b>Access key</b> and{" "}
+                                    <b>Secret access key</b> into Oasis
+                                    Defender:
                                     <PasswordInput
                                         withAsterisk
                                         label="Key"
@@ -307,7 +312,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                 {form.values.cloud_type === "AZURE" && (
                     <List type="ordered" w="90%">
                         <List.Item w="100%">
-                            How to obtain Subscription ID:
+                            Obtain a Subscription ID:
                             <List listStyleType="disc" w="100%">
                                 <List.Item>
                                     {" "}
@@ -319,8 +324,8 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 </List.Item>
                                 <List.Item>
                                     {" "}
-                                    Copy <b>Subscription ID</b> into Oazis
-                                    Defender
+                                    Insert the <b>Subscription ID</b> into Oazis
+                                    Defender:
                                 </List.Item>
                             </List>
                         </List.Item>
@@ -330,7 +335,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             placeholder=""
                             {...form.getInputProps("azure_subscription_id")}
                         />
-                        <br/>
+                        <br />
                         <List.Item>
                             Register the application in Azure:
                             <List listStyleType="disc">
@@ -342,8 +347,8 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                     <b>+ New registration</b>
                                 </List.Item>
                                 <List.Item>
-                                    On the <b>Register an application</b> page, fill
-                                    out the form as follows:
+                                    On the <b>Register an application</b> page,
+                                    fill out the form as follows:
                                     <br />
                                     for <b>Name</b> enter <i>Oasis Defender</i>,
                                     <br />
@@ -357,15 +362,16 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                     .
                                 </List.Item>
                                 <List.Item>
-                                    Select Register to register your app and
-                                    create the application service principal.
+                                    Select Register to register your application
+                                    and create the application service
+                                    principal.
                                 </List.Item>
                             </List>
                         </List.Item>
                         <List.Item>
-                            On the App registration page for{" "}
-                            <b>Oasis Defender</b> app copy{" "}
-                            <b>Directory (tenant) ID</b> into:
+                            On the App registration page for the application
+                            copy the <b>Directory (tenant) ID</b> to{" "}
+                            <b>Oasis Defender</b>:
                         </List.Item>
                         <PasswordInput
                             withAsterisk
@@ -373,11 +379,11 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             placeholder=""
                             {...form.getInputProps("azure_tenant_id")}
                         />
-                        <br/>
+                        <br />
                         <List.Item>
-                            On the App registration page for{" "}
-                            <b>Oasis Defender</b> app copy{" "}
-                            <b>Application (client) ID</b> into:
+                            On the App registration page for the application
+                            copy the <b>Application (client) ID</b> to{" "}
+                            <b>Oasis Defender</b>:
                         </List.Item>
                         <PasswordInput
                             withAsterisk
@@ -385,9 +391,9 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             placeholder=""
                             {...form.getInputProps("azure_client_id")}
                         />
-                        <br/>
+                        <br />
                         <List.Item>
-                            Add new client secret:
+                            Add a new client secret:
                             <List listStyleType="disc">
                                 <List.Item>
                                     On the <b>Certificates & secrets</b> page
@@ -395,14 +401,12 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 <List.Item>
                                     Select <b>+ New client secret</b> the{" "}
                                     <b>Add a client secret</b> dialog will pop
-                                    out from the right-hand side of the page. In
-                                    this dialog:
+                                    out from the right-hand side of the page. In the dialogue:
                                     <br />
                                     for <b>Description</b> enter{" "}
                                     <i>Oasis Defender app</i>,
                                     <br />
-                                    for <b>Expires</b> select a value of 24
-                                    months.
+                                    for <b>Expires</b> select <i>24 months</i>.
                                 </List.Item>
                                 <List.Item>
                                     Select <b>Add</b> to add the secret.
@@ -411,7 +415,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                     On the <b>Certificates & secrets</b> page,
                                     you will be shown the value of the client
                                     secret. Copy the secret <b>Value</b>, as it
-                                    will be shown only once.
+                                    will be shown only once to <b>Oasis Defender:</b>
                                 </List.Item>
                             </List>
                         </List.Item>
@@ -421,7 +425,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                             placeholder=""
                             {...form.getInputProps("azure_client_secret")}
                         />
-                        <br/>
+                        <br />
                         <List.Item>
                             Assign roles to the application service principal:
                             <List listStyleType="disc">
@@ -444,7 +448,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                     resulting drop-down menu{" "}
                                 </List.Item>
                                 <List.Item>
-                                    To create <b>ReadOnly</b> account: <br />
+                                    To create a <b>read-only</b> account: <br />
                                     Select role <b>Reader</b> and press{" "}
                                     <b>Next</b> button.
                                 </List.Item>
@@ -473,10 +477,10 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 </List.Item>
                             </List>
                         </List.Item>
-                        <br/>
+                        <br />
                         <Text>
                             For more information, visit the{" "}
-                            <a href="https://learn.microsoft.com/ru-ru/azure/developer/python/sdk/authentication-on-premises-apps?tabs=azure-portal">
+                            <a href="https://learn.microsoft.com/en-us/azure/developer/python/sdk/authentication-on-premises-apps?tabs=azure-portal">
                                 Azure Help page
                             </a>
                         </Text>
