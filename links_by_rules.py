@@ -26,7 +26,7 @@ class links_by_rules:
         self.all_ip_rules = []
         self.duplicate_rules = []
         self.asymetruc_rules = []
-        self.alone_nodes = []
+        self.lonley_nodes = []
         self.unused_sgs = []
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
             self.sgs_NG, rules)
@@ -112,8 +112,26 @@ class links_by_rules:
         self.detect_ANY()
         self.detect_duplicate()
         self.detect_asymetric()
-        # XXX detect isolated nodes
         self.detect_unused_sg()
+        self.detect_isolated_nodes()
+
+    def detect_isolated_nodes(self):
+        for n in self.nodes:
+            if len(self.sglist_by_node[n]) == 0:
+                self.lonley_nodes.append(n)
+        self.lonley_nodes = list(set(self.lonley_nodes))
+
+    def dump_isolated_nodes(self):
+        d = []
+        n: OneNode
+        for n in self.lonley_nodes:
+            t = []
+            t = self.int_dump_cloud(n.cloud_id) + self.int_dump_node(n)
+            d.append(t)
+        (caption, data) = self.transfer_av(d)
+        res = {"label": "Nodes without any security rules",
+               "caption": caption, "data": data}
+        return res
 
     def detect_ANY(self):
         # ANY ports and Addrs
@@ -303,6 +321,9 @@ class links_by_rules:
         i = {"attr": "Affected Nodes", "val": t}
         return [i]
 
+    def int_dump_node(self, n: OneNode):
+        return [{"attr": "Node Id", "val": n.name}]
+
     def int_dump_rulelist(self, rlist: list[Rule]):
         t = []
         r: Rule
@@ -381,12 +402,6 @@ class links_by_rules:
                "caption": caption, "data": data}
         return res
 
-    def add_alone_node(self, affected_node: OneNode):
-        self.alone_nodes.append(affected_node)
-
-    def add_alone_sg(self, affected_sg: RuleGroupNG):
-        self.alone_sg.append(affected_sg)
-
     def dump_analize_rezults(self):
         res = []
         # res = [{"label": label, "size": size,  "data": data}]
@@ -400,6 +415,8 @@ class links_by_rules:
         t = self.dump_duplicate_rules()
         res.append(t)
         t = self.dump_unused_sgs()
+        res.append(t)
+        t = self.dump_isolated_nodes()
         res.append(t)
 
         return res
