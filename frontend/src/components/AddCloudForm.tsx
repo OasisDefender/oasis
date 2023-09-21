@@ -287,7 +287,7 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                     ID and Secret Access Key
                                 </List.Item>
                                 <List.Item>
-                                    Next, copy both the <b>Access key</b> and{" "}
+                                    Next, insert both the <b>Access key</b> and{" "}
                                     <b>Secret access key</b> into Oasis
                                     Defender:
                                     <PasswordInput
