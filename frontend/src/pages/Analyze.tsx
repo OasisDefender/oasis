@@ -6,10 +6,11 @@ import {
     Group,    
     Loader,    
     Space,    
-    Table,    
+    Table,
+    Tooltip,    
 } from "@mantine/core";
 import { useAnalyzation } from "../core/hooks/analyzation";
-import { IconAlertTriangle } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCircle, IconCircle0Filled, IconCircleDot, IconCircleFilled, IconHelp, IconHelpCircle, IconHelpHexagon, IconHelpOff, IconHelpSmall } from "@tabler/icons-react";
 
 function jsxJoinLines (array: any[]) {
     return array.length > 0
@@ -19,6 +20,16 @@ function jsxJoinLines (array: any[]) {
 
 export function Analyze() {
     const { loading, error, data } = useAnalyzation();
+
+    const severityToColor = function(severity: number) {
+        if (severity === 0) 
+            return "#028A0F";
+        if (severity === 1)
+            return "#FDFD96";
+        if (severity === 2)
+            return "#FFBF00";
+        return "#990F02";
+    }
 
     return (
         <Container size="xl">
@@ -55,7 +66,15 @@ export function Analyze() {
                         <Accordion.Item value={i.toString()} key={i}>
                             <Accordion.Control>
                                 <Group position="apart" spacing="xs">
-                                    <b>{d.label}</b>
+                                    <Group>                                        
+                                        <Tooltip label={`Severity: ${d.severity}`}>
+                                            <IconCircle stroke="0.05rem" fill={severityToColor(d.severity)}/>
+                                        </Tooltip>                                        
+                                        <b>{d.label}</b>
+                                        <Tooltip multiline label={d.description} maw="50%">
+                                            <IconHelpCircle stroke="0.1rem"/>
+                                        </Tooltip>
+                                    </Group>
                                     <Badge size="lg" variant="filled">
                                         {d.data.length}
                                     </Badge>
