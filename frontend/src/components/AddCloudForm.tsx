@@ -401,7 +401,8 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 <List.Item>
                                     Select <b>+ New client secret</b> the{" "}
                                     <b>Add a client secret</b> dialog will pop
-                                    out from the right-hand side of the page. In the dialogue:
+                                    out from the right-hand side of the page. In
+                                    the dialogue:
                                     <br />
                                     for <b>Description</b> enter{" "}
                                     <i>Oasis Defender app</i>,
@@ -414,8 +415,9 @@ export const AddCloudForm = ({ onCancel, makeAddCloud }: AddCloudFormProps) => {
                                 <List.Item>
                                     On the <b>Certificates & secrets</b> page,
                                     you will be shown the value of the client
-                                    secret. Copy the secret <b>Value</b>, as it
-                                    will be shown only once to <b>Oasis Defender:</b>
+                                    secret. It will be shown only once! Insert
+                                    the secret <b>Value</b> into{" "}
+                                    <b>Oasis Defender:</b>
                                 </List.Item>
                             </List>
                         </List.Item>
