@@ -107,6 +107,10 @@ interface HeaderResponsiveProps {
 export function HeaderResponsive({ links }: HeaderResponsiveProps) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === 'dark';
+    
+    console.log(process.env);
+    const logoutType = process.env.REACT_APP_LOGOUT_TYPE;
+    console.log("logoutType", logoutType);
 
     const [opened, { toggle, close }] = useDisclosure(false);
     const location = useLocation();
@@ -153,7 +157,7 @@ export function HeaderResponsive({ links }: HeaderResponsiveProps) {
                         {dark ? <IconSun size="1.1rem" /> : <IconMoonStars size="1.1rem" />}
                     </ActionIcon>
 
-                    <ActionIcon
+                    {(logoutType === "basic") && <ActionIcon
                         color={dark ? "yellow" : "blue"}
                         onClick={() => {
                             const newLocation = new URL(window.location.href);
@@ -165,7 +169,7 @@ export function HeaderResponsive({ links }: HeaderResponsiveProps) {
                         title="Logout"
                     >
                         <IconLogout size="1.1rem" />
-                    </ActionIcon>
+                    </ActionIcon>}
                     
                     <Burger
                         opened={opened}
