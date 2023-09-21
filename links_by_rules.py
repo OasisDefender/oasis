@@ -39,36 +39,42 @@ class links_by_rules:
                 "description": "Except for public resources, unrestricted connection to or from ANY (0.0.0.0) address is considered bad practice.",
                 "detect_fn": self.detect_ANY_IPs,
                 "dump_fn": self.dump_ALL_IP_rules,
+                "severity": 1
             },
             {
                 "label": "Rules to/from ANY Ports",
                 "description": "Except for special cases where the node acts as a proxy or gateway, opening all ports on the node is not a recommended practice.",
                 "detect_fn": self.detect_ANY_ports,
                 "dump_fn": self.dump_ALL_PORTS_rules,
+                "severity": 1
             },
             {
                 "label": "Unused security groups",
                 "description": "Security groups have no effect if there are no associated nodes.",
                 "detect_fn": self.detect_unused_sg,
                 "dump_fn": self.dump_unused_sgs,
+                "severity": 1
             },
             {
                 "label": "Nodes without any security rules",
                 "description": "Nodes without security rules denied any network connections.",
                 "detect_fn": self.detect_isolated_nodes,
                 "dump_fn": self.dump_isolated_nodes,
+                "severity": 1
             },
             {
                 "label": "Rules grants duplicate permissions",
                 "description": "If more than one rule grants the same rights to the same nodes, only one rule will have an effect. Such situations can potentially lead to errors when one of the duplicate rules is changed.",
                 "detect_fn": self.detect_duplicate,
                 "dump_fn": self.dump_duplicate_rules,
+                "severity": 1
             },
             {
                 "label": "Rules with one-side permissions",
                 "description": "If a rule permits connecting to a server without a corresponding rule permitting client connection (or vice versa), it only has an effect if some nodes are not available for analysis (for example, if some nodes are located outside of the cloud).",
                 "detect_fn": self.detect_asymetric,
                 "dump_fn": self.dump_asymetric_rules,
+                "severity": 1
             },
 
         ]
@@ -150,12 +156,6 @@ class links_by_rules:
     def analyze_links(self):
         for i in self.analyzer_cfg:
             i["detect_fn"]()
-        # self.detect_ANY_ports()
-        # self.detect_ANY_IPs()
-        # self.detect_duplicate()
-        # self.detect_asymetric()
-        # self.detect_unused_sg()
-        # self.detect_isolated_nodes()
 
     def detect_isolated_nodes(self):
         for n in self.nodes:
@@ -163,7 +163,7 @@ class links_by_rules:
                 self.lonley_nodes.append(n)
         self.lonley_nodes = list(set(self.lonley_nodes))
 
-    def dump_isolated_nodes(self, label, descr):
+    def dump_isolated_nodes(self, label, descr, severity):
         d = []
         n: OneNode
         for n in self.lonley_nodes:
@@ -171,7 +171,10 @@ class links_by_rules:
             t = self.int_dump_cloud(n.cloud_id) + self.int_dump_node(n)
             d.append(t)
         (caption, data) = self.transfer_av(d)
-        res = {"label": label, "description": descr,
+        if len(data) == 0:
+            severity = 0
+
+        res = {"label": label, "description": descr, "severity": severity,
                "caption": caption, "data": data}
         return res
 
@@ -292,7 +295,7 @@ class links_by_rules:
     def add_unused_sgs(self, sg: RuleGroupNG):
         self.unused_sgs.append(sg)
 
-    def dump_unused_sgs(self, label, descr):
+    def dump_unused_sgs(self, label, descr, severity):
         d = []
         sg: RuleGroupNG
         for sg in self.unused_sgs:
@@ -301,7 +304,9 @@ class links_by_rules:
                 [{"attr": "Security Group", "val": [f"{sg.name}"]}]
             d.append(t)
         (caption, data) = self.transfer_av(d)
-        res = {"label": label, "description": descr,
+        if len(data) == 0:
+            severity = 0
+        res = {"label": label, "description": descr, "severity": severity,
                "caption": caption, "data": data}
         return res
 
@@ -312,7 +317,7 @@ class links_by_rules:
                 return
         self.all_ports_rules.append(i)
 
-    def dump_ALL_PORTS_rules(self, label, descr):
+    def dump_ALL_PORTS_rules(self, label, descr, severity):
         d = []
         caption = []
         r: Rule
@@ -322,7 +327,10 @@ class links_by_rules:
                 r) + self.int_dump_rule_without_ports(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
         (caption, data) = self.transfer_av(d)
-        res = {"label": label, "description": descr,
+        if len(data) == 0:
+            severity = 0
+
+        res = {"label": label, "description": descr, "severity": severity,
                "caption": caption, "data": data}
         return res
 
@@ -347,7 +355,7 @@ class links_by_rules:
                 return
         self.all_ip_rules.append(i)
 
-    def dump_ALL_IP_rules(self, label, descr):
+    def dump_ALL_IP_rules(self, label, descr, severity):
         d = []
         r: Rule
         for (r, nlist) in self.all_ip_rules:
@@ -356,7 +364,9 @@ class links_by_rules:
                 r) + self.int_dump_rule_without_addr(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
         (caption, data) = self.transfer_av(d)
-        res = {"label": label, "description": descr,
+        if len(data) == 0:
+            severity = 0
+        res = {"label": label, "description": descr, "severity": severity,
                "caption": caption, "data": data}
         return res
 
@@ -369,6 +379,7 @@ class links_by_rules:
         return [i]
 
     def int_dump_node(self, n: OneNode):
+        # [{"attr": "Node Id", "val": n.name}]
         return [{"attr": "Node Id", "val": n.name}]
 
     def int_dump_rulelist(self, rlist: list[Rule]):
@@ -404,24 +415,20 @@ class links_by_rules:
         return data
 
     def int_dump_rule_without_addr(self, r: Rule):
-        data = []
         i = {"attr": "Rule",
              "val": [f"id: {r.rule_id}", f"proto: {r.proto}", f"ports: {r.ports}", f"egress: {r.egress}"]}
-        data.append(i)
-        return data
+        return [i]
 
     def int_dump_rule_without_ports(self, r: Rule):
-        data = []
         i = {"attr": "Rule",
              "val": [f"id: {r.rule_id}", f"addr: {r.naddr}", f"proto: {r.proto}", f"egress: {r.egress}"]}
-        data.append(i)
-        return data
+        return [i]
 
     def add_duplicate_rules(self, rlist: list[Rule], ports: list[int], affected_nodes: list[OneNode]):
         i = (rlist, ports, affected_nodes)
         self.duplicate_rules.append(i)
 
-    def dump_duplicate_rules(self, label, descr):
+    def dump_duplicate_rules(self, label, descr, severity):
         d = []
         for (rlist, ports, affected_nodes) in self.duplicate_rules:
             t = []
@@ -429,7 +436,9 @@ class links_by_rules:
                 rlist) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
             d.append(t)
         (caption, data) = self.transfer_av(d)
-        res = {"label": label, "description": descr,
+        if len(data) == 0:
+            severity = 0
+        res = {"label": label, "description": descr, "severity": severity,
                "caption": caption, "data": data}
         return res
 
@@ -437,7 +446,7 @@ class links_by_rules:
         i = (r, ports, affected_nodes)
         self.asymetruc_rules.append(i)
 
-    def dump_asymetric_rules(self, label, descr):
+    def dump_asymetric_rules(self, label, descr, severity):
         d = []
         for (r, ports, affected_nodes) in self.asymetruc_rules:
             t = []
@@ -445,29 +454,18 @@ class links_by_rules:
                 r) + self.int_dump_rule(r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
             d.append(t)
         (caption, data) = self.transfer_av(d)
-        res = {"label": label, "description": descr,
+        if len(data) == 0:
+            severity = 0
+
+        res = {"label": label, "description": descr, "severity": severity,
                "caption": caption, "data": data}
         return res
 
     def dump_analize_rezults(self):
         res = []
         for i in self.analyzer_cfg:
-            t = i["dump_fn"](i["label"], i["description"])
+            t = i["dump_fn"](i["label"], i["description"], i["severity"])
             res.append(t)
-        # res = [{"label": label, "size": size,  "data": data}]
-        # data = [{"attr": attr, "type": type, "value": value}]
-        # t = self.dump_ALL_PORTS_rules()
-        # res.append(t)
-        # t = self.dump_ALL_IP_rules()
-        # res.append(t)
-        # t = self.dump_asymetric_rules()
-        # res.append(t)
-        # t = self.dump_duplicate_rules()
-        # res.append(t)
-        # t = self.dump_unused_sgs()
-        # res.append(t)
-        # t = self.dump_isolated_nodes()
-        # res.append(t)
 
         return res
 
