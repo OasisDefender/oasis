@@ -276,13 +276,13 @@ class FW_AWS:
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, rds_sg['VpcSecurityGroupId'])
 
-            # Load S3 Buckets
-            s3_client = self.__session.resource('s3')
-            for bucket in s3_client.buckets.all():
-                bucket = S3_Bucket(id    = None,
-                                name     = bucket.name,
-                                cloud_id = cloud_id)
-                bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
+        # Load S3 Buckets
+        s3_client = self.__session.resource('s3')
+        for bucket in s3_client.buckets.all():
+            bucket = S3_Bucket(id    = None,
+                            name     = bucket.name,
+                            cloud_id = cloud_id)
+            bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
 
         return 0
     
