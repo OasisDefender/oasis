@@ -28,7 +28,7 @@ export function Analyze() {
             return "#FDFD96";
         if (severity === 2)
             return "#FFBF00";
-        return "#990F02";
+        return "#D0312D";
     }
 
     return (
