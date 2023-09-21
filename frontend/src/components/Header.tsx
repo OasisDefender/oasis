@@ -16,7 +16,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useLocation, matchPath } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
-import { IconMoonStars, IconSun } from "@tabler/icons-react";
+import { IconLogout, IconMoonStars, IconSun } from "@tabler/icons-react";
 
 export const HEADER_HEIGHT = rem(60);
 
@@ -153,6 +153,20 @@ export function HeaderResponsive({ links }: HeaderResponsiveProps) {
                         {dark ? <IconSun size="1.1rem" /> : <IconMoonStars size="1.1rem" />}
                     </ActionIcon>
 
+                    <ActionIcon
+                        color={dark ? "yellow" : "blue"}
+                        onClick={() => {
+                            const newLocation = new URL(window.location.href);
+                            newLocation.username = "logout";
+                            newLocation.password = "password";
+                            newLocation.pathname = "/logout";
+                            window.location.href = newLocation.href;
+                        }}
+                        title="Logout"
+                    >
+                        <IconLogout size="1.1rem" />
+                    </ActionIcon>
+                    
                     <Burger
                         opened={opened}
                         onClick={toggle}
