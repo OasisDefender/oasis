@@ -9,9 +9,10 @@ import {
     ScrollArea,
     Text,
     Title,
+    Tooltip,
 } from "@mantine/core";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { IconGripVertical } from "@tabler/icons-react";
+import { IconGripVertical, IconHelpCircle } from "@tabler/icons-react";
 import { IClassifier } from "../core/models/IClassifier";
 
 const useStyles = createStyles((theme) => ({
@@ -108,11 +109,19 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
         next();
     };
 
+    const helpText =
+        "The tool allows you to flexibly visualize the security policy defined by a set of security rules. Arbitrary multilevel grouping of nodes based on the presented set of properties is possible. You can create arbitrary multilevel groupings of nodes based on the presented properties. To perform the grouping, you need to select the required levels and establish their order. The order is set from the top to the bottom by dragging the chosen levels. A node that belongs to multiple groups will be displayed within each of those groups.";
+
     return (
         <Container h="100%" p="1rem 0">
             <Flex direction="column" h="100%">
                 <Title order={3}>
-                    Configure the order in which the data will be grouped
+                    <Group>
+                        <Tooltip multiline label={helpText} maw="50%">
+                            <IconHelpCircle stroke="0.1rem" />
+                        </Tooltip>
+                        Select categories and define their order
+                    </Group>
                 </Title>
                 <ScrollArea type="auto" offsetScrollbars pt="1rem">
                     <DragDropContext
