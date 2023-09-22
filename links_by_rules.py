@@ -37,15 +37,6 @@ class links_by_rules:
 
         self.analyzer_cfg = [
             {
-                "label": "Rules to ANY IPs",
-                "description": "Unrestricted connection to ANY (0.0.0.0) address in general is not a recommended practice.",
-                "tips": "Restrict the range of addresses in the security rules, if possible",
-                "detect_fn": self.detect_to_ANY_IPs,
-                "dump_fn": self.dump_ALL_IP_rules,
-                "data": self.all_to_ip_rules,
-                "severity": 1
-            },
-            {
                 "label": "Rules from ANY IPs",
                 "description": "Except for public resources, unrestricted connection from ANY (0.0.0.0) address is considered bad practice.",
                 "tips": "Restrict the range of addresses in the security rules, if possible",
@@ -55,12 +46,21 @@ class links_by_rules:
                 "severity": 2
             },
             {
+                "label": "Rules to ANY IPs",
+                "description": "Unrestricted connection to ANY (0.0.0.0) address in general is not a recommended practice.",
+                "tips": "Restrict the range of addresses in the security rules, if possible",
+                "detect_fn": self.detect_to_ANY_IPs,
+                "dump_fn": self.dump_ALL_IP_rules,
+                "data": self.all_to_ip_rules,
+                "severity": 1
+            },
+            {
                 "label": "Rules from ANY Ports",
                 "description": "Granting permission to open connections from any port in general is not a recommended practice.",
                 "tips": "If possible, limit the range of ports in the security rules.",
                 "detect_fn": self.detect_from_ANY_ports,
                 "dump_fn": self.dump_ALL_PORTS_rules,
-                "data": self.all_to_ports_rules,
+                "data": self.all_from_ports_rules,
                 "severity": 1
             },
             {
@@ -69,7 +69,7 @@ class links_by_rules:
                 "tips": "If possible, limit the range of ports in the security rules.",
                 "detect_fn": self.detect_to_ANY_ports,
                 "dump_fn": self.dump_ALL_PORTS_rules,
-                "data": self.all_from_ports_rules,
+                "data": self.all_to_ports_rules,
                 "severity": 2
             },
             {
@@ -100,7 +100,7 @@ class links_by_rules:
                 "severity": 2
             },
             {
-                "label": "Rules with duplicate permissions",
+                "label": "Rules grant one-sided permissions ",
                 "description": "If a rule permits connecting to a server without a corresponding rule permitting client connection (or vice versa), it only has an effect if some nodes are not available for analysis (for example, if some nodes are located outside of the cloud).",
                 "tips": "Remove rules that are unnecessary or add paired rules for the connections you need.",
                 "detect_fn": self.detect_asymetric,
