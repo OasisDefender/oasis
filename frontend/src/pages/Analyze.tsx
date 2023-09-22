@@ -10,7 +10,7 @@ import {
     Tooltip,    
 } from "@mantine/core";
 import { useAnalyzation } from "../core/hooks/analyzation";
-import { IconAlertTriangle, IconCircle, IconCircle0Filled, IconCircleDot, IconCircleFilled, IconHelp, IconHelpCircle, IconHelpHexagon, IconHelpOff, IconHelpSmall } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCircle, IconCircle0Filled, IconCircleDot, IconCircleFilled, IconHammer, IconHelp, IconHelpCircle, IconHelpHexagon, IconHelpOff, IconHelpSmall, IconSettings } from "@tabler/icons-react";
 
 function jsxJoinLines (array: any[]) {
     return array.length > 0
@@ -73,6 +73,9 @@ export function Analyze() {
                                         <b>{d.label}</b>
                                         <Tooltip multiline label={d.description} maw="50%">
                                             <IconHelpCircle stroke="0.1rem"/>
+                                        </Tooltip>
+                                        <Tooltip multiline label={d.tips} maw="50%">
+                                            <IconHammer stroke="0.1rem"/>
                                         </Tooltip>
                                     </Group>
                                     <Badge size="lg" variant="filled">
