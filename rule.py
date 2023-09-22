@@ -154,6 +154,12 @@ class Rule:
 
         return [res]
 
+    def rule_direction(self):
+        res = "Direction : Ingress"
+        if self.egress == "True":
+            res = "Direction : Egress"
+        return res
+
     def is_all_ports(self):
         return (self.ports in ["0", "*", "Any", "ALL", ""]) or (self.port_from == "*") or (self.port_to == "*")
 

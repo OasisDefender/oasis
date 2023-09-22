@@ -171,6 +171,8 @@ class links_by_rules:
 
     def detect_isolated_nodes(self):
         for n in self.nodes:
+            if n.type == "IGW":
+                continue
             if len(self.sglist_by_node[n]) == 0:
                 self.lonley_nodes.append(n)
         self.lonley_nodes = list(set(self.lonley_nodes))
