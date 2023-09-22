@@ -22,8 +22,10 @@ class links_by_rules:
         self.used_r = set()
         self.ext_things = set()
         self.analyze_results = []
-        self.all_ports_rules = []
-        self.all_ip_rules = []
+        self.all_from_ports_rules = []
+        self.all_from_ip_rules = []
+        self.all_to_ports_rules = []
+        self.all_to_ip_rules = []
         self.duplicate_rules = []
         self.asymetric_rules = []
         self.lonley_nodes = []
@@ -35,21 +37,39 @@ class links_by_rules:
 
         self.analyzer_cfg = [
             {
-                "label": "Rules to/from ANY IPs",
-                "description": "Except for public resources, unrestricted connection to or from ANY (0.0.0.0) address is considered bad practice.",
+                "label": "Rules to ANY IPs",
+                "description": "Unrestricted connection to ANY (0.0.0.0) address in general is not a recommended practice.",
                 "tips": "Restrict the range of addresses in the security rules, if possible",
-                "detect_fn": self.detect_ANY_IPs,
+                "detect_fn": self.detect_to_ANY_IPs,
                 "dump_fn": self.dump_ALL_IP_rules,
-                "data": self.all_ip_rules,
+                "data": self.all_to_ip_rules,
+                "severity": 1
+            },
+            {
+                "label": "Rules from ANY IPs",
+                "description": "Except for public resources, unrestricted connection from ANY (0.0.0.0) address is considered bad practice.",
+                "tips": "Restrict the range of addresses in the security rules, if possible",
+                "detect_fn": self.detect_from_ANY_IPs,
+                "dump_fn": self.dump_ALL_IP_rules,
+                "data": self.all_from_ip_rules,
                 "severity": 2
             },
             {
-                "label": "Rules to/from ANY Ports",
-                "description": "Except for special cases where the node acts as a proxy or gateway, opening all ports on the node is not a recommended practice.",
+                "label": "Rules from ANY Ports",
+                "description": "Granting permission to open connections from any port in general is not a recommended practice.",
                 "tips": "If possible, limit the range of ports in the security rules.",
-                "detect_fn": self.detect_ANY_ports,
+                "detect_fn": self.detect_from_ANY_ports,
                 "dump_fn": self.dump_ALL_PORTS_rules,
-                "data": self.all_ports_rules,
+                "data": self.all_to_ports_rules,
+                "severity": 1
+            },
+            {
+                "label": "Rules to ANY Ports",
+                "description": "Except for special cases where the node acts as a NAT or Gateway, opening all ports on the node is not a recommended practice.",
+                "tips": "If possible, limit the range of ports in the security rules.",
+                "detect_fn": self.detect_to_ANY_ports,
+                "dump_fn": self.dump_ALL_PORTS_rules,
+                "data": self.all_from_ports_rules,
                 "severity": 2
             },
             {
@@ -71,7 +91,7 @@ class links_by_rules:
                 "severity": 1
             },
             {
-                "label": "Rules grants duplicate permissions",
+                "label": "Rules grant duplicate permissions",
                 "description": "If more than one rule grants the same rights to the same nodes, only one rule will have an effect. Such situations can potentially lead to errors when one of the duplicate rules is changed.",
                 "tips": "Rewrite the rules of the security policy. Only one rule may allow access to any network connection point (address, port, protocol, direction).",
                 "detect_fn": self.detect_duplicate,
@@ -80,7 +100,7 @@ class links_by_rules:
                 "severity": 2
             },
             {
-                "label": "Rules with one-side permissions",
+                "label": "Rules with duplicate permissions",
                 "description": "If a rule permits connecting to a server without a corresponding rule permitting client connection (or vice versa), it only has an effect if some nodes are not available for analysis (for example, if some nodes are located outside of the cloud).",
                 "tips": "Remove rules that are unnecessary or add paired rules for the connections you need.",
                 "detect_fn": self.detect_asymetric,
@@ -196,27 +216,57 @@ class links_by_rules:
                "caption": caption, "data": data, "tips": c["tips"]}
         return res
 
-    def detect_ANY_ports(self):
+    def detect_to_ANY_ports(self):
         # ANY ports and Addrs
         # nodes_by_sg = self.build_nodes_by_sg_dict(self, nodes, subnets, sgs_NG)
         for r in self.rules:
             if r.action != 'allow':
                 continue
+            if r.egress != "True":
+                continue
             if r.proto != "ICMP" and r.is_all_ports():
                 sg = self.sg_by_r(self.sgs_NG, r)
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_ALL_PORTS_rules(r, nlist)
+                    self.add_to_ALL_PORTS_rules(r, nlist)
 
-    def detect_ANY_IPs(self):
+    def detect_from_ANY_ports(self):
+        # ANY ports and Addrs
+        # nodes_by_sg = self.build_nodes_by_sg_dict(self, nodes, subnets, sgs_NG)
         for r in self.rules:
             if r.action != 'allow':
+                continue
+            if r.egress == "True":
+                continue
+            if r.proto != "ICMP" and r.is_all_ports():
+                sg = self.sg_by_r(self.sgs_NG, r)
+                nlist = self.nodes_by_sg[sg]
+                if len(nlist) > 0:
+                    self.add_from_ALL_PORTS_rules(r, nlist)
+
+    def detect_to_ANY_IPs(self):
+        for r in self.rules:
+            if r.action != 'allow':
+                continue
+            if r.egress != "True":
                 continue
             if r.is_any_addr():
                 sg = self.sg_by_r(self.sgs_NG, r)
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_ALL_IP_rules(r, nlist)
+                    self.add_to_ALL_IP_rules(r, nlist)
+
+    def detect_from_ANY_IPs(self):
+        for r in self.rules:
+            if r.action != 'allow':
+                continue
+            if r.egress == "True":
+                continue
+            if r.is_any_addr():
+                sg = self.sg_by_r(self.sgs_NG, r)
+                nlist = self.nodes_by_sg[sg]
+                if len(nlist) > 0:
+                    self.add_from_ALL_IP_rules(r, nlist)
 
     def detect_duplicate(self):
         # duplicate rules
@@ -323,18 +373,25 @@ class links_by_rules:
             d.append(t)
         return self.build_dump_res(d, c)
 
-    def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
+    def add_from_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
-        for (r1, n1) in self.all_ports_rules:
+        for (r1, n1) in self.all_from_ports_rules:
             if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
                 return
-        self.all_ports_rules.append(i)
+        self.all_from_ports_rules.append(i)
+
+    def add_to_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
+        i = (r, affected_nodes)
+        for (r1, n1) in self.all_to_ports_rules:
+            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
+                return
+        self.all_to_ports_rules.append(i)
 
     def dump_ALL_PORTS_rules(self, c):
         d = []
         caption = []
         r: Rule
-        for (r, nlist) in self.all_ports_rules:
+        for (r, nlist) in c["data"]:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule_without_ports(r) + self.int_dump_afected_nodes(nlist)
@@ -355,17 +412,24 @@ class links_by_rules:
             data.append(line)
         return (caption, data)
 
-    def add_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
+    def add_from_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
-        for (r1, n1) in self.all_ip_rules:
+        for (r1, n1) in self.all_from_ip_rules:
             if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
                 return
-        self.all_ip_rules.append(i)
+        self.all_from_ip_rules.append(i)
+
+    def add_to_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
+        i = (r, affected_nodes)
+        for (r1, n1) in self.all_to_ip_rules:
+            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
+                return
+        self.all_to_ip_rules.append(i)
 
     def dump_ALL_IP_rules(self, c):
         d = []
         r: Rule
-        for (r, nlist) in self.all_ip_rules:
+        for (r, nlist) in c["data"]:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule_without_addr(r) + self.int_dump_afected_nodes(nlist)

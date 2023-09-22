@@ -39,13 +39,13 @@ class classifier:
                           "field": "name", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": [{"title": "Net Address", "attr": "network"}]})
         self.items.append({"name": "Subnet", "description": "Group by subnet", "class_name": "Subnet",
                           "field": "name", "node_type": "Subnet", "node_icon": "IconInfoCircle", "info": [{"title": "ARN", "attr": "arn"}, {"title": "Address", "attr": "network"}]})
-        self.items.append({"name": "VM OS", "description": "Group by host Base Software", "class_name": "OneNode",
+        self.items.append({"name": "VM OS", "description": "Group by host base software", "class_name": "OneNode",
                           "field": "os", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM State", "description": "Group by host current state", "class_name": "OneNode",
                           "field": "state", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "Security group", "description": "Group by security group", "class_name": "RuleGroup",
                           "field": "name", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
-        self.items.append({"name": "Availability Zone", "description": "Group by host Availability Zone", "class_name": "OneNode",
+        self.items.append({"name": "Availability Zone", "description": "Group by host availability zone", "class_name": "OneNode",
                           "field": "azone", "node_type": "Cloud", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Functional Type (detailed)", "description": "Group by provided services (one group - one port), based on security rules", "class_name": "Rule",
                           "field": "server_type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
@@ -56,7 +56,7 @@ class classifier:
         self.items.append({"name": "Rule proto", "description": "Group by security rule protocol", "class_name": "Rule",
                           "field": "proto", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         '''
-        self.items.append({"name": "VM Public IP", "description": "Group by Interface Public Address", "class_name": "OneNode",
+        self.items.append({"name": "VM Public IP", "description": "Group by interface Public Address", "class_name": "OneNode",
                           "field": "pubip", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
         self.items.append({"name": "VM Private IP", "description": "Interface Private Address", "class_name": "OneNode",
                           "field": "privip", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
@@ -78,7 +78,7 @@ class classifier:
         '''
         self.items.append({"name": "VM Type", "description": "Group by host type", "class_name": "OneNode",
                           "field": "type", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
-        self.items.append({"name": "RuleAddr", "description": "Group by target address in security rule", "class_name": "Rule",
+        self.items.append({"name": "Rule Address", "description": "Group by target address in security rule", "class_name": "Rule",
                           "field": "naddr", "node_type": "VPC", "node_icon": "IconInfoCircle", "info": []})
 
     def add(self, name, description, class_name, field, fn=None, node_type="Cloud", node_icon="IconInfoCircle", info=[]):

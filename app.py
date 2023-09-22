@@ -446,7 +446,7 @@ def api_get_header_info():
     l.analyze_links()
     res = l.get_max_severity()
 
-    return jsonify({ "maxSeverity": res })
+    return jsonify({"maxSeverity": res})
 
 
 if __name__ == '__main__':
