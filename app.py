@@ -446,7 +446,7 @@ def api_get_max_severity():
     l.analyze_links()
     res = l.get_max_severity()
 
-    return jsonify(res)
+    return jsonify({ "maxSeverity": res })
 
 
 if __name__ == '__main__':

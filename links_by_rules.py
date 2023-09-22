@@ -465,7 +465,7 @@ class links_by_rules:
                 continue
             if i["severity"] > max_severity:
                 max_severity = i["severity"]
-        return {"max_severity": max_severity}
+        return max_severity
 
     def get_cloud_by_id(self, cloud_id):
         res = None
