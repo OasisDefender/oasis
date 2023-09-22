@@ -5,15 +5,16 @@ import {
     createStyles,
     Flex,
     Group,
+    Popover,
     rem,
     ScrollArea,
     Text,
     Title,
-    Tooltip,
 } from "@mantine/core";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { IconGripVertical, IconHelpCircle } from "@tabler/icons-react";
 import { IClassifier } from "../core/models/IClassifier";
+import { useDisclosure } from "@mantine/hooks";
 
 const useStyles = createStyles((theme) => ({
     item: {
@@ -68,6 +69,8 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
     reorder,
     next,
 }) => {
+    const [helpOpened, { close: helpClose, open: helpOpen }] =
+        useDisclosure(false);
     const { classes, cx } = useStyles();
 
     if (!classifiers) return null;
@@ -109,17 +112,51 @@ const PolicyMapFilters: React.FC<PolicyMapFiltersProps> = ({
         next();
     };
 
-    const helpText =
-        "The tool allows you to flexibly visualize the security policy defined by a set of security rules. Arbitrary multilevel grouping of nodes based on the presented set of properties is possible. You can create arbitrary multilevel groupings of nodes based on the presented properties. To perform the grouping, you need to select the required levels and establish their order. The order is set from the top to the bottom by dragging the chosen levels. A node that belongs to multiple groups will be displayed within each of those groups.";
-
     return (
         <Container h="100%" p="1rem 0">
             <Flex direction="column" h="100%">
                 <Title order={3}>
                     <Group>
-                        <Tooltip multiline label={helpText} maw="50%">
-                            <IconHelpCircle stroke="0.1rem" />
-                        </Tooltip>
+                        <Popover
+                            width="30rem"
+                            withArrow
+                            shadow="md"
+                            opened={helpOpened}
+                        >
+                            <Popover.Target>
+                                <IconHelpCircle
+                                    stroke="0.1rem"
+                                    cursor="pointer"
+                                    onMouseEnter={helpOpen}
+                                    onMouseLeave={helpClose}
+                                />
+                            </Popover.Target>
+                            <Popover.Dropdown>
+                                <Text size="md">
+                                    <p>
+                                        The tool allows you to flexibly
+                                        visualize the security policy defined by
+                                        a set of security rules.
+                                    </p>
+                                    <p>
+                                        You can create arbitrary multilevel
+                                        groupings of nodes based on the
+                                        presented properties.
+                                    </p>
+                                    <p>
+                                        To perform the grouping, you need to
+                                        select the required levels and establish
+                                        their order. The order is set from the
+                                        top to the bottom by dragging the chosen
+                                        levels. A node that belongs to multiple
+                                        groups will be displayed within each of
+                                        those groups.
+                                    </p>
+                                    When the selection is complete, press the
+                                    'Show Data' button.
+                                </Text>
+                            </Popover.Dropdown>
+                        </Popover>
                         Select categories and define their order
                     </Group>
                 </Title>
