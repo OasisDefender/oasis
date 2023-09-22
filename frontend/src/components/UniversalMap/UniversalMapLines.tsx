@@ -154,10 +154,7 @@ const UniversalMapLines: React.FC<UniversalMapLinesProps> = ({
         setRenderState((old) => old + 1);
     };
 
-    console.log("UniversalMapLines render");
-
     useLayoutEffect(() => {
-        console.log("UniversalMapLines useLayoutEffect");
         rerender();
     }, []);
 
