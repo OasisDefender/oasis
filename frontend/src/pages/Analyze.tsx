@@ -19,7 +19,7 @@ import {
 } from "@tabler/icons-react";
 import { severityToColor, severityToText } from "../core/severity";
 import { useDisclosure } from "@mantine/hooks";
-import { AnalyzeGroup, IAnalyzation } from "../core/models/IAnalyzation";
+import { AnalyzeGroup } from "../core/models/IAnalyzation";
 
 function jsxJoinLines(array: any[]) {
     return array.length > 0
