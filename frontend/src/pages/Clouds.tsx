@@ -26,7 +26,7 @@ import { AddCloudForm } from "../components/AddCloudForm";
 import { ShowModalError } from "../core/oasiserror";
 import { AxiosError } from "axios";
 
-export function Clouds() {    
+export function Clouds() {
     const {
         loading: cloudsLoading,
         error: cloudsError,
@@ -96,10 +96,22 @@ export function Clouds() {
             infoShowed={infoShowed}
         />
     ));
-
     return (
         <>
             <Container>
+                {process.env.REACT_APP_VERSION && (
+                    <div
+                        id="version"
+                        style={{
+                            position: "absolute",
+                            bottom: 0,
+                            right: "10px",
+                            color: "#80808060",
+                        }}
+                    >
+                        {process.env.REACT_APP_VERSION}
+                    </div>
+                )}
                 <Space h="sm" />
                 <Group position="apart">
                     <Group>
@@ -123,7 +135,9 @@ export function Clouds() {
                             color="yellow"
                             onClick={toggleInfoShowed}
                         >
-                            {infoShowed ? "Hide sensitive Info" : "Show sensitive info"}
+                            {infoShowed
+                                ? "Hide sensitive Info"
+                                : "Show sensitive info"}
                         </Button>
                     </Group>
                 </Group>

@@ -425,5 +425,29 @@ def api_analyze_links():
     return jsonify(ar)
 
 
+@app.route('/api/header-info', methods=['GET'])
+def api_get_header_info():
+    context = DB()
+    clouds = context.get_clouds()
+    map = CloudMap()
+    map.get()
+    vpcs = map.vpcs
+
+    sgs = get_all_rule_groups()
+    rules = get_all_rules()
+    nodes = Nodes(context.get_all_nodes_info())
+    s = []
+    for v in vpcs:
+        s = s + v.subnets
+    subnets = [*set(s)]
+
+    l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
+    l.make_links()
+    l.analyze_links()
+    res = l.get_max_severity()
+
+    return jsonify({"maxSeverity": res})
+
+
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
