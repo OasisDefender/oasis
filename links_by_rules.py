@@ -25,7 +25,7 @@ class links_by_rules:
         self.all_ports_rules = []
         self.all_ip_rules = []
         self.duplicate_rules = []
-        self.asymetruc_rules = []
+        self.asymetric_rules = []
         self.lonley_nodes = []
         self.unused_sgs = []
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
@@ -40,6 +40,7 @@ class links_by_rules:
                 "tips": "Restrict the range of addresses in the security rules, if possible",
                 "detect_fn": self.detect_ANY_IPs,
                 "dump_fn": self.dump_ALL_IP_rules,
+                "data": self.all_ip_rules,
                 "severity": 2
             },
             {
@@ -48,6 +49,7 @@ class links_by_rules:
                 "tips": "If possible, limit the range of ports in the security rules.",
                 "detect_fn": self.detect_ANY_ports,
                 "dump_fn": self.dump_ALL_PORTS_rules,
+                "data": self.all_ports_rules,
                 "severity": 2
             },
             {
@@ -56,6 +58,7 @@ class links_by_rules:
                 "tips": "Remove security groups that are not required",
                 "detect_fn": self.detect_unused_sg,
                 "dump_fn": self.dump_unused_sgs,
+                "data": self.unused_sgs,
                 "severity": 1
             },
             {
@@ -64,6 +67,7 @@ class links_by_rules:
                 "tips": "Remove or shut down unneeded nodes",
                 "detect_fn": self.detect_isolated_nodes,
                 "dump_fn": self.dump_isolated_nodes,
+                "data": self.lonley_nodes,
                 "severity": 1
             },
             {
@@ -72,6 +76,7 @@ class links_by_rules:
                 "tips": "Rewrite the rules of the security policy. Only one rule may allow access to any network connection point (address, port, protocol, direction).",
                 "detect_fn": self.detect_duplicate,
                 "dump_fn": self.dump_duplicate_rules,
+                "data": self.duplicate_rules,
                 "severity": 2
             },
             {
@@ -80,6 +85,7 @@ class links_by_rules:
                 "tips": "Remove rules that are unnecessary or add paired rules for the connections you need.",
                 "detect_fn": self.detect_asymetric,
                 "dump_fn": self.dump_asymetric_rules,
+                "data": self.asymetric_rules,
                 "severity": 1
             },
 
@@ -169,22 +175,23 @@ class links_by_rules:
                 self.lonley_nodes.append(n)
         self.lonley_nodes = list(set(self.lonley_nodes))
 
-    def dump_isolated_nodes(self, label, descr, severity, tips):
+    def dump_isolated_nodes(self, c):
         d = []
         n: OneNode
         for n in self.lonley_nodes:
             t = []
             t = self.int_dump_cloud(n.cloud_id) + self.int_dump_node(n)
             d.append(t)
-        return self.build_dump_res(d, label, descr, severity, tips)
+        return self.build_dump_res(d, c)
 
-    def build_dump_res(self, d, label, descr, severity, tips):
+    def build_dump_res(self, d, c):
+        severity = c["severity"]
         (caption, data) = self.transfer_av(d)
         if len(data) == 0:
             severity = 0
 
-        res = {"label": label, "description": descr, "severity": severity,
-               "caption": caption, "data": data, "tips": tips}
+        res = {"label": c["label"], "description": c["description"], "severity": severity,
+               "caption": caption, "data": data, "tips": c["tips"]}
         return res
 
     def detect_ANY_ports(self):
@@ -304,7 +311,7 @@ class links_by_rules:
     def add_unused_sgs(self, sg: RuleGroupNG):
         self.unused_sgs.append(sg)
 
-    def dump_unused_sgs(self, label, descr, severity, tips):
+    def dump_unused_sgs(self, c):
         d = []
         sg: RuleGroupNG
         for sg in self.unused_sgs:
@@ -312,7 +319,7 @@ class links_by_rules:
             t = t + self.int_dump_cloud(sg.cloud_id) + \
                 [{"attr": "Security Group", "val": [f"{sg.name}"]}]
             d.append(t)
-        return self.build_dump_res(d, label, descr, severity, tips)
+        return self.build_dump_res(d, c)
 
     def add_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
@@ -321,7 +328,7 @@ class links_by_rules:
                 return
         self.all_ports_rules.append(i)
 
-    def dump_ALL_PORTS_rules(self, label, descr, severity, tips):
+    def dump_ALL_PORTS_rules(self, c):
         d = []
         caption = []
         r: Rule
@@ -330,7 +337,7 @@ class links_by_rules:
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule_without_ports(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
-        return self.build_dump_res(d, label, descr, severity, tips)
+        return self.build_dump_res(d, c)
 
     def transfer_av(self, avs: list):
         caption = []
@@ -353,7 +360,7 @@ class links_by_rules:
                 return
         self.all_ip_rules.append(i)
 
-    def dump_ALL_IP_rules(self, label, descr, severity, tips):
+    def dump_ALL_IP_rules(self, c):
         d = []
         r: Rule
         for (r, nlist) in self.all_ip_rules:
@@ -361,7 +368,7 @@ class links_by_rules:
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule_without_addr(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
-        return self.build_dump_res(d, label, descr, severity, tips)
+        return self.build_dump_res(d, c)
 
     def int_dump_afected_nodes(self, nlist: list[OneNode]):
         t = []
@@ -421,36 +428,44 @@ class links_by_rules:
         i = (rlist, ports, affected_nodes)
         self.duplicate_rules.append(i)
 
-    def dump_duplicate_rules(self, label, descr, severity, tips):
+    def dump_duplicate_rules(self, c):
         d = []
         for (rlist, ports, affected_nodes) in self.duplicate_rules:
             t = []
             t = t + self.int_dump_cloud(rlist[0].cloud_id) + self.int_dump_rulelist(
                 rlist) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
             d.append(t)
-        return self.build_dump_res(d, label, descr, severity, tips)
+        return self.build_dump_res(d, c)
 
     def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
         i = (r, ports, affected_nodes)
-        self.asymetruc_rules.append(i)
+        self.asymetric_rules.append(i)
 
-    def dump_asymetric_rules(self, label, descr, severity, tips):
+    def dump_asymetric_rules(self, c):
         d = []
-        for (r, ports, affected_nodes) in self.asymetruc_rules:
+        for (r, ports, affected_nodes) in self.asymetric_rules:
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule(r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
             d.append(t)
-        return self.build_dump_res(d, label, descr, severity, tips)
+        return self.build_dump_res(d, c)
 
     def dump_analize_rezults(self):
         res = []
         for i in self.analyzer_cfg:
-            t = i["dump_fn"](i["label"], i["description"],
-                             i["severity"], i["tips"])
+            t = i["dump_fn"](i)
             res.append(t)
 
         return res
+
+    def get_max_severity(self):
+        max_severity = 0
+        for i in self.analyzer_cfg:
+            if len(i["data"]) == 0:
+                continue
+            if i["severity"] > max_severity:
+                max_severity = i["severity"]
+        return {"max_severity": max_severity}
 
     def get_cloud_by_id(self, cloud_id):
         res = None
