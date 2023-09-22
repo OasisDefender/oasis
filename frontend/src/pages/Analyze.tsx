@@ -11,6 +11,7 @@ import {
 } from "@mantine/core";
 import { useAnalyzation } from "../core/hooks/analyzation";
 import { IconAlertTriangle, IconCircle, IconCircle0Filled, IconCircleDot, IconCircleFilled, IconHammer, IconHelp, IconHelpCircle, IconHelpHexagon, IconHelpOff, IconHelpSmall, IconSettings } from "@tabler/icons-react";
+import { severityToColor } from "../core/severity";
 
 function jsxJoinLines (array: any[]) {
     return array.length > 0
@@ -20,16 +21,6 @@ function jsxJoinLines (array: any[]) {
 
 export function Analyze() {
     const { loading, error, data } = useAnalyzation();
-
-    const severityToColor = function(severity: number) {
-        if (severity === 0) 
-            return "#028A0F";
-        if (severity === 1)
-            return "#FDFD96";
-        if (severity === 2)
-            return "#FFBF00";
-        return "#D0312D";
-    }
 
     return (
         <Container size="xl">

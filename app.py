@@ -425,8 +425,8 @@ def api_analyze_links():
     return jsonify(ar)
 
 
-@app.route('/api/analyzation/max-severity', methods=['GET'])
-def api_get_max_severity():
+@app.route('/api/header-info', methods=['GET'])
+def api_get_header_info():
     context = DB()
     clouds = context.get_clouds()
     map = CloudMap()

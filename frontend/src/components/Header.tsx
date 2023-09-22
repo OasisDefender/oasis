@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import {
     createStyles,
     Header,
@@ -101,7 +101,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 interface HeaderResponsiveProps {
-    links: { link: string; label: string }[];
+    links: { link: string; label: ReactNode }[];
 }
 
 export function HeaderResponsive({ links }: HeaderResponsiveProps) {

@@ -20,17 +20,27 @@ import { ModalsProvider } from "@mantine/modals";
 import { PolicyMap } from "./pages/PolicyMap";
 import { StoragesMap } from "./pages/StoragesMap";
 import { Analyze } from "./pages/Analyze";
+import { severityToColor } from "./core/severity";
+import { IconCircle } from "@tabler/icons-react";
+import { useHeaderInfo } from "./core/hooks/headerInfo";
+import { useInterval } from "@mantine/hooks";
 
 function App() {
     const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
     const toggleColorScheme = (value?: ColorScheme) => {
         setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
     };
+    const { fetch, maxSeverity } = useHeaderInfo();
 
     useEffect(() => {
         document.body.style.background =
             colorScheme === "dark" ? "#343A40" : "#F5F5DC";
     }, [colorScheme]);
+
+    const { start } = useInterval(fetch, 60000);
+    useEffect(() => {
+        start();
+    }, []);
 
     const headerLinks = [
         {
@@ -51,7 +61,18 @@ function App() {
         },
         {
             link: "/analyze",
-            label: "Analyze",
+            label: (
+                <>
+                    {maxSeverity && (
+                        <IconCircle
+                            size="12px"
+                            stroke="0.05rem"
+                            fill={severityToColor(maxSeverity)}
+                        />
+                    )}
+                    {" Security Analysis"}
+                </>
+            ),
         },
     ];
 
