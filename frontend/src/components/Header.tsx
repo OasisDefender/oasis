@@ -6,7 +6,7 @@ import {
     Group,
     Burger,
     Paper,
-    Transition,    
+    Transition,
     rem,
     useMantineColorScheme,
     ActionIcon,
@@ -17,7 +17,6 @@ import { useLocation, matchPath } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
 import { IconLogout, IconMoonStars, IconSun } from "@tabler/icons-react";
-
 export const HEADER_HEIGHT = rem(60);
 
 const useStyles = createStyles((theme) => ({
@@ -45,7 +44,7 @@ const useStyles = createStyles((theme) => ({
     header: {
         height: "100%",
         padding: "0 1rem 0 1rem",
-        justifyContent: "space-between"        
+        justifyContent: "space-between",
     },
 
     links: {
@@ -98,6 +97,12 @@ const useStyles = createStyles((theme) => ({
             }).color,
         },
     },
+
+    iconText: {
+        [theme.fn.smallerThan("md")]: {
+            display: "none",
+        },
+    },
 }));
 
 interface HeaderResponsiveProps {
@@ -106,18 +111,16 @@ interface HeaderResponsiveProps {
 
 export function HeaderResponsive({ links }: HeaderResponsiveProps) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-    const dark = colorScheme === 'dark';
-    
-    console.log(process.env);
+    const dark = colorScheme === "dark";
+
     const logoutType = process.env.REACT_APP_LOGOUT_TYPE;
-    console.log("logoutType", logoutType);
 
     const [opened, { toggle, close }] = useDisclosure(false);
     const location = useLocation();
 
     const [active, setActive] = useState(location.pathname);
     const { classes, cx } = useStyles();
-
+    
     const items = links.map((link) => (
         <Link
             key={link.link}
@@ -137,12 +140,12 @@ export function HeaderResponsive({ links }: HeaderResponsiveProps) {
     // Subscribe to location changes
     useEffect(() => {
         setActive(location.pathname);
-    }, [location]);    
-  
+    }, [location]);
+
     return (
         <Header height={HEADER_HEIGHT} className={classes.root}>
             <Flex className={classes.header} gap="xs" align="center">
-                <Icon size={24}/>
+                <Icon size={24} iconTextClasses={classes.iconText}/>
 
                 <Group spacing={5} className={classes.links}>
                     {items}
@@ -150,27 +153,39 @@ export function HeaderResponsive({ links }: HeaderResponsiveProps) {
 
                 <Group>
                     <ActionIcon
-                        color={dark ? 'yellow' : 'blue'}
+                        color={dark ? "yellow" : "blue"}
                         onClick={() => toggleColorScheme()}
                         title="Toggle color scheme"
-                        >
-                        {dark ? <IconSun size="1.1rem" /> : <IconMoonStars size="1.1rem" />}
+                    >
+                        {dark ? (
+                            <IconSun size="1.1rem" />
+                        ) : (
+                            <IconMoonStars size="1.1rem" />
+                        )}
                     </ActionIcon>
 
-                    {(logoutType === "basic") && <ActionIcon
-                        color={dark ? "yellow" : "blue"}
-                        onClick={() => {
-                            const newLocation = new URL(window.location.href);
-                            newLocation.username = "logout";
-                            newLocation.password = "password";
-                            newLocation.pathname = "/logout";
-                            window.location.href = newLocation.href;
-                        }}
-                        title="Logout"
-                    >
-                        <IconLogout size="1.1rem" />
-                    </ActionIcon>}
-                    
+                    {logoutType === "basic" && (
+                        <ActionIcon
+                            color={dark ? "yellow" : "blue"}
+                            onClick={() => {
+                                let a = new window.XMLHttpRequest();
+                                a.open("HEAD", window.location.href, !0, "logout", new Date().getTime().toString());
+                                a.send("");
+
+                                const newLocation = new URL(
+                                    window.location.href
+                                );
+                                newLocation.username = "logout";
+                                newLocation.password = "password";
+                                newLocation.pathname = "/logout";
+                                window.location.href = newLocation.href;
+                            }}
+                            title="Logout"
+                        >
+                            <IconLogout size="1.1rem" />
+                        </ActionIcon>
+                    )}
+
                     <Burger
                         opened={opened}
                         onClick={toggle}
