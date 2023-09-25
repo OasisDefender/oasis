@@ -1,30 +1,64 @@
-import React from 'react';
-import { Text, Flex, useMantineTheme, rem } from '@mantine/core';
+import React from "react";
+import { Text, Flex, useMantineTheme, rem } from "@mantine/core";
 
-interface IconProps extends React.ComponentPropsWithoutRef<'svg'> {
+interface IconProps extends React.ComponentPropsWithoutRef<"svg"> {
     size?: number | string;
     inverted?: boolean;
-  }
+    iconTextClasses?: string;
+}
 
+export function Icon({
+    size,
+    inverted,
+    iconTextClasses,
+    ...others
+}: IconProps) {
+    const theme = useMantineTheme();
 
-export function Icon({ size, inverted, ...others }: IconProps) {
-  const theme = useMantineTheme();
-
-  return (
-    <Flex justify="center" align="center" gap="xs">
-        <svg style={{ display: 'inline' }} {...others} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 116 123" height={rem(size)}>
-            <g fill="none" fillRule="evenodd">
-                <path
-                fill={inverted ? theme.white : theme.colorScheme === 'dark' ? theme.white : theme.black}
-                fillRule="nonzero"
-                d="M55.715,0c20.867,13.199,39.669,19.466,55.855,17.992 c2.838,57.108-18.25,90.841-55.633,104.888C19.844,109.718-1.502,77.422,0.083,17.107C19.069,18.103,37.688,14.01,55.715,0 L55.715,0L55.715,0z"
-                />        
-            </g>
-        </svg>
-        <Text fz="lg"
-              sx={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"' }}>
+    return (
+        <Flex justify="center" align="center" gap="xs">
+            <svg
+                style={{ display: "inline" }}
+                {...others}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 3458.7 2980.23"
+                height={rem(size)}
+            >
+                <defs>
+                    <linearGradient
+                        id="id0"
+                        gradientUnits="userSpaceOnUse"
+                        x1="-0"
+                        y1="1490.12"
+                        x2="3458.7"
+                        y2="1490.12"
+                    >
+                        <stop offset="0" stopOpacity={1} stopColor="#02949D" />
+                        <stop
+                            offset="0.45098"
+                            stopOpacity={1}
+                            stopColor="#8DDCE0"
+                        />
+                        <stop offset="1" stopOpacity={1} stopColor="#3EBCC1" />
+                    </linearGradient>
+                </defs>
+                <g fill="none" fillRule="evenodd">
+                    <polygon
+                        fill="url(#id0)"
+                        points="3458.7,2980.23 -0,2980.23 220.17,2600.08 2791.16,2600.08 1730.16,766.03 885.08,2223.29 436.27,2223.29 1730.16,0 "
+                    />                                       
+                </g>
+            </svg>
+            <Text
+                fz="lg"
+                sx={{
+                    fontFamily:
+                        'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                }}
+                className={iconTextClasses}
+            >
                 Oasis Defender
-        </Text>
-    </Flex>
-  );
+            </Text>
+        </Flex>
+    );
 }

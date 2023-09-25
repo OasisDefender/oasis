@@ -99,6 +99,7 @@ function App() {
                                 path="/"
                                 element={<Navigate replace to="/clouds" />}
                             />
+                            <Route path="/logout" element={<Logout />} />
                         </Routes>
                     </ModalsProvider>
                 </MantineProvider>
@@ -106,5 +107,10 @@ function App() {
         </Router>
     );
 }
+
+function Logout() {
+    window.location.href = '/';
+    return null;
+  }
 
 export default App;
