@@ -26,9 +26,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Oasis Docker image
+      - name: Build backend and frontend and push Oasis Docker images
         run: |
           git fetch --tags
-          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          docker buildx build --push --tag ghcr.io/oasisdefender/oasis-${GITHUB_REF#refs/heads/}:$LAST_TAG .
+          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)a
+          docker buildx build -f Dockerfile-frontend --push --tag ghcr.io/oasisdefender/oasis-frontend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
+          docker buildx build -f Dockerfile          --push --tag ghcr.io/oasisdefender/oasis-backend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
 
