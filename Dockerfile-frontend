@@ -1,12 +1,6 @@
 FROM node:18.13
 WORKDIR /app
 COPY frontend/. .
-RUN echo 'REACT_APP_BACKEND_URI="http://oasis-backend:5000"' >  .env
-RUN echo 'REACT_APP_LOGOUT_TYPE="basic"'                     >> .env
-RUN export OD_TAG=`git describe --tags --abbrev=0`
-RUN export OD_BRABCH=`git symbolic-ref --short HEAD`
-RUN export OD_BUILD=`git describe --always`
-RUN echo "REACT_APP_VERSION=\"$OD_TAG ($OD_BRABCH, $OD_BUILD)\"" >> .env
 RUN npm install
 EXPOSE 3000
 CMD [ "npm", "start" ]
