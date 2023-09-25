@@ -26,9 +26,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Oasis Docker image
+      - name: Build backend and frontend and push Oasis Docker images
         run: |
           git fetch --tags
           LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          docker buildx build --push --tag ghcr.io/oasisdefender/oasis-${GITHUB_REF#refs/heads/}:$LAST_TAG .
+          echo 'REACT_APP_BACKEND_URI="http://oasis-backend:5000"'     >  frontend/.env
+          echo 'REACT_APP_LOGOUT_TYPE="basic"'                         >> frontend/.env
+          echo "REACT_APP_VERSION=\"`git describe --tags --abbrev=0` (`git symbolic-ref --short HEAD`, `git describe --always`)\"" >> frontend/.env
+          echo 'REACT_APP_GTM_ID="G-FZQWZ6HET9"'                       >> frontend/.env
+          docker buildx build -f Dockerfile-frontend --push --tag ghcr.io/oasisdefender/oasis-frontend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
+          docker buildx build -f Dockerfile          --push --tag ghcr.io/oasisdefender/oasis-backend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
 
