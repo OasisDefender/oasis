@@ -12,6 +12,8 @@ import {
     MantineProvider,
 } from "@mantine/core";
 
+import TagManager from 'react-gtm-module';
+
 import { HeaderResponsive as Header } from "./components/Header";
 
 import { Clouds } from "./pages/Clouds";
@@ -35,10 +37,20 @@ function App() {
     useEffect(() => {
         document.body.style.background =
             colorScheme === "dark" ? "#343A40" : "#F5F5DC";
-    }, [colorScheme]);
-
+    }, [colorScheme]);    
+    
     const { start } = useInterval(fetch, 60000);
     useEffect(() => {
+        if (process.env.REACT_APP_GTM_ID) {
+            console.log("GTM_ID", process.env.REACT_APP_GTM_ID);
+
+            const tagManagerArgs = {
+                gtmId: process.env.REACT_APP_GTM_ID
+            }
+
+            TagManager.initialize(tagManagerArgs)
+        }
+
         start();
     }, []);
 
