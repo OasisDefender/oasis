@@ -76,6 +76,8 @@ def convert_RuleGroup_to_NG(sgs: list[RuleGroup], rules: list[Rule]):
             sgs_NG[key] = sg_NG
 
         if sg.subnet_id == None or sg.subnet_id == "":
+            if sg.if_id == '' or sg.if_id == None:
+                continue
             sgs_NG[key].add_if(sg.if_id)
         else:
             sgs_NG[key].add_subnet(sg.subnet_id)

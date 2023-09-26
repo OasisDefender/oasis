@@ -91,7 +91,7 @@ class split_vms:
         return r
 
     def sec_groups_list(self, sgs: list[RuleGroup], n: OneNode):
-        r = [c for c in sgs if (c.cloud_id == n.cloud_id) and (
+        r = [c for c in sgs if (c.cloud_id == n.cloud_id) and (c.if_id != "") and (c.if_id != None) and (n.if_id != "") and (n.if_id != None) and (
             (c.if_id == n.if_id) or (c.subnet_id == n.subnet_id))]
         if len(r) == 0:
             r = [self.fakeSecGroup]
