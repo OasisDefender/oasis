@@ -9,6 +9,7 @@ import {
     Space,
     Table,
     Text,
+    Tooltip,
 } from "@mantine/core";
 import { useAnalyzation } from "../core/hooks/analyzation";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 import { severityToColor, severityToText } from "../core/severity";
 import { useDisclosure } from "@mantine/hooks";
-import { AnalyzeGroup } from "../core/models/IAnalyzation";
+import { AnalyzeGroup, AnalyzeValue, AnalyzeValueObject } from "../core/models/IAnalyzation";
 
 function jsxJoinLines(array: any[]) {
     return array.length > 0
@@ -31,6 +32,20 @@ function jsxJoinLines(array: any[]) {
               </>
           ))
         : null;
+}
+
+function AnalyzeItemCellLine(value: string | AnalyzeValueObject) {
+    if (typeof value === "string") {
+        return value;
+    }
+    return <Tooltip withArrow multiline maw="50%" label={value.hint}><span>{value.name}</span></Tooltip>
+}
+
+export function AnalyzeItemCell({ value }: { value: AnalyzeValue }) {    
+    if (Array.isArray(value)) {
+        return jsxJoinLines(value.map((v) => AnalyzeItemCellLine(v)));
+    }
+    return AnalyzeItemCellLine(value);
 }
 
 export function AnalyzeItem({
@@ -125,9 +140,7 @@ export function AnalyzeItem({
                             <tr key={j}>
                                 {r.map((col, i) => (
                                     <td key={i}>
-                                        {typeof col === "string"
-                                            ? col
-                                            : jsxJoinLines(col)}
+                                        <AnalyzeItemCell value={col}/>
                                     </td>
                                 ))}
                             </tr>
