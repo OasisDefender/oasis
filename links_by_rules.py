@@ -408,7 +408,29 @@ class links_by_rules:
         for l in avs:
             line = []
             for av in l:
-                line.append(av["val"])
+                val = av["val"]
+                if not type(val) is list:
+                    val = [val]
+                vl = []
+                for s in val:
+                    s = str(s)
+                    if len(s) > 32:
+                        name = s.split(":")[0]
+                        if name == s:
+                            name = ""
+                        else:
+                            name += ": "
+                        label = s.split("/")[-1]
+                        if name == "":
+                            hint = s
+                        else:
+                            hint = s.split(": ")[1]
+                        if s != label:
+                            s = {"name": f"{name}{label}", "hint": hint}
+                    vl.append(s)
+                if len(vl) == 1:
+                    vl = vl[0]
+                line.append(vl)
             data.append(line)
         return (caption, data)
 
