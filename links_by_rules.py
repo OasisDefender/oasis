@@ -408,7 +408,12 @@ class links_by_rules:
         for l in avs:
             line = []
             for av in l:
-                line.append(av["val"])
+                s: str = av["val"]
+                if len(s) > 16:
+                    label = s.split("/")[-1]
+                    hint = s
+                    s = {"name": label, "hint": hint}
+                line.append(s)
             data.append(line)
         return (caption, data)
 
