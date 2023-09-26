@@ -6,6 +6,7 @@ import {
     Group,
     Loader,
     Popover,
+    ScrollArea,
     Space,
     Table,
     Text,
@@ -127,26 +128,28 @@ export function AnalyzeItem({
                 </Group>
             </Accordion.Control>
             <Accordion.Panel>
-                <Table striped>
-                    <thead>
-                        <tr>
-                            {data.caption.map((caption, i) => (
-                                <th key={i}>{caption}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.data.map((r, j) => (
-                            <tr key={j}>
-                                {r.map((col, i) => (
-                                    <td key={i}>
-                                        <AnalyzeItemCell value={col}/>
-                                    </td>
+                <ScrollArea type="auto">
+                    <Table striped miw="55rem">
+                        <thead>
+                            <tr>
+                                {data.caption.map((caption, i) => (
+                                    <th key={i}>{caption}</th>
                                 ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </Table>
+                        </thead>
+                        <tbody>
+                            {data.data.map((r, j) => (
+                                <tr key={j}>
+                                    {r.map((col, i) => (
+                                        <td key={i}>
+                                            <AnalyzeItemCell value={col}/>
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </ScrollArea>
             </Accordion.Panel>
         </Accordion.Item>
     );
@@ -186,8 +189,8 @@ export function Analyze() {
             )}
             {!loading && data && (
                 <Accordion variant="separated" multiple={true}>
-                    {data.map((d, i) => (
-                        <AnalyzeItem data={d} index={i} key={i} />
+                    {data.map((d, i) => (                        
+                        <AnalyzeItem data={d} index={i} key={i} />                        
                     ))}
                 </Accordion>
             )}
