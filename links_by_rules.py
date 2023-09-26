@@ -413,7 +413,8 @@ class links_by_rules:
                     val = [val]
                 vl = []
                 for s in val:
-                    if type(s) is str and len(s) > 32:
+                    s = str(s)
+                    if len(s) > 32:
                         name = s.split(":")[0]
                         if name == s:
                             name = ""
