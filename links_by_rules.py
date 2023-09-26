@@ -413,11 +413,22 @@ class links_by_rules:
                     val = [val]
                 vl = []
                 for s in val:
-                    if type(s) is str and len(s) > 16:
+                    if type(s) is str and len(s) > 32:
+                        name = s.split(":")[0]
+                        if name == s:
+                            name = ""
+                        else:
+                            name += ": "
                         label = s.split("/")[-1]
-                        hint = s
-                        s = {"name": label, "hint": hint}
+                        if name == "":
+                            hint = s
+                        else:
+                            hint = s.split(": ")[1]
+                        if s != label:
+                            s = {"name": f"{name}{label}", "hint": hint}
                     vl.append(s)
+                if len(vl) == 1:
+                    vl = vl[0]
                 line.append(vl)
             data.append(line)
         return (caption, data)
