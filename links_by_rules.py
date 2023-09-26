@@ -636,6 +636,8 @@ class links_by_rules:
         return nodes_by_sg
 
     def is_node_in_sg(self, node: OneNode, sg: RuleGroupNG):
+        if node.if_id == '' or node.if_id == None:
+            return False
         return node.if_id in sg.if_ids
 
     def is_subnet_in_sg(self, subnet: Subnet, sg: RuleGroupNG):
