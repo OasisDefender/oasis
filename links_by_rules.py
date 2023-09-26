@@ -413,7 +413,7 @@ class links_by_rules:
                     val = [val]
                 vl = []
                 for s in val:
-                    if len(s) > 16:
+                    if type(s) is str and len(s) > 16:
                         label = s.split("/")[-1]
                         hint = s
                         s = {"name": label, "hint": hint}
