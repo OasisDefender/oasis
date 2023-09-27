@@ -432,6 +432,8 @@ class links_by_rules:
                     vl = vl[0]
                 line.append(vl)
             data.append(line)
+            # remove duplicates
+            data = [i for n, i in enumerate(data) if i not in data[:n]]
         return (caption, data)
 
     def add_from_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
