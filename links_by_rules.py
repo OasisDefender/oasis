@@ -441,7 +441,7 @@ class links_by_rules:
         n: OneNode
         for n in nlist:
             t.append(f"{n.name}")
-        i = {"attr": "Affected Nodes", "val": t}
+        i = {"attr": "Affected Nodes", "val": list(set(t))}
         return [i]
 
     def int_dump_node(self, n: OneNode):
