@@ -23,13 +23,21 @@ class links_by_rules:
         self.ext_things = set()
         self.analyze_results = []
         self.all_from_ports_rules = []
-        self.all_from_ip_rules = []
         self.all_to_ports_rules = []
-        self.all_to_ip_rules = []
+        self.all_from_ip_rules_sg = []
+        self.all_to_ip_rules_sg = []
+        self.all_from_ip_rules_acl = []
+        self.all_to_ip_rules_acl = []
         self.duplicate_rules = []
         self.asymetric_rules = []
         self.lonley_nodes = []
         self.unused_sgs = []
+        self.pubIP_VMs = []
+        self.port_tcp80 = []
+        self.port_tcp20 = []
+        self.port_tcp21 = []
+        self.port_tcp23 = []
+        self.port_tcp79 = []
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
             self.sgs_NG, rules)
         self.nodes_by_sg = self.build_nodes_by_sg_dict()
@@ -37,21 +45,39 @@ class links_by_rules:
 
         self.analyzer_cfg = [
             {
-                "label": "Rules from ANY IPs",
+                "label": "Ingress security rules with ANY IPs",
                 "description": "Except for public resources, unrestricted connection from ANY (0.0.0.0) address is considered bad practice.",
                 "tips": "Restrict the range of addresses in the security rules, if possible",
-                "detect_fn": self.detect_from_ANY_IPs,
+                "detect_fn": self.detect_from_ANY_IPs_sg,
                 "dump_fn": self.dump_ALL_IP_rules,
-                "data": self.all_from_ip_rules,
+                "data": self.all_from_ip_rules_sg,
                 "severity": 2
             },
             {
-                "label": "Rules to ANY IPs",
+                "label": "Egress security rules with ANY IPs",
                 "description": "Unrestricted connection to ANY (0.0.0.0) address in general is not a recommended practice.",
                 "tips": "Restrict the range of addresses in the security rules, if possible",
-                "detect_fn": self.detect_to_ANY_IPs,
+                "detect_fn": self.detect_to_ANY_IPs_sg,
                 "dump_fn": self.dump_ALL_IP_rules,
-                "data": self.all_to_ip_rules,
+                "data": self.all_to_ip_rules_sg,
+                "severity": 1
+            },
+            {
+                "label": "Ingress subdirectory NACLs with ANY IPs",
+                "description": "Except for public resources, unrestricted connection from ANY (0.0.0.0) address is considered bad practice.",
+                "tips": "Restrict the range of addresses in the security rules, if possible",
+                "detect_fn": self.detect_from_ANY_IPs_acl,
+                "dump_fn": self.dump_ALL_IP_rules,
+                "data": self.all_from_ip_rules_acl,
+                "severity": 2
+            },
+            {
+                "label": "Egress subdirectory NACLs with ANY IPs",
+                "description": "Unrestricted connection to ANY (0.0.0.0) address in general is not a recommended practice.",
+                "tips": "Restrict the range of addresses in the security rules, if possible",
+                "detect_fn": self.detect_to_ANY_IPs_acl,
+                "dump_fn": self.dump_ALL_IP_rules,
+                "data": self.all_to_ip_rules_acl,
                 "severity": 1
             },
             {
@@ -59,7 +85,7 @@ class links_by_rules:
                 "description": "Granting permission to open connections from any port in general is not a recommended practice.",
                 "tips": "If possible, limit the range of ports in the security rules.",
                 "detect_fn": self.detect_from_ANY_ports,
-                "dump_fn": self.dump_ALL_PORTS_rules,
+                "dump_fn": self.dump_PORTS_rules,
                 "data": self.all_from_ports_rules,
                 "severity": 1
             },
@@ -68,7 +94,7 @@ class links_by_rules:
                 "description": "Except for special cases where the node acts as a NAT or Gateway, opening all ports on the node is not a recommended practice.",
                 "tips": "If possible, limit the range of ports in the security rules.",
                 "detect_fn": self.detect_to_ANY_ports,
-                "dump_fn": self.dump_ALL_PORTS_rules,
+                "dump_fn": self.dump_PORTS_rules,
                 "data": self.all_to_ports_rules,
                 "severity": 2
             },
@@ -86,7 +112,7 @@ class links_by_rules:
                 "description": "Nodes without security rules denied any network connections.",
                 "tips": "Remove or shut down unneeded nodes",
                 "detect_fn": self.detect_isolated_nodes,
-                "dump_fn": self.dump_isolated_nodes,
+                "dump_fn": self.dump_nodes,
                 "data": self.lonley_nodes,
                 "severity": 1
             },
@@ -100,7 +126,7 @@ class links_by_rules:
                 "severity": 2
             },
             {
-                "label": "Rules grant one-sided permissions ",
+                "label": "Rules grant one-sided permissions",
                 "description": "If a rule permits connecting to a server without a corresponding rule permitting client connection (or vice versa), it only has an effect if some nodes are not available for analysis (for example, if some nodes are located outside of the cloud).",
                 "tips": "Remove rules that are unnecessary or add paired rules for the connections you need.",
                 "detect_fn": self.detect_asymetric,
@@ -108,7 +134,60 @@ class links_by_rules:
                 "data": self.asymetric_rules,
                 "severity": 1
             },
-
+            {
+                "label": "VM nodes with public IP",
+                "description": "Connecting VM directly to Internet increases the attack surface",
+                "tips": "Connect VM through NAT/LB infrastructure",
+                "detect_fn": self.detect_VM_pubIP,
+                "dump_fn": self.dump_nodes,
+                "data": self.pubIP_VMs,
+                "severity": 1
+            },
+            {
+                "label": "Using unsafe protocols: HTTP",
+                "description": "Granting permission to use unsafe HTTP protocol.",
+                "tips": "If possible, change HTTP protocol to more secure HTTPS.",
+                "detect_fn": self.detect_tcp80,
+                "dump_fn": self.dump_PORTS_rules,
+                "data": self.port_tcp80,
+                "severity": 1
+            },
+            {
+                "label": "Using unsafe protocols: FTP (command)",
+                "description": "Granting permission to use unsafe FTP protocol.",
+                "tips": "If possible, change FTP protocol to more secure FTP over SSL/TLS.",
+                "detect_fn": self.detect_tcp21,
+                "dump_fn": self.dump_PORTS_rules,
+                "data": self.port_tcp21,
+                "severity": 1
+            },
+            {
+                "label": "Using unsafe protocols: FTP (data)",
+                "description": "Granting permission to use unsafe FTP protocol.",
+                "tips": "If possible, change FTP protocol to more secure FTP over SSL/TLS.",
+                "detect_fn": self.detect_tcp20,
+                "dump_fn": self.dump_PORTS_rules,
+                "data": self.port_tcp20,
+                "severity": 1
+            },
+            {
+                "label": "Using unsafe protocols: Telnet (23/TCP)",
+                "description": "Granting permission to use unsafe Telnet protocol.",
+                "tips": "If possible, change Telnet protocol to more secure SSH.",
+                "detect_fn": self.detect_tcp23,
+                "dump_fn": self.dump_PORTS_rules,
+                "data": self.port_tcp23,
+                "severity": 1
+            },
+            {
+                "label": "Using unsafe protocols: Finger (79/TCP)",
+                "description": "Granting permission to use unsafe Finger protocol.",
+                "tips": "If possible, do not use finger protocol",
+                "detect_fn": self.detect_tcp79,
+                "dump_fn": self.dump_PORTS_rules,
+                "data": self.port_tcp79,
+                "severity": 1
+            },
         ]
 
     def make_links(self):
@@ -189,23 +268,6 @@ class links_by_rules:
         for i in self.analyzer_cfg:
             i["detect_fn"]()
 
-    def detect_isolated_nodes(self):
-        for n in self.nodes:
-            if n.type == "IGW":
-                continue
-            if len(self.sglist_by_node[n]) == 0:
-                self.lonley_nodes.append(n)
-        self.lonley_nodes = list(set(self.lonley_nodes))
-
-    def dump_isolated_nodes(self, c):
-        d = []
-        n: OneNode
-        for n in self.lonley_nodes:
-            t = []
-            t = self.int_dump_cloud(n.cloud_id) + self.int_dump_node(n)
-            d.append(t)
-        return self.build_dump_res(d, c)
-
     def build_dump_res(self, d, c):
         severity = c["severity"]
         (caption, data) = self.transfer_av(d)
@@ -216,57 +278,93 @@ class links_by_rules:
                "caption": caption, "data": data, "tips": c["tips"]}
         return res
 
-    def detect_to_ANY_ports(self):
-        # ANY ports and Addrs
-        # nodes_by_sg = self.build_nodes_by_sg_dict(self, nodes, subnets, sgs_NG)
+    def detect_VM_pubIP(self):
+        for n in self.nodes:
+            if n.type != "VM":
+                continue
+            if n.pubip != "" and n.pubip != None:
+                self.pubIP_VMs.append(n)
+        self.lonley_nodes = list(set(self.pubIP_VMs))
+
+    def detect_isolated_nodes(self):
+        for n in self.nodes:
+            if n.type == "IGW":
+                continue
+            if len(self.sglist_by_node[n]) == 0:
+                self.lonley_nodes.append(n)
+        self.lonley_nodes = list(set(self.lonley_nodes))
+
+    def detect_tcp80(self):
+        self.int_detect_ports(80, "TCP", self.port_tcp80)
+
+    def detect_tcp20(self):
+        self.int_detect_ports(20, "TCP", self.port_tcp20)
+
+    def detect_tcp21(self):
+        self.int_detect_ports(21, "TCP", self.port_tcp21)
+
+    def detect_tcp23(self):
+        self.int_detect_ports(23, "TCP", self.port_tcp23)
+
+    def detect_tcp79(self):
+        self.int_detect_ports(79, "TCP", self.port_tcp79)
+
+    def int_detect_ports(self, port, proto, res_list):
         for r in self.rules:
             if r.action != 'allow':
                 continue
-            if r.egress != "True":
+            if r.proto != proto:
                 continue
-            if r.proto != "ICMP" and r.is_all_ports():
-                sg = self.sg_by_r(self.sgs_NG, r)
-                nlist = self.nodes_by_sg[sg]
-                if len(nlist) > 0:
-                    self.add_to_ALL_PORTS_rules(r, nlist)
+            if port not in r.get_port_list():
+                continue
+            sg = self.sg_by_r(self.sgs_NG, r)
+            nlist = self.nodes_by_sg[sg]
+            if len(nlist) > 0:
+                self.add_PORTS_rules(res_list, r, nlist)
+
+    def detect_to_ANY_ports(self):
+        self.int_detect_ANY_ports("False", self.all_to_ports_rules)
 
     def detect_from_ANY_ports(self):
-        # ANY ports and Addrs
-        # nodes_by_sg = self.build_nodes_by_sg_dict(self, nodes, subnets, sgs_NG)
+        self.int_detect_ANY_ports("True", self.all_from_ports_rules)
+
+    def int_detect_ANY_ports(self, egress, res_list):
         for r in self.rules:
             if r.action != 'allow':
                 continue
-            if r.egress == "True":
+            if r.egress != egress:
                 continue
             if r.proto != "ICMP" and r.is_all_ports():
                 sg = self.sg_by_r(self.sgs_NG, r)
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_from_ALL_PORTS_rules(r, nlist)
+                    self.add_PORTS_rules(res_list, r, nlist)
 
-    def detect_to_ANY_IPs(self):
+    def detect_from_ANY_IPs_sg(self):
+        self.int_detect_ANY_IPs("False", "sg-", self.all_from_ip_rules_sg)
+
+    def detect_from_ANY_IPs_acl(self):
+        self.int_detect_ANY_IPs("False", "acl-", self.all_from_ip_rules_acl)
+
+    def detect_to_ANY_IPs_sg(self):
+        self.int_detect_ANY_IPs("True", "sg-", self.all_to_ip_rules_sg)
+
+    def detect_to_ANY_IPs_acl(self):
+        self.int_detect_ANY_IPs("True", "acl-", self.all_to_ip_rules_acl)
+
+    def int_detect_ANY_IPs(self, egress, sg_name_start_with, res_list):
         for r in self.rules:
             if r.action != 'allow':
                 continue
-            if r.egress != "True":
+            if r.egress != egress:
                 continue
             if r.is_any_addr():
                 sg = self.sg_by_r(self.sgs_NG, r)
+                if sg.name[0:len(sg_name_start_with)] != sg_name_start_with:
+                    continue
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_to_ALL_IP_rules(r, nlist)
-
-    def detect_from_ANY_IPs(self):
-        for r in self.rules:
-            if r.action != 'allow':
-                continue
-            if r.egress == "True":
-                continue
-            if r.is_any_addr():
-                sg = self.sg_by_r(self.sgs_NG, r)
-                nlist = self.nodes_by_sg[sg]
-                if len(nlist) > 0:
-                    self.add_from_ALL_IP_rules(r, nlist)
+                    self.add_ALL_IP_rules(res_list, r, nlist)
 
     def detect_duplicate(self):
         # duplicate rules
@@ -360,6 +458,17 @@ class links_by_rules:
             if len(nlist) == 0:
                 self.add_unused_sgs(sg)
 
+    # def dump_isolated_nodes(self, c):
+
+    def dump_nodes(self, c):
+        d = []
+        n: OneNode
+        for n in c["data"]:
+            t = []
+            t = self.int_dump_cloud(n.cloud_id) + self.int_dump_node(n)
+            d.append(t)
+        return self.build_dump_res(d, c)
+
     def add_unused_sgs(self, sg: RuleGroupNG):
         self.unused_sgs.append(sg)
 
@@ -373,21 +482,14 @@ class links_by_rules:
             d.append(t)
         return self.build_dump_res(d, c)
 
-    def add_from_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
+    def add_PORTS_rules(self, rlist: list, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
-        for (r1, n1) in self.all_from_ports_rules:
+        for (r1, n1) in rlist:
             if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
                 return
-        self.all_from_ports_rules.append(i)
+        rlist.append(i)
 
-    def add_to_ALL_PORTS_rules(self, r: Rule, affected_nodes: list[OneNode]):
-        i = (r, affected_nodes)
-        for (r1, n1) in self.all_to_ports_rules:
-            if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
-                return
-        self.all_to_ports_rules.append(i)
-
-    def dump_ALL_PORTS_rules(self, c):
+    def dump_PORTS_rules(self, c):
         d = []
         caption = []
         r: Rule
@@ -441,12 +543,12 @@ class links_by_rules:
                 return
         self.all_from_ip_rules.append(i)
 
-    def add_to_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
+    def add_ALL_IP_rules(self, rlist: list, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
-        for (r1, n1) in self.all_to_ip_rules:
+        for (r1, n1) in rlist:
             if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
                 return
-        self.all_to_ip_rules.append(i)
+        rlist.append(i)
 
     def dump_ALL_IP_rules(self, c):
         d = []
@@ -468,7 +570,7 @@ class links_by_rules:
 
     def int_dump_node(self, n: OneNode):
         # [{"attr": "Node Id", "val": n.name}]
-        return [{"attr": "Node Id", "val": n.name}]
+        return [{"attr": "Node Id", "val": n.name}, {"attr": "Node name", "val": n.note}]
 
     def int_dump_rulelist(self, rlist: list[Rule]):
         t = []
