@@ -1,0 +1,11 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #F5F5DC;
+}
+
+.cognitoText {
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    font-size: 1.5rem;
+}
