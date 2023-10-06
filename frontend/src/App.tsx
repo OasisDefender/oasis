@@ -12,7 +12,7 @@ import {
     MantineProvider,
 } from "@mantine/core";
 
-import TagManager from 'react-gtm-module';
+import TagManager from "react-gtm-module";
 
 import { HeaderResponsive as Header } from "./components/Header";
 
@@ -29,10 +29,10 @@ import { useInterval } from "@mantine/hooks";
 import { Auth } from "aws-amplify";
 
 interface AppProps {
-    logout?: () => void
-};
+    logout?: () => void;
+}
 
-function App({ logout } : AppProps) {
+function App({ logout }: AppProps) {
     const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
     const toggleColorScheme = (value?: ColorScheme) => {
         setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
@@ -43,7 +43,9 @@ function App({ logout } : AppProps) {
     useEffect(() => {
         console.log("App started");
 
-        console.log(Auth.currentSession().then((session) => console.log(session)));
+        console.log(
+            Auth.currentSession().then((session) => console.log(session))
+        );
 
         const defaultStyle = document.body.style.background;
         return () => {
@@ -52,18 +54,18 @@ function App({ logout } : AppProps) {
     }, []);
     useEffect(() => {
         document.body.style.background =
-            colorScheme === "dark" ? "#343A40" : "#F5F5DC";        
+            colorScheme === "dark" ? "#343A40" : "#F5F5DC";
     }, [colorScheme]);
-    
+
     useEffect(() => {
         if (global.config.GMTId) {
             console.log("GTM_ID", global.config.GMTId);
 
             const tagManagerArgs = {
-                gtmId: global.config.GMTId
-            }
+                gtmId: global.config.GMTId,
+            };
 
-            TagManager.initialize(tagManagerArgs)
+            TagManager.initialize(tagManagerArgs);
         }
     }, []);
 
@@ -73,7 +75,6 @@ function App({ logout } : AppProps) {
             headerInfoUpdate.stop();
         };
     }, [headerInfoUpdate]);
-
 
     const headerLinks = [
         {
@@ -107,7 +108,7 @@ function App({ logout } : AppProps) {
                 </>
             ),
         },
-    ];    
+    ];
 
     return (
         <Router>
@@ -120,7 +121,7 @@ function App({ logout } : AppProps) {
                     withGlobalStyles
                     withNormalizeCSS
                 >
-                    <ModalsProvider>                    
+                    <ModalsProvider>
                         <Header links={headerLinks} logout={logout} />
                         <Routes>
                             <Route path="/clouds" element={<Clouds />} />
