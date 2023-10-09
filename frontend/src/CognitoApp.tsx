@@ -1,7 +1,7 @@
 import { Amplify } from "aws-amplify";
 
 import { Authenticator } from "@aws-amplify/ui-react";
-import { Flex, Text } from "@mantine/core"
+import { Flex, Text } from "@mantine/core";
 
 import "@aws-amplify/ui-react/styles.css";
 import "./styles/cognitoStyles.css";
@@ -17,7 +17,7 @@ function CognitoApp() {
     const components = {
         Header: () => (
             <Flex justify="center" p="md">
-                <Icon size="64" iconTextClasses="cognitoText"/>
+                <Icon size="64" iconTextClasses="cognitoText" />
             </Flex>
         ),
         Footer: () => (
