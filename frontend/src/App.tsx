@@ -12,7 +12,7 @@ import {
     MantineProvider,
 } from "@mantine/core";
 
-import TagManager from 'react-gtm-module';
+import TagManager from "react-gtm-module";
 
 import { HeaderResponsive as Header } from "./components/Header";
 
@@ -26,33 +26,55 @@ import { severityToColor } from "./core/severity";
 import { IconCircle } from "@tabler/icons-react";
 import { useHeaderInfo } from "./core/hooks/headerInfo";
 import { useInterval } from "@mantine/hooks";
+import { Auth } from "aws-amplify";
 
-function App() {
+interface AppProps {
+    logout?: () => void;
+}
+
+function App({ logout }: AppProps) {
     const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
     const toggleColorScheme = (value?: ColorScheme) => {
         setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
     };
     const { fetch, maxSeverity } = useHeaderInfo();
+    const headerInfoUpdate = useInterval(fetch, 60000);
 
+    useEffect(() => {
+        console.log("App started");
+
+        console.log(
+            Auth.currentSession().then((session) => console.log(session))
+        );
+
+        const defaultStyle = document.body.style.background;
+        return () => {
+            document.body.style.background = defaultStyle;
+        };
+    }, []);
     useEffect(() => {
         document.body.style.background =
             colorScheme === "dark" ? "#343A40" : "#F5F5DC";
-    }, [colorScheme]);    
-    
-    const { start } = useInterval(fetch, 60000);
+    }, [colorScheme]);
+
     useEffect(() => {
-        if (process.env.REACT_APP_GTM_ID) {
-            console.log("GTM_ID", process.env.REACT_APP_GTM_ID);
+        if (global.config.GMTId) {
+            console.log("GTM_ID", global.config.GMTId);
 
             const tagManagerArgs = {
-                gtmId: process.env.REACT_APP_GTM_ID
-            }
+                gtmId: global.config.GMTId,
+            };
 
-            TagManager.initialize(tagManagerArgs)
+            TagManager.initialize(tagManagerArgs);
         }
-
-        start();
     }, []);
+
+    useEffect(() => {
+        headerInfoUpdate.start();
+        return () => {
+            headerInfoUpdate.stop();
+        };
+    }, [headerInfoUpdate]);
 
     const headerLinks = [
         {
@@ -100,7 +122,7 @@ function App() {
                     withNormalizeCSS
                 >
                     <ModalsProvider>
-                        <Header links={headerLinks} />
+                        <Header links={headerLinks} logout={logout} />
                         <Routes>
                             <Route path="/clouds" element={<Clouds />} />
                             <Route path="/map" element={<CloudMap />} />
@@ -111,7 +133,6 @@ function App() {
                                 path="/"
                                 element={<Navigate replace to="/clouds" />}
                             />
-                            <Route path="/logout" element={<Logout />} />
                         </Routes>
                     </ModalsProvider>
                 </MantineProvider>
@@ -119,10 +140,5 @@ function App() {
         </Router>
     );
 }
-
-function Logout() {
-    window.location.href = '/';
-    return null;
-  }
 
 export default App;

@@ -99,7 +99,7 @@ export function Clouds() {
     return (
         <>
             <Container>
-                {process.env.REACT_APP_VERSION && (
+                {global.config.version && (
                     <div
                         id="version"
                         style={{
@@ -109,7 +109,7 @@ export function Clouds() {
                             color: "#80808060",
                         }}
                     >
-                        {process.env.REACT_APP_VERSION}
+                        {global.config.version}
                     </div>
                 )}
                 <Space h="sm" />

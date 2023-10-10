@@ -1,4 +1,3 @@
-import { px } from "@mantine/styles";
 import {
     LineInfo,
     LineStyle,

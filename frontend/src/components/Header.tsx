@@ -107,13 +107,12 @@ const useStyles = createStyles((theme) => ({
 
 interface HeaderResponsiveProps {
     links: { link: string; label: ReactNode }[];
+    logout?: () => void
 }
 
-export function HeaderResponsive({ links }: HeaderResponsiveProps) {
+export function HeaderResponsive({ links, logout }: HeaderResponsiveProps) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === "dark";
-
-    const logoutType = process.env.REACT_APP_LOGOUT_TYPE;
 
     const [opened, { toggle, close }] = useDisclosure(false);
     const location = useLocation();
@@ -164,22 +163,10 @@ export function HeaderResponsive({ links }: HeaderResponsiveProps) {
                         )}
                     </ActionIcon>
 
-                    {logoutType === "basic" && (
+                    {logout && (
                         <ActionIcon
                             color={dark ? "yellow" : "blue"}
-                            onClick={() => {
-                                let a = new window.XMLHttpRequest();
-                                a.open("HEAD", window.location.href, !0, "logout", new Date().getTime().toString());
-                                a.send("");
-
-                                const newLocation = new URL(
-                                    window.location.href
-                                );
-                                newLocation.username = "logout";
-                                newLocation.password = "password";
-                                newLocation.pathname = "/logout";
-                                window.location.href = newLocation.href;
-                            }}
+                            onClick={logout}
                             title="Logout"
                         >
                             <IconLogout size="1.1rem" />
