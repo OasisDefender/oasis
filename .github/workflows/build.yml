@@ -30,7 +30,7 @@ jobs:
         run: |
           git fetch --tags
           LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          echo 'REACT_APP_BACKEND_URI="http://oasis-backend:5000"'     >  frontend/.env
+          echo 'REACT_APP_BACKEND_URI='                                 >  frontend/.env
           echo 'REACT_APP_AUTH_TYPE="BASIC"'                           >> frontend/.env
           echo "REACT_APP_VERSION=\"`git describe --tags --abbrev=0` (`git symbolic-ref --short HEAD`, `git describe --always`)\"" >> frontend/.env
           echo 'REACT_APP_GTM_ID="G-FZQWZ6HET9"'                       >> frontend/.env
