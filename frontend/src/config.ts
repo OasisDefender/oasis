@@ -44,7 +44,7 @@ let odConfig: ODConfig = {
     version: process.env.REACT_APP_VERSION,
     GMTId: process.env.REACT_APP_GTM_ID,
     backendURI: process.env.REACT_APP_BACKEND_URI,
-    authType: authType as ("COGNITO" | "BASIC" | undefined),
+    authType: authType as (undefined | "COGNITO" | "BASIC"),
     cognitoSettings: cognitoSettings,
 };
 
