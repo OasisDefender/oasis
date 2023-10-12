@@ -1,8 +1,6 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_cors import CORS
 
-import sys
-sys.path.append('backend')
 from backend import Backend
 
 import json
