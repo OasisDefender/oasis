@@ -1,11 +1,11 @@
+from ctx import CTX # base class for frontend objects
 from db import DB
 from vm import VM
 
 
-class Subnet:
+class Subnet(CTX):
     def __init__(self, subnet: list[str], name: str = None, arn: str = None, network: str = None, azone: str = None,
                  note: str = None, vpc_id: str = None, cloud_id: int = None):
-        self.db = DB()
         if subnet != None:
             # load from DB
             self.id: int = subnet[0]
@@ -17,9 +17,6 @@ class Subnet:
             self.vpc_id: str = subnet[6]
             self.cloud_id: int = subnet[7]
             self.vms: list[VM] = []
-            for vm in self.db.get_vms_info(subnet[1]):
-                m = VM(vm=vm)
-                self.vms.append(m)
         else:
             # load from cloud
             self.id: int = None
@@ -31,6 +28,13 @@ class Subnet:
             self.vpc_id: str = vpc_id
             self.cloud_id: int = cloud_id
             self.vms: list[VM] = []
+
+    def get_vms_info(self):
+        db = DB(self.get_ctx())
+        for vm in db.get_vms_info(self.name):
+            m = VM(vm=vm)
+            m.save_ctx(self.get_ctx())
+            self.vms.append(m)
 
     def to_dict(self) -> dict:
         return {

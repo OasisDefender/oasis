@@ -1,15 +1,18 @@
+from ctx import CTX # base class for frontend objects
 from vpc import VPC
 from db  import DB
 
-class CloudMap:
+class CloudMap(CTX):
     def __init__(self):
-        self.db   = DB()
         self.vpcs: list[VPC] = []
 
 
     def get(self):
-        for vpc_info in self.db.get_vpcs_info():
+        db   = DB(self.get_ctx())
+        for vpc_info in db.get_vpcs_info():
             v = VPC(vpc=vpc_info)
+            v.save_ctx(self.get_ctx())
+            v.get_subnet_info()
             self.vpcs.append(v)
 
 

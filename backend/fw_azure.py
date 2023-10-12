@@ -1,6 +1,8 @@
 import sys
 import uuid
 
+from ctx import CTX  # base class for frontend objects
+
 from azure.identity            import *
 from azure.mgmt.resource       import ResourceManagementClient
 from azure.mgmt.compute        import ComputeManagementClient
@@ -17,10 +19,9 @@ from rule_group import RuleGroup
 from rule       import Rule
 from fw_common  import make_ports_string
 
-class FW_Azure:
+class FW_Azure(CTX):
     def __init__(self):
         self.__cloud_id        = ""
-        self.__db              = DB()
 
         self.__resource_client = None
         self.__compute_client  = None
@@ -51,8 +52,8 @@ class FW_Azure:
 
     
     def connect(self, cloud_id: int) -> int:
-        db = DB()
-        creds = self.__db.get_azure_credentials(cloud_id)
+        db = DB(self.get_ctx())
+        creds = db.get_azure_credentials(cloud_id)
         for cred in creds:
             credential             = ClientSecretCredential(cred[0], cred[1], cred[2])
             self.__resource_client = ResourceManagementClient(credential, cred[3])
@@ -78,7 +79,7 @@ class FW_Azure:
 
 
     #def get_app_security_groups(self, cloud_id: int):
-    #    db = DB()
+    #    db = DB(self.get_ctx())
     #    g:RuleGroup = None
     #    resources = self.__resource_client.resource_groups.list()
     #    for resource in resources:
@@ -95,7 +96,7 @@ class FW_Azure:
 
 
     def get_topology(self, cloud_id: int):
-        db = DB()
+        db = DB(self.get_ctx())
 
         # Load VPC's
         vpcs = self.__network_client.virtual_networks.list_all()
@@ -386,7 +387,7 @@ class FW_Azure:
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
-        db = DB()
+        db = DB(self.get_ctx())
         resource_groups = self.__resource_client.resource_groups.list()
         for rg in resource_groups:
             resource_group_name = rg.id.split('/')[-1]

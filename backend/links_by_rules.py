@@ -1,3 +1,4 @@
+from ctx import CTX  # base class for frontend objects
 from subnet import Subnet
 from vm import OneNode
 from rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
@@ -8,7 +9,7 @@ from cloud import Cloud
 from vpc import VPC
 
 
-class links_by_rules:
+class links_by_rules(CTX):
     def __init__(self, clouds: list[Cloud], nodes: list[OneNode], subnets: list[Subnet], sgs1: list[RuleGroup], rules: list[Rule]):
         self.sgs_NG = convert_RuleGroup_to_NG(sgs1, rules)
         self.clouds = clouds
@@ -500,43 +501,46 @@ class links_by_rules:
             d.append(t)
         return self.build_dump_res(d, c)
 
+
     def transfer_av(self, avs: list):
-        caption = []
-        data = []
-        if len(avs) == 0:
+            caption = []
+            data = []
+            if len(avs) == 0:
+                return (caption, data)
+            for t in avs[0]:
+                caption.append(t["attr"])
+            for l in avs:
+                line = []
+                for av in l:
+                    val = av["val"]
+                    if not type(val) is list:
+                        val = [val]
+                    vl = []
+                    for s in val:
+                        s = str(s)
+                        if len(s) > 32:
+                            name = s.split(":")[0]
+                            if name == s:
+                                name = ""
+                            else:
+                                name += ": "
+                            label = s.split("/")[-1]
+                            if name == "":
+                                hint = s
+                            else:
+                                t = s.split(": ")
+                                if len(t) == 2:
+                                    hint = t[1]
+                                else:
+                                    hint = s
+                            if s != label:
+                                s = {"name": f"{name}{label}", "hint": hint}
+                        vl.append(s)
+                    if len(vl) == 1:
+                        vl = vl[0]
+                    line.append(vl)
+                data.append(line)
             return (caption, data)
-        for t in avs[0]:
-            caption.append(t["attr"])
-        for l in avs:
-            line = []
-            for av in l:
-                val = av["val"]
-                if not type(val) is list:
-                    val = [val]
-                vl = []
-                for s in val:
-                    s = str(s)
-                    if len(s) > 32:
-                        name = s.split(":")[0]
-                        if name == s:
-                            name = ""
-                        else:
-                            name += ": "
-                        label = s.split("/")[-1]
-                        if name == "":
-                            hint = s
-                        else:
-                            hint = s.split(": ")[1]
-                        if s != label:
-                            s = {"name": f"{name}{label}", "hint": hint}
-                    vl.append(s)
-                if len(vl) == 1:
-                    vl = vl[0]
-                line.append(vl)
-            data.append(line)
-            # remove duplicates
-            data = [i for n, i in enumerate(data) if i not in data[:n]]
-        return (caption, data)
 
     def add_from_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)

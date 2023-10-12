@@ -43,10 +43,6 @@ function App({ logout }: AppProps) {
     useEffect(() => {
         console.log("App started");
 
-        console.log(
-            Auth.currentSession().then((session) => console.log(session))
-        );
-
         const defaultStyle = document.body.style.background;
         return () => {
             document.body.style.background = defaultStyle;

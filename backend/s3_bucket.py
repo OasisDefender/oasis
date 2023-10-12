@@ -1,6 +1,7 @@
+from ctx import CTX  # base class for frontend objects
 from db import DB
 
-class S3_Bucket:
+class S3_Bucket(CTX):
     def __init__(self, id: int, name: str, cloud_id: int):
         self.id       : str = id
         self.name     : str = name
@@ -29,7 +30,7 @@ class S3_Bucket:
         
 
 
-class S3_Cloud:
+class S3_Cloud(CTX):
     def __init__(self, id: int, name: str, type: str):
         self.id      : str = id
         self.name    : str = name
@@ -37,9 +38,10 @@ class S3_Cloud:
         self.buckets : list[S3_Bucket] = []
 
     def get_buckets(self):
-        db = DB()
+        db = DB(self.get_ctx())
         for bucket_info in db.get_s3_buckets(cloud_id=self.id):
             b = S3_Bucket(id=bucket_info[0], name=bucket_info[1], cloud_id=bucket_info[2])
+            b.save_ctx(self.get_ctx())
             self.buckets.append(b)
 
 

@@ -3,6 +3,7 @@ import botocore.exceptions
 import sys
 import json
 
+from ctx import CTX  # base class for frontend objects
 from db         import DB
 #from cloud      import Cloud
 from vpc        import VPC
@@ -15,16 +16,15 @@ from s3_bucket  import S3_Bucket
 
 from types  import SimpleNamespace
 
-class FW_AWS:
+class FW_AWS(CTX):
     def __init__(self):
         self.__cloud_id: int                   = 0
         self.__session:  boto3.session.Session = None
-        self.__db:       DB                    = DB()
 
 
     def connect(self, cloud_id: int) -> int:
-        db = DB()
-        creds = self.__db.get_aws_credentials(cloud_id)
+        db = DB(self.get_ctx())
+        creds = db.get_aws_credentials(cloud_id)
         for cred in creds:
             self.__session = boto3.Session(aws_access_key_id=cred[1], aws_secret_access_key=cred[2], region_name=cred[0])
             self.__cloud_id = cloud_id
@@ -41,7 +41,7 @@ class FW_AWS:
 
 
     def get_topology(self, cloud_id: int):
-        db = DB()
+        db = DB(self.get_ctx())
         client = self.__session.client('ec2')
         vpc_note: str = None
         response = client.describe_vpcs()
@@ -289,7 +289,7 @@ class FW_AWS:
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
-        db     = DB()
+        db     = DB(self.get_ctx())
         naddr  = None
         ref_sg = None
         prefix_list_id  = None
@@ -398,7 +398,7 @@ class FW_AWS:
 
 
     def get_network_acl_rules(self, cloud_id: int, group_id: str):
-        db     = DB()
+        db     = DB(self.get_ctx())
         naddr  = None
 
         client = self.__session.client('ec2')
