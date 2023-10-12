@@ -1,9 +1,10 @@
 import sys
 
+from ctx import CTX  # base class for frontend objects
 from db import DB
 
 
-class Rule:
+class Rule(CTX):
     def __init__(self, rule_row: list[str] = None, id: int = 0, group_id: str = '', rule_id: str = '', egress: str = '', proto: str = '',
                  port_from: str = '', port_to: str = '', naddr: str = '', cloud_id: int = '', ports: str = '', action: str = 'allow', priority: int = 0):
         if rule_row != None:  # load from DB
@@ -87,7 +88,7 @@ class Rule:
             ports = 'Any'
         if ports[0] == '*':
             ports = 'Any'
-        db = DB()
+        db = DB(self.get_ctx())
         srvc: str = db.detect_service(self.proto, self.port_from, self.port_to)
         if srvc == '':
             return {
@@ -179,10 +180,11 @@ class Rule:
         return l
 
 
-def get_all_rules() -> list[Rule]:
-    db = DB()
+def get_all_rules(user_id:str = None) -> list[Rule]:
+    db = DB(user_id)
     rules: list[Rule] = []
     for row in db.get_all_rules():
         rule = Rule(row)
+        rule.save_ctx(user_id)
         rules.append(rule)
     return rules

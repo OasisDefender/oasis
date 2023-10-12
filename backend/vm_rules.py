@@ -1,3 +1,4 @@
+from ctx import CTX  # base class for frontend objects
 import sys
 
 from rule import Rule
@@ -6,12 +7,13 @@ from fw_aws import FW_AWS
 from fw_azure import FW_Azure
 
 
-class VM_Rules:
+class VM_Rules(CTX):
     def __init__(self, vm_id: int):
         self.id: int = vm_id
         self.rules: list[Rule] = []  # links to
 
-        db = DB()
+    def get(self):
+        db = DB(self.get_ctx())
         rows = db.get_vm_rules(self.id)
         for row in rows:
             rule = Rule(id=row[0], group_id=row[1], rule_id=row[2].split('/')[-1], egress=row[3], proto=row[4],

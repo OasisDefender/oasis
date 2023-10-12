@@ -1,11 +1,13 @@
 import sys
+
+from ctx             import CTX  # base class for frontend objects
 from rule            import Rule
 from fw_aws          import FW_AWS
 from fw_azure        import FW_Azure
 from db              import DB
 from network_service import NetworkService
 
-class FW_Selected:
+class FW_Selected(CTX):
     def __init__(self, jsn: dict):
         # from JSON
         self.type        = "" # "vm"
@@ -16,13 +18,13 @@ class FW_Selected:
         self.group_id         = ""
         self.cloud_id : int   = ""
 
-        self.__db = DB()
-
+    def get(self):
+        db = DB(self.get_ctx())
         try:
             self.id   = jsn['selected']['id']
             self.type = jsn['selected']['type']
 
-            rows = self.__db.get_cloud_vm_info(self.id)
+            rows = db.get_cloud_vm_info(self.id)
             for row in rows:
                 #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: {row}")
                 self.cloud_type = row[0]
@@ -73,7 +75,7 @@ class FW_Selected:
                         self.rules.append(rule)
                         #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: {rule.to_sql_values()}")
             else:
-                for s in self.__db.get_services_by_name(jsn['rule']['service']):
+                for s in db.get_services_by_name(jsn['rule']['service']):
                     print(f"service: {s.to_dict()}")
                     rule = Rule(id=None,
                                 group_id=self.group_id,
@@ -123,6 +125,7 @@ class FW_Selected:
 
     def sync_rules(self):
         cloud = None
+        db = DB(self.get_ctx())
 
         if self.cloud_type == 'AWS':
             cloud = FW_AWS()
@@ -130,7 +133,8 @@ class FW_Selected:
             cloud = FW_Azure()
 
         if cloud != None:
-            self.__db.delete_group_rules(self.cloud_id, self.group_id)
+            cloud.save_ctx(self.get_ctx())
+            db.delete_group_rules(self.cloud_id, self.group_id)
             cloud.connect(self.cloud_id)
             cloud.get_group_rules(self.cloud_id, self.group_id)
 

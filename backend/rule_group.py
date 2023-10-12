@@ -1,8 +1,9 @@
+from ctx import CTX  # base class for frontend objects
 from db import DB
 from rule import Rule
 
 
-class RuleGroup:
+class RuleGroup(CTX):
     def __init__(self, rg_row: list[str] = None, id: int = 0, if_id: str = '', subnet_id: str = '', name: str = '', type: str = '', cloud_id: int = 0):
         if rg_row != None:  # load from DB
             self.id: int = rg_row[0]
@@ -30,17 +31,18 @@ class RuleGroup:
         }
 
 
-def get_all_rule_groups() -> list[RuleGroup]:
-    db = DB()
+def get_all_rule_groups(user_id:str = None) -> list[RuleGroup]:
+    db = DB(user_id)
     rgs: list[RuleGroup] = []
     for row in db.get_all_rule_groups():
         rg = RuleGroup(row)
+        rg.save_ctx(user_id)
         # print(f"rg: {rg.to_sql_values()}")
         rgs.append(rg)
     return rgs
 
 
-class RuleGroupNG:
+class RuleGroupNG(CTX):
     def __init__(self, sg_id: int, if_ids: list[str], subnet_ids: list[str], name: str, type: str, cloud_id: int, rules: list[Rule]):
         # self.id = sg_id
         self.if_ids = if_ids

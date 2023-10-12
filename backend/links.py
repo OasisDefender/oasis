@@ -1,21 +1,21 @@
+from ctx import CTX  # base class for frontend objects
 from db          import DB
 from destination import Destination
 
 
-class Links:
+class Links(CTX):
     def __init__(self, id):
-        self.db  = DB()                   # SQL db
         self.id  = id                     # VM ID
         self.dst : list[Destination] = [] # links to
 
     def get(self):
         row_4: str = None
-        db        = DB()
+        db        = DB(self.get_ctx())
         srvc: str = ''
 
         # Load link with type - network
         d : Destination = None
-        for rule in self.db.get_link_networks(self.id):
+        for rule in db.get_link_networks(self.id):
             row_4 = rule[4]
             if row_4 == '*':
                 row_4 = 'Any'
@@ -46,7 +46,7 @@ class Links:
 
         # Load link with type - vpc
         d : Destination = None
-        for rule in self.db.get_link_vpcs(self.id):
+        for rule in db.get_link_vpcs(self.id):
             row_4 = rule[4]
             if row_4 == '*':
                 row_4 = 'Any'
@@ -77,7 +77,7 @@ class Links:
 
         # Load link with type - subnet
         d : Destination = None
-        for rule in self.db.get_link_subnets(self.id):
+        for rule in db.get_link_subnets(self.id):
             row_4 = rule[4]
             if row_4 == '*':
                 row_4 = 'Any'
@@ -108,7 +108,7 @@ class Links:
         
         # Load link with type - vm
         d : Destination = None
-        for rule in self.db.get_link_vms(self.id):
+        for rule in db.get_link_vms(self.id):
             row_4 = rule[4]
             if row_4 == '*':
                 row_4 = 'Any'

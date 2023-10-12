@@ -1,4 +1,5 @@
-class VM:
+from ctx import CTX # base class for frontend objects
+class VM(CTX):
 
     def __init__(self, vm: list[str], type: str = None, vpc_id: str = None, azone: str = None, subnet_id: str = None, name: str = None,
                  privdn: str = None, privip: str = None, pubdn: str = None, pubip: str = None, note: str = None, os: str = None,
@@ -76,7 +77,7 @@ def vm_encoder(obj):
         f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
-class OneNode:
+class OneNode(CTX):
     def __init__(self, n: list[str]):
         # load from DB
         self.id: int = n[0]
@@ -109,7 +110,7 @@ class OneNode:
         return f"XXX.XXX.{l[1]}.{l[2]}.{l[3]}"
 
 
-class Nodes:
+class Nodes(CTX):
     def __init__(self, req_res: list[list[str]]):
         self.nodes = []
         for n in req_res:

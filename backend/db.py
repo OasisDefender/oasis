@@ -2,21 +2,25 @@ import sqlite3
 import sys
 import os
 
-from cloud import Cloud
+from cloud           import Cloud
 from network_service import NetworkService
 
 
 class DB:
-    def __init__(self):
+    def __init__(self, user_id: str = None):
+        if user_id == None:
+           self.dbname = 'db.sqlite3'
+        else:
+            self.dbname = f"{user_id}.sqlite3"
 
         if os.getenv('RUN_IN_DOCKER'):
             # DB place in-docker-run for
-            db_file_name = 'db/db.sqlite3'
+            db_file_name = f"db/{self.dbname}"
         else:
             # host run
             db_path = f"{os.path.expanduser('~')}/.db"
             os.makedirs(db_path, exist_ok=True)
-            db_file_name = f"{db_path}/db.sqlite3"
+            db_file_name = f"{db_path}/{self.dbname}"
 
         self.__database = sqlite3.connect(db_file_name)
         self.create_database_schema()
@@ -151,16 +155,6 @@ class DB:
 
     def delete_cloud(self, cloud_id):
         cursor = self.__database.cursor()
-        # sql = f"DELETE FROM rules WHERE cloud_id = {cloud_id}"
-        # cursor.execute(sql)
-        # sql = f"DELETE FROM rule_groups WHERE cloud_id = {cloud_id}"
-        # cursor.execute(sql)
-        # sql = f"DELETE FROM subnets WHERE cloud_id = {cloud_id}"
-        # cursor.execute(sql)
-        # sql = f"DELETE FROM nodes WHERE cloud_id = {cloud_id}"
-        # cursor.execute(sql)
-        # sql = f"DELETE FROM vpcs WHERE cloud_id = {cloud_id}"
-        # cursor.execute(sql)
         self.sync_cloud(cloud_id)
         sql = f"DELETE FROM clouds WHERE id = {cloud_id}"
         cursor.execute(sql)
