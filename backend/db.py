@@ -15,7 +15,7 @@ class DB:
         if os.getenv('RUN_IN_DOCKER'):
             # DB place in-docker-run for
             db_file_name = f"db/{self.dbname}"
-        if os.getenv('RUN_IN_LAMDA'):
+        elif os.getenv('RUN_IN_LAMDA'):
             # DB place in-lambda-run for
             db_file_name = f"/mnt/efs/{self.dbname}"
         else:
@@ -23,6 +23,7 @@ class DB:
             db_path = f"{os.path.expanduser('~')}/.db"
             os.makedirs(db_path, exist_ok=True)
             db_file_name = f"{db_path}/{self.dbname}"
+        print(f"{db_file_name}")
         self.__database = sqlite3.connect(db_file_name)
         self.create_database_schema()
 
