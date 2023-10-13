@@ -12,21 +12,19 @@ class DB:
            self.dbname = 'db.sqlite3'
         else:
             self.dbname = f"{user_id}.sqlite3"
-
         if os.getenv('RUN_IN_DOCKER'):
             # DB place in-docker-run for
             db_file_name = f"db/{self.dbname}"
+        if os.getenv('RUN_IN_LAMDA'):
+            # DB place in-lambda-run for
+            db_file_name = f"/mnt/efs/{self.dbname}"
         else:
             # host run
             db_path = f"{os.path.expanduser('~')}/.db"
             os.makedirs(db_path, exist_ok=True)
             db_file_name = f"{db_path}/{self.dbname}"
-
         self.__database = sqlite3.connect(db_file_name)
         self.create_database_schema()
-
-    # def __del__(self):
-    #    self.__database.close()
 
     def create_database_schema(self):
         cursor = self.__database.cursor()
