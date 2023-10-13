@@ -23,6 +23,7 @@ class DB:
             db_path = f"{os.path.expanduser('~')}/.db"
             os.makedirs(db_path, exist_ok=True)
             db_file_name = f"{db_path}/{self.dbname}"
+        print(f"{db_file_name}")
         self.__database = sqlite3.connect(db_file_name)
         self.create_database_schema()
 
