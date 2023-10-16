@@ -1,4 +1,4 @@
-from ctx import CTX  # base class for frontend objects
+from ctx import CTX
 from subnet import Subnet
 from vm import OneNode
 from rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
@@ -450,7 +450,6 @@ class links_by_rules(CTX):
                     set(remain_plist1).difference(common_ports))
             if len(remain_plist1) == 0:
                 continue
-            reason = f"Assymetrical rule for ports {remain_plist1}"
             self.add_asymetric_rules(r1, remain_plist1, r1nodes)
 
     def detect_unused_sg(self):
@@ -501,46 +500,45 @@ class links_by_rules(CTX):
             d.append(t)
         return self.build_dump_res(d, c)
 
-
     def transfer_av(self, avs: list):
-            caption = []
-            data = []
-            if len(avs) == 0:
-                return (caption, data)
-            for t in avs[0]:
-                caption.append(t["attr"])
-            for l in avs:
-                line = []
-                for av in l:
-                    val = av["val"]
-                    if not type(val) is list:
-                        val = [val]
-                    vl = []
-                    for s in val:
-                        s = str(s)
-                        if len(s) > 32:
-                            name = s.split(":")[0]
-                            if name == s:
-                                name = ""
-                            else:
-                                name += ": "
-                            label = s.split("/")[-1]
-                            if name == "":
-                                hint = s
-                            else:
-                                t = s.split(": ")
-                                if len(t) == 2:
-                                    hint = t[1]
-                                else:
-                                    hint = s
-                            if s != label:
-                                s = {"name": f"{name}{label}", "hint": hint}
-                        vl.append(s)
-                    if len(vl) == 1:
-                        vl = vl[0]
-                    line.append(vl)
-                data.append(line)
+        caption = []
+        data = []
+        if len(avs) == 0:
             return (caption, data)
+        for t in avs[0]:
+            caption.append(t["attr"])
+        for l in avs:
+            line = []
+            for av in l:
+                val = av["val"]
+                if not type(val) is list:
+                    val = [val]
+                vl = []
+                for s in val:
+                    s = str(s)
+                    if len(s) > 32:
+                        name = s.split(":")[0]
+                        if name == s:
+                            name = ""
+                        else:
+                            name += ": "
+                        label = s.split("/")[-1]
+                        if name == "":
+                            hint = s
+                        else:
+                            t = s.split(": ")
+                            if len(t) == 2:
+                                hint = t[1]
+                            else:
+                                hint = s
+                        if s != label:
+                            s = {"name": f"{name}{label}", "hint": hint}
+                    vl.append(s)
+                if len(vl) == 1:
+                    vl = vl[0]
+                line.append(vl)
+            data.append(line)
+        return (caption, data)
 
     def add_from_ALL_IP_rules(self, r: Rule, affected_nodes: list[OneNode]):
         i = (r, affected_nodes)
@@ -583,8 +581,9 @@ class links_by_rules(CTX):
         r: Rule
         for r in rlist:
             t.append(
-                f"id: {r.rule_id}, addr: {r.naddr}, proto: {r.proto}, ports: {r.ports}, egress: {r.egress}")
-        i = {"attr": "Rules", "val": t}
+                # f"rule id: {r.rule_id}, addr: {r.naddr}, proto: {r.proto}, ports: {r.ports}, egress: {r.egress}")
+                f"{r.group_id}: {r.rule_id}")
+        i = {"attr": "Security group: Rule", "val": t}
         return [i]
 
     def int_dump_portlist(self, portlist: list[int]):
@@ -621,6 +620,24 @@ class links_by_rules(CTX):
         return [i]
 
     def add_duplicate_rules(self, rlist: list[Rule], ports: list[int], affected_nodes: list[OneNode]):
+        for t, (t_rlist, t_ports, t_affected_nodes) in enumerate(self.duplicate_rules):
+            (t_rlist, t_ports, t_affected_nodes) = self.duplicate_rules[t]
+
+            if self.same_rule_lists(t_rlist, rlist):
+                if t_ports == ports and t_affected_nodes == affected_nodes:
+                    return
+                else:
+                    # need to update list
+                    for p in t_ports:
+                        if not p in ports:
+                            ports.append(p)
+                    ports.sort()
+                    for n in t_affected_nodes:
+                        if not n in affected_nodes:
+                            affected_nodes.append(p)
+                    affected_nodes.sort()
+                    del self.duplicate_rules[t]
+                    break
         i = (rlist, ports, affected_nodes)
         self.duplicate_rules.append(i)
 
@@ -634,6 +651,15 @@ class links_by_rules(CTX):
         return self.build_dump_res(d, c)
 
     def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
+        found = False
+        for idx, (t_r, t_ports, t_affected_nodes) in enumerate(self.asymetric_rules):
+            if r.rule_id == t_r.rule_id:
+                if set(ports) == set(t_ports):
+                    return
+                else:
+                    del self.asymetric_rules[idx]
+                    ports = list(set(ports) | set(t_ports))
+                    break
         i = (r, ports, affected_nodes)
         self.asymetric_rules.append(i)
 
@@ -932,3 +958,16 @@ class links_by_rules(CTX):
         for s in tmp:
             tt = tt + s
         return tt
+
+    def same_rule_lists(self, l1: list[Rule], l2: list[Rule]):
+        if len(l1) != len(l2):
+            return False
+        for t1 in l1:
+            found = False
+            for t2 in l2:
+                if t1.rule_id == t2.rule_id:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
