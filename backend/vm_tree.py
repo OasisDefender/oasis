@@ -1,5 +1,5 @@
-from vm import OneNode
-from classifier_attr_set import attr_set
+from .vm import OneNode
+from .classifier_attr_set import attr_set
 
 
 class vm_tree:

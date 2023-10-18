@@ -1,6 +1,6 @@
-from ctx import CTX  # base class for frontend objects
-from db          import DB
-from destination import Destination
+from .ctx import CTX  # base class for frontend objects
+from .db          import DB
+from .destination import Destination
 
 
 class Links(CTX):

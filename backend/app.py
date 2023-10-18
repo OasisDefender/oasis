@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_cors import CORS
 import json
 
-from backend import Backend
+from .backend import Backend
 
 
 app = Flask(__name__)
