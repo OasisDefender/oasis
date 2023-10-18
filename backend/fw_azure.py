@@ -1,7 +1,7 @@
 import sys
 import uuid
 
-from ctx import CTX  # base class for frontend objects
+from .ctx import CTX  # base class for frontend objects
 
 from azure.identity            import *
 from azure.mgmt.resource       import ResourceManagementClient
@@ -11,13 +11,13 @@ from azure.mgmt.sql            import SqlManagementClient
 from azure.mgmt.network.models import SecurityRule
 from azure.core.exceptions     import *
 
-from db         import DB
-from vpc        import VPC
-from subnet     import Subnet
-from vm         import VM
-from rule_group import RuleGroup
-from rule       import Rule
-from fw_common  import make_ports_string
+from .db         import DB
+from .vpc        import VPC
+from .subnet     import Subnet
+from .vm         import VM
+from .rule_group import RuleGroup
+from .rule       import Rule
+from .fw_common  import make_ports_string
 
 class FW_Azure(CTX):
     def __init__(self):

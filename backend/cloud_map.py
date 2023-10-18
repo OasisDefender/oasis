@@ -1,6 +1,6 @@
-from ctx import CTX # base class for frontend objects
-from vpc import VPC
-from db  import DB
+from .ctx import CTX # base class for frontend objects
+from .vpc import VPC
+from .db  import DB
 
 class CloudMap(CTX):
     def __init__(self):

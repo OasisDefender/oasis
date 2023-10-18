@@ -1,4 +1,4 @@
-from db import DB
+from .db import DB
 
 class Destination:
     def __init__(self, row, type):

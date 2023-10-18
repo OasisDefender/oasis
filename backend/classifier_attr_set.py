@@ -1,4 +1,4 @@
-from classifiers_list import classifier, vminfo
+from .classifiers_list import classifier, vminfo
 
 
 class attr_set:

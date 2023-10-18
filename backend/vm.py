@@ -1,4 +1,5 @@
-from ctx import CTX # base class for frontend objects
+from .ctx import CTX # base class for frontend objects
+
 class VM(CTX):
 
     def __init__(self, vm: list[str], type: str = None, vpc_id: str = None, azone: str = None, subnet_id: str = None, name: str = None,
