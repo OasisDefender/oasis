@@ -26,7 +26,7 @@ class VM_Rules(CTX):
     def delete_rules(self, rules: list[int]):
         cloud = None
 
-        db = DB()
+        db = DB(self.get_ctx())
         cloud_info = db.get_cloud_vm_info(self.id)[0]
         cloud_type = cloud_info[0]
         cloud_id = cloud_info[2]

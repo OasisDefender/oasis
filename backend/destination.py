@@ -1,6 +1,7 @@
+from ctx import CTX  # base class for frontend objects
 from db import DB
 
-class Destination:
+class Destination(CTX):
     def __init__(self, row, type):
         row_4: str = row[4]
         
@@ -15,7 +16,7 @@ class Destination:
         if row_4 == '0':
             row_4 = 'Any'
 
-        db        = DB()
+        db        = DB(self.get_ctx())
         srvc: str = db.detect_service(row[2], row[4], '')
         if srvc == '':
             srvc = f"{row[2]}/{row_4}"

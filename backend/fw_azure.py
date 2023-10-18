@@ -72,7 +72,6 @@ class FW_Azure(CTX):
             print(type(inst))
             print(inst.args)
             print(inst)
-            
             self.__cloud_id = 0
 
         return self.__cloud_id
@@ -97,7 +96,6 @@ class FW_Azure(CTX):
 
     def get_topology(self, cloud_id: int):
         db = DB(self.get_ctx())
-
         # Load VPC's
         vpcs = self.__network_client.virtual_networks.list_all()
         for vpc in vpcs:
@@ -568,19 +566,13 @@ class FW_Azure(CTX):
 
     def del_rule(self, rule: Rule) -> bool:
         status: bool = False
-        #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Try delete rule: {rule.to_dict()}")
-
         resource_group_name = rule.group_id.split('/')[4]
         nsg_name            = rule.group_id.split('/')[-1]
         rule_name           = rule.rule_id.split('/')[-1]
-
         result = self.__network_client.security_rules.begin_delete(resource_group_name, nsg_name, rule_name)
         result.wait()
-
         if result.status() == 'Succeeded':
             status = True
         else:
             print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Error while del rule: {rule_name}")
-
         return status
-
