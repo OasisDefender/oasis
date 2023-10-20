@@ -4,13 +4,19 @@ from destination import Destination
 
 
 class Links(CTX):
-    def __init__(self, id):
+    def __init__(self, id, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
         self.id  = id                     # VM ID
         self.dst : list[Destination] = [] # links to
 
     def get(self):
         row_4: str = None
-        db        = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         srvc: str = ''
 
         # Load link with type - network
@@ -27,7 +33,7 @@ class Links(CTX):
                 srvc = f"{rule[2]}/{row_4}"
             
             if d is None:
-                d = Destination(rule, "network")
+                d = Destination(rule, "network", _db=db)
             else:
                 if d.address == rule[3]:
                     # Inbound                                
@@ -39,7 +45,7 @@ class Links(CTX):
                 else:
                     if d.is_empty() == 0:
                         self.dst.append(d)
-                    d = Destination(rule, "network")
+                    d = Destination(rule, "network", _db=db)
         if d != None:
             if d.is_empty() == 0:
                 self.dst.append(d)
@@ -58,7 +64,7 @@ class Links(CTX):
                 srvc = f"{rule[2]}/{row_4}"
             
             if d is None:
-                d = Destination(rule, "vpc")
+                d = Destination(rule, "vpc", _db=db)
             else:
                 if d.address == rule[3]:
                     #inbound
@@ -70,7 +76,7 @@ class Links(CTX):
                 else:
                     if d.is_empty() == 0:
                         self.dst.append(d)
-                    d = Destination(rule, "vpc")
+                    d = Destination(rule, "vpc", _db=db)
         if d != None:
             if d.is_empty() == 0:
                 self.dst.append(d)
@@ -89,7 +95,7 @@ class Links(CTX):
                 srvc = f"{rule[2]}/{row_4}"
 
             if d is None:
-                d = Destination(rule, "subnet")
+                d = Destination(rule, "subnet", _db=db)
             else:
                 if d.address == rule[3]:
                     #inbound
@@ -101,7 +107,7 @@ class Links(CTX):
                 else:
                     if d.is_empty() == 0:
                         self.dst.append(d)
-                    d = Destination(rule, "subnet")
+                    d = Destination(rule, "subnet", _db=db)
         if d != None:
             if d.is_empty() == 0:
                 self.dst.append(d)
@@ -120,7 +126,7 @@ class Links(CTX):
                 srvc = f"{rule[2]}/{row_4}"
 
             if d is None:
-                d = Destination(rule, "vm")
+                d = Destination(rule, "vm", _db=db)
             else:
                 if d.address == rule[3]:
                     #inbound                    
@@ -132,7 +138,7 @@ class Links(CTX):
                 else:
                     if d.is_empty() == 0:
                         self.dst.append(d)
-                    d = Destination(rule, "vm")
+                    d = Destination(rule, "vm", _db=db)
         if d != None:
             if d.is_empty() == 0:
                 self.dst.append(d)

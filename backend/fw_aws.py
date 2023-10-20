@@ -17,13 +17,20 @@ from s3_bucket  import S3_Bucket
 from types  import SimpleNamespace
 
 class FW_AWS(CTX):
-    def __init__(self):
+    def __init__(self, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
+
         self.__cloud_id: int                   = 0
         self.__session:  boto3.session.Session = None
 
 
     def connect(self, cloud_id: int) -> int:
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         creds = db.get_aws_credentials(cloud_id)
         for cred in creds:
             self.__session = boto3.Session(aws_access_key_id=cred[1], aws_secret_access_key=cred[2], region_name=cred[0])
@@ -41,7 +48,11 @@ class FW_AWS(CTX):
 
 
     def get_topology(self, cloud_id: int):
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         client = self.__session.client('ec2')
         vpc_note: str = None
         response = client.describe_vpcs()
@@ -50,7 +61,7 @@ class FW_AWS(CTX):
             if vpc_note == "none":
                 vpc_note = row['VpcId']
 
-            vpc = VPC(vpc=None, name=row['VpcId'], network=row['CidrBlock'], cloud_id=cloud_id, note=vpc_note)
+            vpc = VPC(vpc=None, name=row['VpcId'], network=row['CidrBlock'], cloud_id=cloud_id, note=vpc_note, _db = db)
             vpc.id = db.add_vpc(vpc=vpc.to_sql_values())
         
         subnet_note: str = None
@@ -61,7 +72,7 @@ class FW_AWS(CTX):
                 subnet_note = row['SubnetId']
             subnet = Subnet(subnet=None, name=row['SubnetId'], arn=row['SubnetArn'], network=row['CidrBlock'],
                             azone=row['AvailabilityZone'], note=subnet_note,
-                            vpc_id=row['VpcId'], cloud_id=cloud_id)
+                            vpc_id=row['VpcId'], cloud_id=cloud_id, _db = db)
             subnet.id = db.add_subnet(subnet=subnet.to_sql_values())
 
             acl_response = client.describe_network_acls(Filters=[{'Name': 'association.subnet-id', 'Values': [row['SubnetId']]}])
@@ -70,7 +81,7 @@ class FW_AWS(CTX):
                                 subnet_id=subnet.name,
                                 name     = acl['NetworkAclId'],
                                 type     = 'NSG',
-                                cloud_id = cloud_id)
+                                cloud_id = cloud_id, _db = db)
                 subnet_rg.id = db.add_rule_group(rule_group=subnet_rg.to_sql_values())
                 # Load rules for current rule group
                 self.get_network_acl_rules(cloud_id, acl['NetworkAclId'])
@@ -219,7 +230,8 @@ class FW_AWS(CTX):
                                    if_id    = elb_if_id,
                                    name     = lb_sg,
                                    type     = 'NSG',
-                                   cloud_id = cloud_id)
+                                   cloud_id = cloud_id,
+                                   _db = db)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, lb_sg)
@@ -271,7 +283,8 @@ class FW_AWS(CTX):
                                    if_id    = rds_if_id,
                                    name     = rds_sg['VpcSecurityGroupId'],
                                    type     = 'NSG',
-                                   cloud_id = cloud_id)
+                                   cloud_id = cloud_id,
+                                   _db = db)
                     rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, rds_sg['VpcSecurityGroupId'])
@@ -281,7 +294,8 @@ class FW_AWS(CTX):
         for bucket in s3_client.buckets.all():
             bucket = S3_Bucket(id    = None,
                             name     = bucket.name,
-                            cloud_id = cloud_id)
+                            cloud_id = cloud_id,
+                            _db = db)
             bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
 
         return 0
@@ -289,7 +303,11 @@ class FW_AWS(CTX):
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
-        db     = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         naddr  = None
         ref_sg = None
         prefix_list_id  = None
@@ -320,7 +338,8 @@ class FW_AWS(CTX):
                             cloud_id=cloud_id,
                             ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
                             action='allow',
-                            priority=priority)
+                            priority=priority,
+                            _db = db)
                     r.id = db.add_rule(rule=r.to_sql_values())
                     #print(r.to_sql_values())
                 continue
@@ -360,7 +379,8 @@ class FW_AWS(CTX):
                                     cloud_id  = cloud_id,
                                     ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
                                     action='allow',
-                                    priority=priority)
+                                    priority=priority,
+                                    _db = db)
                             r.id = db.add_rule(rule=r.to_sql_values())
                             if naddr != None: # TODO: remove for many network interfaces support
                                 break
@@ -391,14 +411,19 @@ class FW_AWS(CTX):
                     cloud_id=cloud_id,
                     ports=make_ports_string(rule['FromPort'], rule['ToPort'], rule['IpProtocol']),
                     action='allow',
-                    priority=priority)
+                    priority=priority,
+                    _db = db)
             r.id = db.add_rule(rule=r.to_sql_values())
             #print(r.to_sql_values())
 
 
 
     def get_network_acl_rules(self, cloud_id: int, group_id: str):
-        db     = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         naddr  = None
 
         client = self.__session.client('ec2')
@@ -449,7 +474,8 @@ class FW_AWS(CTX):
                          cloud_id=cloud_id,
                          ports=make_ports_string(port_from, port_to, proto),
                          action=rule['RuleAction'],
-                         priority=rule['RuleNumber'])
+                         priority=rule['RuleNumber'],
+                         _db = db)
                 r.id = db.add_rule(rule=r.to_sql_values())
 
 

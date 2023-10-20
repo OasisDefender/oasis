@@ -550,3 +550,6 @@ class DB:
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return cursor.fetchall()
+
+def db_exist(user_id: str = None):
+    return True

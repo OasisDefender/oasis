@@ -2,11 +2,17 @@ from ctx import CTX # base class for frontend objects
 from db import DB
 
 class InternetNodes(CTX):
-    def __init__(self):
+    def __init__(self, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
         self.inodes = []
 
     def get(self):
-        db   = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         for n in db.get_internet_nodes():
             self.inodes.append(n[0])
 

@@ -7,127 +7,200 @@ from network_service import NetworkService
 
 
 class DB:
-    def __init__(self, user_id: str = None):
-        if user_id == None:
-           self.dbname = 'db'
+    def __init__(self, user_id: str = None, _conn = None):
+        self.user_id = user_id
+        
+        if self.user_id == None:
+            self.user_id = 'db'
+
+        if _conn != None:
+            #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Using a previously established connection")
+            self.__database = _conn
         else:
-            user_id.replace('-', '')
-            self.dbname = f"u{user_id}"
-        self.pghost = os.getenv('OD_USE_PG_HOST')
-        print(f"pghost: {self.pghost}")
-        print(f"dbname: {self.dbname}")
-        print(f"dbpass: {user_id}")
+            self.pghost  = os.getenv('OD_USE_PG_HOST')
+            if self.pghost:
+                try:
+                    self.__database = psycopg2.connect(
+                        host=self.pghost,
+                        database=mk_db_name(self.user_id),
+                        user=mk_user_name(self.user_id),
+                        password=self.user_id,
+                        connect_timeout=3)
+                    #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Connected to existent database: {mk_db_name(self.user_id)}")
+                except psycopg2.Error as e:
+                    print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
+                    if e != 'timeout expired':
+                        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Database {mk_db_name(self.user_id)} not exist, try create")
+                        self.__create_database_user()
+                        self.__create_database()
+                        self.__database = psycopg2.connect(
+                            host=self.pghost,
+                            database=mk_db_name(self.user_id),
+                            user=mk_user_name(self.user_id),
+                            password=self.user_id,
+                            connect_timeout=3)
+                        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Connected to new database: {mk_db_name(self.user_id)}")
+                        self.__create_database_schema()
+            else:
+                print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error: Database host (OD_USE_PG_HOST) not set")
+                raise Exception("Error: Database host (OD_USE_PG_HOST) not set")
 
-        if self.pghost:
-            self.__database = psycopg2.connect(
+    def __create_database_user(self):
+        dbpass = os.getenv('OD_PG_SU_PASS')
+        if dbpass == None:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error: Postgres user password (OD_PG_SU_PASS) not set")
+            raise Exception("Error: Postgres user password (OD_PG_SU_PASS) not set")
+        try:
+            db = psycopg2.connect(
                 host=self.pghost,
-                database=self.dbname,
-                user=self.dbname,
-                password=user_id,
+                database='template1',
+                user='postgres',
+                password=dbpass,
                 connect_timeout=3)
-            print("connected!")
-            
-            #self.create_database_schema()
+            #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Connected to 'template1' database as user 'postgres'")
+            with db.cursor() as cursor:
+                sql = f"create user {mk_user_name(self.user_id)} CREATEDB PASSWORD '{self.user_id}';"
+                cursor.execute(sql)
+            db.commit()
+            db.close()
+        except psycopg2.Error as e:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error create database owner user: {mk_user_name(self.user_id)}")
+            raise Exception(f"Error create new database owner {mk_user_name(self.user_id)}")
+        return
 
-    def create_database_schema(self):
-        with self.__database.cursor() as cursor:
-            cursor.execute('''CREATE TABLE IF NOT EXISTS clouds
-                (
-                    id   serial PRIMARY KEY,
-                    name TEXT UNIQUE not null, -- Cloud name (show in gui)
-                    cloud_type TEXT not null,  -- AWS or AZURE
-                    aws_region TEXT,     -- AWS region
-                    aws_key TEXT,        -- AWS key
-                    aws_secret_key TEXT, -- AWS secret-key
-                    azure_tenant_id TEXT,      -- Azure tenant-id
-                    azure_client_id TEXT,      -- Azure client-id
-                    azure_client_secret TEXT,  -- Azure client-secret
-                    azure_subscription_id TEXT -- Azure only subscription-id
-                )''')
-            cursor.execute(
-                "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_aws_index ON clouds(aws_region, aws_key, aws_secret_key)")
-            cursor.execute(
-                "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_azure_index ON clouds(azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)")
+    def __create_database(self):
+        if self.pghost == None:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error: Database host (OD_USE_PG_HOST) not set")
+            raise Exception("Error: Database host (OD_USE_PG_HOST) not set")
+        try:
+            db = psycopg2.connect(
+                host=self.pghost,
+                database='template1',
+                user=mk_user_name(self.user_id),
+                password=self.user_id,
+                connect_timeout=3)
+            #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Connected to 'template1' database as user '{mk_user_name(self.user_id)}'")
+            db.autocommit = True
+            with db.cursor() as cursor:
+                sql = f"create database {mk_db_name(self.user_id)};"
+                cursor.execute(sql)
+            db.close()
+        except psycopg2.Error as e:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error create new database: {mk_db_name(self.user_id)}")
+            raise Exception(f"Error create new database: {mk_db_name(self.user_id)}")
+        return
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS vpcs(
-                id      serial PRIMARY KEY,
-                name    TEXT UNIQUE not null,
-                network TEXT,
-                cloud_id integer REFERENCES clouds (id),
-                note    TEXT)''')
+    def __create_database_schema(self):
+        try:
+            with self.__database.cursor() as cursor:
+                cursor.execute('''CREATE TABLE IF NOT EXISTS clouds
+                    (
+                        id   serial PRIMARY KEY,
+                        name TEXT UNIQUE not null, -- Cloud name (show in gui)
+                        cloud_type TEXT not null,  -- AWS or AZURE
+                        aws_region TEXT,     -- AWS region
+                        aws_key TEXT,        -- AWS key
+                        aws_secret_key TEXT, -- AWS secret-key
+                        azure_tenant_id TEXT,      -- Azure tenant-id
+                        azure_client_id TEXT,      -- Azure client-id
+                        azure_client_secret TEXT,  -- Azure client-secret
+                        azure_subscription_id TEXT -- Azure only subscription-id
+                    )''')
+                cursor.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_aws_index ON clouds(aws_region, aws_key, aws_secret_key)")
+                cursor.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_azure_index ON clouds(azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)")
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS subnets(
-                id      serial PRIMARY KEY,
-                name    TEXT UNIQUE not null,
-                arn     TEXT,
-                network TEXT,
-                azone   TEXT,
-                note    TEXT,
-                vpc_id  text REFERENCES vpcs(name),
-                cloud_id integer REFERENCES clouds(id))''')
+                cursor.execute('''CREATE TABLE IF NOT EXISTS vpcs(
+                    id      serial PRIMARY KEY,
+                    name    TEXT UNIQUE not null,
+                    network TEXT,
+                    cloud_id integer REFERENCES clouds (id),
+                    note    TEXT)''')
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS nodes(
-                id        serial PRIMARY KEY,
-                type      TEXT,
-                vpc_id    text, -- REFERENCES vpcs(name),
-                azone     TEXT,
-                subnet_id text, -- REFERENCES subnets(name),
-                name      TEXT,
-                privdn    TEXT,
-                privip    TEXT,
-                pubdn     TEXT,
-                pubip     TEXT,
-                note      TEXT,
-                os        TEXT,
-                state     TEXT,
-                mac       TEXT,
-                if_id     TEXT, -- UNIQUE not null,
-                cloud_id integer REFERENCES clouds(id))''')
+                cursor.execute('''CREATE TABLE IF NOT EXISTS subnets(
+                    id      serial PRIMARY KEY,
+                    name    TEXT UNIQUE not null,
+                    arn     TEXT,
+                    network TEXT,
+                    azone   TEXT,
+                    note    TEXT,
+                    vpc_id  text REFERENCES vpcs(name),
+                    cloud_id integer REFERENCES clouds(id))''')
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS rule_groups(
-                id        serial PRIMARY KEY,
-                if_id     text, -- REFERENCES nodes(if_id),
-                subnet_id text, -- REFERENCES subnets(name),
-                name      TEXT,
-                type      TEXT,
-                cloud_id  integer REFERENCES clouds(id))''')
+                cursor.execute('''CREATE TABLE IF NOT EXISTS nodes(
+                    id        serial PRIMARY KEY,
+                    type      TEXT,
+                    vpc_id    text, -- REFERENCES vpcs(name),
+                    azone     TEXT,
+                    subnet_id text, -- REFERENCES subnets(name),
+                    name      TEXT,
+                    privdn    TEXT,
+                    privip    TEXT,
+                    pubdn     TEXT,
+                    pubip     TEXT,
+                    note      TEXT,
+                    os        TEXT,
+                    state     TEXT,
+                    mac       TEXT,
+                    if_id     TEXT, -- UNIQUE not null,
+                    cloud_id integer REFERENCES clouds(id))''')
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS rules(
-                id        serial PRIMARY KEY,
-                group_id  text, -- REFERENCES rule_groups(name),
-                rule_id   TEXT,
-                egress    TEXT,
-                proto     TEXT,
-                port_from TEXT,
-                port_to   TEXT,
-                naddr     TEXT,
-                cloud_id  integer REFERENCES clouds(id),
-                ports     TEXT,
-                action    TEXT,
-                priority  INTEGER)''')
+                cursor.execute('''CREATE TABLE IF NOT EXISTS rule_groups(
+                    id        serial PRIMARY KEY,
+                    if_id     text, -- REFERENCES nodes(if_id),
+                    subnet_id text, -- REFERENCES subnets(name),
+                    name      TEXT,
+                    type      TEXT,
+                    cloud_id  integer REFERENCES clouds(id))''')
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS network_services(
-                id    serial PRIMARY KEY,
-                name  TEXT,
-                proto TEXT,
-                port  TEXT)''')
-            self.__import_network_services()
+                cursor.execute('''CREATE TABLE IF NOT EXISTS rules(
+                    id        serial PRIMARY KEY,
+                    group_id  text, -- REFERENCES rule_groups(name),
+                    rule_id   TEXT,
+                    egress    TEXT,
+                    proto     TEXT,
+                    port_from TEXT,
+                    port_to   TEXT,
+                    naddr     TEXT,
+                    cloud_id  integer REFERENCES clouds(id),
+                    ports     TEXT,
+                    action    TEXT,
+                    priority  INTEGER)''')
 
-            cursor.execute('''CREATE TABLE IF NOT EXISTS s3_buckets(
-                id        serial PRIMARY KEY,
-                name      TEXT,
-                cloud_id  integer REFERENCES clouds(id))''')
+                cursor.execute('''CREATE TABLE IF NOT EXISTS network_services(
+                    id    serial PRIMARY KEY,
+                    name  TEXT,
+                    proto TEXT,
+                    port  TEXT)''')
+                self.__import_network_services()
 
-            # Not used now
-            # cursor.execute('''CREATE TABLE IF NOT EXISTS routes(
-            #    id        serial PRIMARY KEY,
-            #    cloud_id  integer REFERENCES clouds(id),
-            #    vpc_id    integer REFERENCES vpcs(id),
-            #    subnet_id integer REFERENCES subnets(id),
-            #    route   TEXT,
-            #    note    TEXT,
-            #    naddr   TEXT,
-            #    gw      TEXT)''')
+                cursor.execute('''CREATE TABLE IF NOT EXISTS s3_buckets(
+                    id        serial PRIMARY KEY,
+                    name      TEXT,
+                    cloud_id  integer REFERENCES clouds(id));''')
+                self.__database.commit()
+
+                # Not used now
+                # cursor.execute('''CREATE TABLE IF NOT EXISTS routes(
+                #    id        serial PRIMARY KEY,
+                #    cloud_id  integer REFERENCES clouds(id),
+                #    vpc_id    integer REFERENCES vpcs(id),
+                #    subnet_id integer REFERENCES subnets(id),
+                #    route   TEXT,
+                #    note    TEXT,
+                #    naddr   TEXT,
+                #    gw      TEXT)''')
+        except psycopg2.Error as e:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error create new database schema: {mk_db_name(self.user_id)}")
+            raise Exception(f"Error create new database schema: {self.dbname}")
+        except:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Unknown error while create new database schema: {mk_db_name(self.user_id)}")
+            raise Exception(f"Unknown error while create new database schema: {mk_db_name(self.user_id)}")
+
 
     def add_cloud(self, cloud: Cloud) -> int:
         with self.__database.cursor() as cursor:
@@ -135,20 +208,20 @@ class DB:
                 if cloud.cloud_type == 'AWS':
                     cursor.execute("""
                         INSERT INTO clouds (name, cloud_type, aws_region, aws_key, aws_secret_key)
-                        VALUES (%s, %s, %s, %s, %s);
+                        VALUES (%s, %s, %s, %s, %s) RETURNING id;
                         """,
                         (cloud.name, cloud.cloud_type, cloud.aws_region, cloud.aws_key, cloud.aws_secret_key))
-                    cloud.id = cursor.lastrowid
+                    cloud.id = cursor.fetchone()[0]
                     self.__database.commit()
                 elif cloud.cloud_type == 'AZURE':
                     cursor.execute("""
                         INSERT INTO clouds (name, cloud_type, azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;
                     """, (cloud.name, cloud.cloud_type, cloud.azure_tenant_id, cloud.azure_client_id, cloud.azure_client_secret, cloud.azure_subscription_id))
-                    cloud.id = cursor.lastrowid
+                    cloud.id = cursor.fetchone()[0]
                     self.__database.commit()
                 else:
-                    print(f"Unsupported Cloud Type: '{cloud.cloud_type}'")
+                    print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Unsupported Cloud Type: '{cloud.cloud_type}'")
             except psycopg2.Error as e:
                 print(f"DB error: {e}")
         return cloud.id
@@ -302,10 +375,8 @@ class DB:
                     g.if_id = n.if_id and \
                     r.naddr in {nets} \
                 ORDER by r.naddr"
-        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] {sql}")
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
             return cursor.fetchall()
 
     def get_link_vpcs(self, id) -> list[int]:
@@ -321,14 +392,11 @@ class DB:
                     r.naddr = v.network \
                 ORDER \
                     by r.naddr"
-        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] {sql}")
         with self.__database.cursor() as cursor:
             try:
                 cursor.execute(sql)
-                print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
-            except:
-                print(f"DB error")
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
+            except psycopg2.Error as e:
+                print(f"DB error: {e}")
             return cursor.fetchall()
 
     def get_link_subnets(self, id) -> list[int]:
@@ -366,15 +434,11 @@ class DB:
                     nip.pubip != '' and \
                     r.naddr = nip.pubip||'/32') as unsurted_rezult \
                 ORDER by naddr"
-        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] SQL: {sql}")
         with self.__database.cursor() as cursor:
             try:
-                print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
                 cursor.execute(sql)
-                print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
             except psycopg2.Error as e:
                 print(f"DB error: {e}")
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
             return cursor.fetchall()
 
     def get_cloud_vm_info(self, vm_id: str) -> list[str]:
@@ -400,7 +464,6 @@ class DB:
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             self.__database.commit()
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
         return cursor.lastrowid
 
     def add_subnet(self, subnet: dict) -> int:
@@ -410,22 +473,21 @@ class DB:
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             self.__database.commit()
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
         return cursor.lastrowid
 
     def add_instance(self, instance: dict) -> int:
-        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] instance: {instance}")
+        ret:int = -1
         with self.__database.cursor() as cursor:
             cursor.execute("""
                 INSERT INTO nodes (type, vpc_id, azone, subnet_id, name, privdn, privip, pubdn, pubip, note, os, state, mac, if_id, cloud_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)  RETURNING id;
                 """,
                         (instance['type'], instance['vpc_id'], instance['azone'], instance['subnet_id'], instance['name'],
                             instance['privdn'], instance['privip'], instance['pubdn'], instance['pubip'], instance['note'],
                             instance['os'], instance['state'], instance['mac'], instance['if_id'], instance['cloud_id']))
+            ret = cursor.fetchone()[0]
             self.__database.commit()
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
-        return cursor.lastrowid
+        return ret
 
     def add_rule_group(self, rule_group: dict) -> int:
         sql:str = ''
@@ -436,10 +498,8 @@ class DB:
             sql = f"INSERT INTO rule_groups (if_id, name, type, cloud_id, subnet_id) \
             VALUES ('{rule_group['if_id']}', '{rule_group['name']}', '{rule_group['type']}', {rule_group['cloud_id']}, '{rule_group['subnet_id']}')"
         with self.__database.cursor() as cursor:
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] SQL: {sql}")
             cursor.execute(sql)
             self.__database.commit()
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
         return cursor.lastrowid
 
     def add_rule(self, rule: dict) -> int:
@@ -450,31 +510,26 @@ class DB:
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             self.__database.commit()
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
         return cursor.lastrowid
 
     def get_vm_rules(self, vm_id: int) -> list[str]:
         sql = f"select r.* from rules r, rule_groups rg, nodes n where r.group_id = rg.name and rg.if_id = n.if_id and n.id = {vm_id} order by r.id"
-        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] SQL: {sql}")
         with self.__database.cursor() as cursor:
             try:
                 cursor.execute(sql)
             except psycopg2.Error as e:
                 print(f"DB error: {e}")
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
             return cursor.fetchall()
 
     def detect_service(self, proto, port_from, port_to):
         ret: str = ''
         sql: str = f"select trim(name) as name from network_services where trim(proto)='{proto.lower().strip()}' and port='{port_from}'"
-        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] SQL: {sql}")
         if (port_from) == '*' or (port_from == '0'):
             pass
         else:
             if (port_to == '') or (port_from == port_to):
                 with self.__database.cursor() as cursor:
                     cursor.execute(sql)
-                    print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]")
                     for row in cursor.fetchall():
                         ret = row[0]  # .upper()
                         break
@@ -558,7 +613,6 @@ class DB:
 
     def get_s3_buckets(self, cloud_id: int) -> list[str]:
         sql = f"select id, name, cloud_id from s3_buckets where cloud_id = {cloud_id} order by name"
-        #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] {sql}")
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()
@@ -568,3 +622,38 @@ class DB:
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()
+
+def mk_user_name(_userid: str = None):
+    ret = _userid
+    if ret == None:
+        ret = 'db'
+    else:
+        ret = f"u{_userid.replace('-', '')}"
+    return ret
+
+def mk_db_name(user_id: str = None):
+    return mk_user_name(user_id)
+
+def db_exist(_userid: str = None):
+    ret:bool = False
+    db       = None
+    userid:str = _userid
+    if userid == None:
+        userid = 'db'
+    pghost = os.getenv('OD_USE_PG_HOST')
+    if pghost:
+        try:
+            db = psycopg2.connect(
+                host=pghost,
+                database=mk_db_name(userid),
+                user=mk_user_name(userid),
+                password=userid,
+                connect_timeout=3)
+            #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Connected to existent database")
+            ret = True
+        except psycopg2.Error as e:
+            db = None
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
+    else:
+        print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error: Database host (OD_USE_PG_HOST) not set")
+    return ret, db

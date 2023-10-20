@@ -8,12 +8,18 @@ from fw_azure import FW_Azure
 
 
 class VM_Rules(CTX):
-    def __init__(self, vm_id: int):
+    def __init__(self, vm_id: int, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
         self.id: int = vm_id
         self.rules: list[Rule] = []  # links to
 
     def get(self):
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         rows = db.get_vm_rules(self.id)
         for row in rows:
             rule = Rule(id=row[0], group_id=row[1], rule_id=row[2].split('/')[-1], egress=row[3], proto=row[4],
@@ -25,17 +31,21 @@ class VM_Rules(CTX):
 
     def delete_rules(self, rules: list[int]):
         cloud = None
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
 
-        db = DB(self.get_ctx())
         cloud_info = db.get_cloud_vm_info(self.id)[0]
         cloud_type = cloud_info[0]
         cloud_id = cloud_info[2]
         group_id: list[str] = []
 
         if cloud_type == 'AWS':
-            cloud = FW_AWS()
+            cloud = FW_AWS(_db=db)
         if cloud_type == 'AZURE':
-            cloud = FW_Azure()
+            cloud = FW_Azure(_db=db)
 
         if cloud != None:
             # Delete rules from DB

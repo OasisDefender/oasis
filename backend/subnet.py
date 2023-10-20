@@ -5,7 +5,9 @@ from vm import VM
 
 class Subnet(CTX):
     def __init__(self, subnet: list[str], name: str = None, arn: str = None, network: str = None, azone: str = None,
-                 note: str = None, vpc_id: str = None, cloud_id: int = None):
+                 note: str = None, vpc_id: str = None, cloud_id: int = None, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
         if subnet != None:
             # load from DB
             self.id: int = subnet[0]
@@ -30,7 +32,11 @@ class Subnet(CTX):
             self.vms: list[VM] = []
 
     def get_vms_info(self):
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         for vm in db.get_vms_info(self.name):
             m = VM(vm=vm)
             m.save_ctx(self.get_ctx())
