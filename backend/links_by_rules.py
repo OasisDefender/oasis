@@ -23,6 +23,7 @@ class links_by_rules(CTX):
         self.used_r = set()
         self.ext_things = set()
         self.analyze_results = []
+
         self.all_from_ports_rules = []
         self.all_to_ports_rules = []
         self.all_from_ip_rules_sg = []
@@ -39,6 +40,7 @@ class links_by_rules(CTX):
         self.port_tcp21 = []
         self.port_tcp23 = []
         self.port_tcp79 = []
+
         (self.servers, self.clients) = self.build_servers_clients_rule_dict(
             self.sgs_NG, rules)
         self.nodes_by_sg = self.build_nodes_by_sg_dict()
@@ -52,6 +54,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_from_ANY_IPs_sg,
                 "dump_fn": self.dump_ALL_IP_rules,
                 "data": self.all_from_ip_rules_sg,
+                "datatype": "rules",
                 "severity": 2
             },
             {
@@ -61,6 +64,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_to_ANY_IPs_sg,
                 "dump_fn": self.dump_ALL_IP_rules,
                 "data": self.all_to_ip_rules_sg,
+                "datatype": "rules",
                 "severity": 1
             },
             {
@@ -70,6 +74,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_from_ANY_IPs_acl,
                 "dump_fn": self.dump_ALL_IP_rules,
                 "data": self.all_from_ip_rules_acl,
+                "datatype": "rules",
                 "severity": 2
             },
             {
@@ -79,6 +84,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_to_ANY_IPs_acl,
                 "dump_fn": self.dump_ALL_IP_rules,
                 "data": self.all_to_ip_rules_acl,
+                "datatype": "rules",
                 "severity": 1
             },
             {
@@ -88,6 +94,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_from_ANY_ports,
                 "dump_fn": self.dump_PORTS_rules,
                 "data": self.all_from_ports_rules,
+                "datatype": "rules",
                 "severity": 1
             },
             {
@@ -97,6 +104,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_to_ANY_ports,
                 "dump_fn": self.dump_PORTS_rules,
                 "data": self.all_to_ports_rules,
+                "datatype": "rules",
                 "severity": 2
             },
             {
@@ -106,6 +114,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_unused_sg,
                 "dump_fn": self.dump_unused_sgs,
                 "data": self.unused_sgs,
+                "datatype": "securitygroups",
                 "severity": 1
             },
             {
@@ -115,6 +124,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_isolated_nodes,
                 "dump_fn": self.dump_nodes,
                 "data": self.lonley_nodes,
+                "datatype": "nodes",
                 "severity": 1
             },
             {
@@ -124,6 +134,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_duplicate,
                 "dump_fn": self.dump_duplicate_rules,
                 "data": self.duplicate_rules,
+                "datatype": "rulepairs",
                 "severity": 2
             },
             {
@@ -133,6 +144,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_asymetric,
                 "dump_fn": self.dump_asymetric_rules,
                 "data": self.asymetric_rules,
+                "datatype": "rules",
                 "severity": 1
             },
             {
@@ -142,6 +154,7 @@ class links_by_rules(CTX):
                 "detect_fn": self.detect_VM_pubIP,
                 "dump_fn": self.dump_nodes,
                 "data": self.pubIP_VMs,
+                "datatype": "nodes",
                 "severity": 1
             },
             {
@@ -150,6 +163,7 @@ class links_by_rules(CTX):
                 "tips": "If possible, change HTTP protocol to more secure HTTPS.",
                 "detect_fn": self.detect_tcp80,
                 "dump_fn": self.dump_PORTS_rules,
+                "datatype": "rules",
                 "data": self.port_tcp80,
                 "severity": 1
             },
@@ -159,6 +173,7 @@ class links_by_rules(CTX):
                 "tips": "If possible, change FTP protocol to more secure FTP over SSL/TLS.",
                 "detect_fn": self.detect_tcp21,
                 "dump_fn": self.dump_PORTS_rules,
+                "datatype": "rules",
                 "data": self.port_tcp21,
                 "severity": 1
             },
@@ -168,6 +183,7 @@ class links_by_rules(CTX):
                 "tips": "If possible, change FTP protocol to more secure FTP over SSL/TLS.",
                 "detect_fn": self.detect_tcp20,
                 "dump_fn": self.dump_PORTS_rules,
+                "datatype": "rules",
                 "data": self.port_tcp20,
                 "severity": 1
             },
@@ -177,6 +193,7 @@ class links_by_rules(CTX):
                 "tips": "If possible, change Telnet protocol to more secure SSH.",
                 "detect_fn": self.detect_tcp23,
                 "dump_fn": self.dump_PORTS_rules,
+                "datatype": "rules",
                 "data": self.port_tcp23,
                 "severity": 1
             },
@@ -186,6 +203,7 @@ class links_by_rules(CTX):
                 "tips": "If possible, do not use finger protocol",
                 "detect_fn": self.detect_tcp79,
                 "dump_fn": self.dump_PORTS_rules,
+                "datatype": "rules",
                 "data": self.port_tcp79,
                 "severity": 1
             },
@@ -285,7 +303,7 @@ class links_by_rules(CTX):
                 continue
             if n.pubip != "" and n.pubip != None:
                 self.pubIP_VMs.append(n)
-        self.lonley_nodes = list(set(self.pubIP_VMs))
+        self.pubIP_VMs = list(set(self.pubIP_VMs))
 
     def detect_isolated_nodes(self):
         for n in self.nodes:
@@ -321,7 +339,7 @@ class links_by_rules(CTX):
             sg = self.sg_by_r(self.sgs_NG, r)
             nlist = self.nodes_by_sg[sg]
             if len(nlist) > 0:
-                self.add_PORTS_rules(res_list, r, nlist)
+                self.add_PORTS_rules(res_list, r)
 
     def detect_to_ANY_ports(self):
         self.int_detect_ANY_ports("False", self.all_to_ports_rules)
@@ -339,7 +357,7 @@ class links_by_rules(CTX):
                 sg = self.sg_by_r(self.sgs_NG, r)
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_PORTS_rules(res_list, r, nlist)
+                    self.add_PORTS_rules(res_list, r)
 
     def detect_from_ANY_IPs_sg(self):
         self.int_detect_ANY_IPs("False", "sg-", self.all_from_ip_rules_sg)
@@ -365,54 +383,50 @@ class links_by_rules(CTX):
                     continue
                 nlist = self.nodes_by_sg[sg]
                 if len(nlist) > 0:
-                    self.add_ALL_IP_rules(res_list, r, nlist)
+                    self.add_ALL_IP_rules(res_list, r)
 
     def detect_duplicate(self):
         # duplicate rules
-        duplicates = {}
+        duplicates = []
         for r1 in self.rules:
-            if r1.action != 'allow':
-                continue
             if r1.is_all_ports():
                 continue
             for r2 in self.rules:
-                if r2.action != 'allow':
+                # if r2.is_all_ports():
+                #    continue
+                if r1.cloud_id != r2.cloud_id:
                     continue
-                if r1.rule_id == r2.rule_id:
+                if r1.action != r2.action:
                     continue
                 if r1.egress != r2.egress:
+                    continue
+                if r1.rule_id == r2.rule_id:
                     continue
                 if r1.is_any_addr() or r2.is_any_addr():
                     continue
                 plist1 = r1.get_port_list()
-                plist2 = r2.get_port_list()
-                if r1.is_all_ports():
-                    # ports = set(plist2)
-                    continue
+                if r2.is_all_ports():
+                    ports = set(plist1)
                 else:
-                    if r2.is_all_ports():
-                        ports = set(plist1)
-                    else:
-                        ports = set(plist1).intersection(set(plist2))
+                    plist2 = r2.get_port_list()
+                    ports = set(plist1).intersection(set(plist2))
                 if len(ports) == 0:
                     continue
                 a1 = ip_network(r1.naddr)
                 a2 = ip_network(r2.naddr)
-                if r1.cloud_id == r2.cloud_id and a1.overlaps(a2):
-                    sg1 = self.sg_by_r(self.sgs_NG, r1)
-                    sg2 = self.sg_by_r(self.sgs_NG, r2)
-                    nset1 = set(self.nodes_by_sg[sg1])
-                    nset2 = set(self.nodes_by_sg[sg2])
-                    ncommon = nset1.intersection(nset2)
-                    if len(ncommon) > 0:
-                        if duplicates.get((r1, r2), None) == None and duplicates.get((r2, r1), None) == None:
-                            duplicates[(r1, r2)] = (list(ports), list(ncommon))
+                if not a1.overlaps(a2):
+                    continue
+                sg1 = self.sg_by_r(self.sgs_NG, r1)
+                sg2 = self.sg_by_r(self.sgs_NG, r2)
+                nset1 = set(self.nodes_by_sg[sg1])
+                nset2 = set(self.nodes_by_sg[sg2])
+                ncommon = nset1.intersection(nset2)
+                if len(ncommon) == 0:
+                    continue
+                if (r1, r2) not in duplicates and (r2, r1) not in duplicates:
+                    duplicates.append((r1, r2))
         for (r1, r2) in duplicates:
-            # sglist = set()
-            # for t in duplicates[r]:
-            #     sglist.add(self.sg_by_r(t))
-            (p, n) = duplicates[(r1, r2)]
-            self.add_duplicate_rules([r1, r2], p, n)
+            self.add_duplicate_rules(r1, r2)
 
     def detect_asymetric(self):
         # one-sided rules
@@ -438,9 +452,12 @@ class links_by_rules(CTX):
             for r2 in rlist2:
                 if r2.egress == r1.egress:
                     continue
-                plist2 = r2.get_port_list()
-                common_ports = set(plist2).intersection(remain_plist1)
-                if not r2.is_all_ports() and len(common_ports) == 0:
+                if r2.is_all_ports():
+                    common_ports = remain_plist1
+                else:
+                    plist2 = r2.get_port_list()
+                    common_ports = set(plist2).intersection(remain_plist1)
+                if len(common_ports) == 0:
                     continue
                 nlist2 = self.is_known_address(r2, self.nodes)
                 common_nodes = set(r1nodes).intersection(set(nlist2))
@@ -450,7 +467,7 @@ class links_by_rules(CTX):
                     set(remain_plist1).difference(common_ports))
             if len(remain_plist1) == 0:
                 continue
-            self.add_asymetric_rules(r1, remain_plist1, r1nodes)
+            self.add_asymetric_rules(r1)
 
     def detect_unused_sg(self):
         for sg in self.sgs_NG:
@@ -482,19 +499,19 @@ class links_by_rules(CTX):
             d.append(t)
         return self.build_dump_res(d, c)
 
-    def add_PORTS_rules(self, rlist: list, r: Rule, affected_nodes: list[OneNode]):
-        i = (r, affected_nodes)
-        for (r1, n1) in rlist:
+    def add_PORTS_rules(self, rlist: list, r: Rule):
+        for r1 in rlist:
             if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
                 return
-        rlist.append(i)
+        rlist.append(r)
 
     def dump_PORTS_rules(self, c):
         d = []
-        caption = []
         r: Rule
-        for (r, nlist) in c["data"]:
+        for r in c["data"]:
             t = []
+            sg = self.sg_by_r(self.sgs_NG, r)
+            nlist = self.nodes_by_sg[sg]
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule_without_ports(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
@@ -547,18 +564,19 @@ class links_by_rules(CTX):
                 return
         self.all_from_ip_rules.append(i)
 
-    def add_ALL_IP_rules(self, rlist: list, r: Rule, affected_nodes: list[OneNode]):
-        i = (r, affected_nodes)
-        for (r1, n1) in rlist:
+    def add_ALL_IP_rules(self, rlist: list, r: Rule):
+        for r1 in rlist:
             if r1.cloud_id == r.cloud_id and r1.rule_id == r.rule_id:
                 return
-        rlist.append(i)
+        rlist.append(r)
 
     def dump_ALL_IP_rules(self, c):
         d = []
         r: Rule
-        for (r, nlist) in c["data"]:
+        for r in c["data"]:
             t = []
+            sg = self.sg_by_r(self.sgs_NG, r)
+            nlist = self.nodes_by_sg[sg]
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
                 r) + self.int_dump_rule_without_addr(r) + self.int_dump_afected_nodes(nlist)
             d.append(t)
@@ -619,56 +637,53 @@ class links_by_rules(CTX):
              "val": [f"id: {r.rule_id}", f"addr: {r.naddr}", f"proto: {r.proto}", f"egress: {r.egress}"]}
         return [i]
 
-    def add_duplicate_rules(self, rlist: list[Rule], ports: list[int], affected_nodes: list[OneNode]):
-        for t, (t_rlist, t_ports, t_affected_nodes) in enumerate(self.duplicate_rules):
-            (t_rlist, t_ports, t_affected_nodes) = self.duplicate_rules[t]
-
-            if self.same_rule_lists(t_rlist, rlist):
-                if t_ports == ports and t_affected_nodes == affected_nodes:
-                    return
-                else:
-                    # need to update list
-                    for p in t_ports:
-                        if not p in ports:
-                            ports.append(p)
-                    ports.sort()
-                    for n in t_affected_nodes:
-                        if not n in affected_nodes:
-                            affected_nodes.append(p)
-                    affected_nodes.sort()
-                    del self.duplicate_rules[t]
-                    break
-        i = (rlist, ports, affected_nodes)
-        self.duplicate_rules.append(i)
+    def add_duplicate_rules(self, r1: Rule, r2: Rule):
+        for (t_r1, t_r2) in self.duplicate_rules:
+            if t_r1.cloud_id != r1.cloud_id:
+                continue
+            if t_r1.rule_id != r1.rule_id and t_r1.rule_id != r2.rule_id:
+                continue
+            if t_r2.rule_id != r1.rule_id and t_r2.rule_id != r2.rule_id:
+                continue
+            return
+        self.duplicate_rules.append((r1, r2))
 
     def dump_duplicate_rules(self, c):
         d = []
-        for (rlist, ports, affected_nodes) in self.duplicate_rules:
+        for (r1, r2) in self.duplicate_rules:
+            plist1 = r1.get_port_list()
+            if r2.is_all_ports():
+                ports = set(plist1)
+            else:
+                plist2 = r2.get_port_list()
+                ports = set(plist1).intersection(set(plist2))
+            ports = list(ports)
+
+            sg1 = self.sg_by_r(self.sgs_NG, r1)
+            sg2 = self.sg_by_r(self.sgs_NG, r2)
+            nset1 = set(self.nodes_by_sg[sg1])
+            nset2 = set(self.nodes_by_sg[sg2])
+            ncommon = nset1.intersection(nset2)
             t = []
-            t = t + self.int_dump_cloud(rlist[0].cloud_id) + self.int_dump_rulelist(
-                rlist) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+            t = t + self.int_dump_cloud(r1.cloud_id) + self.int_dump_rulelist(
+                [r1, r2]) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(ncommon)
             d.append(t)
         return self.build_dump_res(d, c)
 
-    def add_asymetric_rules(self, r: Rule, ports: list[int], affected_nodes: list[OneNode]):
-        found = False
-        for idx, (t_r, t_ports, t_affected_nodes) in enumerate(self.asymetric_rules):
-            if r.rule_id == t_r.rule_id:
-                if set(ports) == set(t_ports):
-                    return
-                else:
-                    del self.asymetric_rules[idx]
-                    ports = list(set(ports) | set(t_ports))
-                    break
-        i = (r, ports, affected_nodes)
-        self.asymetric_rules.append(i)
+    def add_asymetric_rules(self, r: Rule):
+        for r1 in self.asymetric_rules:
+            if r.cloud_id == r1.cloud_id and r.rule_id == r1.rule_id:
+                return
+        self.asymetric_rules.append(r)
 
     def dump_asymetric_rules(self, c):
         d = []
-        for (r, ports, affected_nodes) in self.asymetric_rules:
+        for r in self.asymetric_rules:
+            sg1 = self.sg_by_r(self.sgs_NG, r)
+            nodes = self.nodes_by_sg[sg1]
             t = []
             t = t + self.int_dump_cloud(r.cloud_id) + self.int_dump_sg_by_r(
-                r) + self.int_dump_rule(r) + self.int_dump_portlist(ports) + self.int_dump_afected_nodes(affected_nodes)
+                r) + self.int_dump_rule(r) + self.int_dump_afected_nodes(nodes)
             d.append(t)
         return self.build_dump_res(d, c)
 
@@ -971,3 +986,220 @@ class links_by_rules(CTX):
             if not found:
                 return False
         return True
+
+    def issue_dump1(self, ext_things):
+        return {"scheme": self.issue_dump_scheme("sg", ext_things), "links": self.issue_dump_links("sg", self.rules, ext_things), "colors": self.issue_dump_colors(self.analyzer_cfg)}
+
+    def issue_dump2(self, ext_things):
+        return {"scheme": self.issue_dump_scheme("acl", ext_things), "links": self.issue_dump_links("acl", self.rules, ext_things), "colors": self.issue_dump_colors(self.analyzer_cfg)}
+
+    def issue_dump_colors(self, cfg_list):
+        # return list of pairs (id, color)
+        res = []
+        for cfg in cfg_list:
+            d = cfg['data']
+            datatype = cfg['datatype']
+            id_list = []
+            severity = cfg['severity']
+            if datatype == 'nodes':
+                for n in d:
+                    id_list.append(self.get_id_by_vm(n))
+            elif datatype == 'rules':
+                for r in d:
+                    id_list = id_list + list(self.issue_linkid_by_rid[r.id])
+            elif datatype == 'securitygroups':
+                for sg in d:
+                    id_list.append(self.get_id_by_sg(sg))
+            elif datatype == 'rulepairs':
+                for (r1, r2) in d:
+                    id_list = id_list + list(self.issue_linkid_by_rid[r1.id])
+                    id_list = id_list + list(self.issue_linkid_by_rid[r2.id])
+            else:
+                # BUG
+                None
+            for id in id_list:
+                res.append({'severity': severity, 'id': id})
+
+        return res
+
+    def issue_dump_links(self, case, rules: list[Rule], ext_things: set()):
+        res = []
+        self.issue_linkid_by_rid = {}
+        r: Rule
+        for r in rules:
+            self.issue_linkid_by_rid[r.id] = set()
+            sg: RuleGroupNG
+            sg = self.sg_by_r(self.sgs_NG, r)
+            id1_list = []
+            if case == 'sg' and not self.is_sg_acl(sg):
+                id1_list = [self.get_id_by_sg(sg)]
+            elif case == 'acl' and self.is_sg_acl(sg):
+                for subnet_id in sg.subnet_ids:
+                    id1_list.append(self.get_id_by_net(
+                        self.get_subnet_by_id(subnet_id)))
+            else:
+                # BUG
+                None
+            nlist = []
+            id2_list = []
+            ext_id = None
+            if self.is_known_address(r, self.nodes):
+                nlist = self.filter_by_addr(r, self.nodes)
+                for n in nlist:
+                    id2_list.append(self.get_id_by_vm(n))
+            else:
+                for (ext_id, ip) in ext_things:
+                    if ip == r.naddr:
+                        break
+                if ext_id == None:
+                    # BUG
+                    None
+                id2_list = [ext_id]
+            for id1 in id1_list:
+                for id2 in id2_list:
+                    link_id = self.get_linkid_by_rule(r, id1, id2)
+                    self.issue_linkid_by_rid[r.id].add(link_id)
+                    if r.egress == "True":
+                        res.append({"id": link_id, "dst": id1, "src": id2,
+                                    "dstTooltip": "", "srcTooltip": ""})
+                    else:
+                        res.append({"id": link_id, "dst": id2, "src": id1,
+                                    "dstTooltip": "", "srcTooltip": ""})
+
+        return res
+
+        # return list of pairs (id, id)
+        return
+
+    def issue_dump_scheme(self, case,  ext_things: set()):
+        c = {}
+        c = {
+            "children": []
+        }
+        # XXX Internet/External things
+        for (id, ip) in ext_things:
+            i = {
+                "id": id,
+                "type": "Cloud",
+                "label": ip,
+                "iconTooltip": "External IP",
+                "info": []
+            }
+            c["children"].append(i)
+        for cloud in self.clouds:
+            c["children"].append(self.issue_dump_cloud(case, cloud))
+        return c
+
+    def issue_dump_cloud(self, case, cloud: Cloud):
+        c = {}
+        c = {
+            "children": []
+        }
+        c["id"]: self.get_id_by_cloud(cloud)
+        c["type"]: "Cloud"
+        c["label"]: cloud.name
+        c["iconTooltip"]: cloud.cloud_type
+        l = []
+        a = "Cloud type"
+        v = cloud.cloud_type
+        i = "IconInfoCircle"
+        l.append({"icon": i, "tooltip": f"{a}: {v}"})
+        a = "Cloud region"
+        v = cloud.aws_region
+        i = "IconInfoCircle"
+        l.append({"icon": i, "tooltip": f"{a}: {v}"})
+        c["info"] = l
+        for sg in self.sgs_NG:
+            if not self.is_sg_acl(sg) and case == "sg":
+                c["children"].append(self.issue_dump_sg(sg))
+            elif self.is_sg_acl(sg) and case == "acl":
+                sg: RuleGroupNG
+                netlist = []
+                for sn_id in sg.subnet_ids:
+                    netlist.append(self.get_subnet_by_id(sn_id))
+                for s in netlist:
+                    c["children"].append(self.issue_dump_subnet(s))
+        return c
+
+    def issue_dump_sg(self, sg: RuleGroupNG):
+        c = {}
+        c = {
+            "children": []
+        }
+        c["id"] = self.get_id_by_sg(sg)
+        c["type"] = "Cloud"
+        c["label"] = "Security Group"
+        c["iconTooltip"] = sg.name
+        l = []
+        c["info"] = l
+        nlist = self.nodes_by_sg[sg]
+        for n in nlist:
+            c["children"].append(self.issue_dump_nodes(n))
+        return c
+
+    def issue_dump_subnet(self, subnet: Subnet):
+        c = {}
+        c = {
+            "children": []
+        }
+        c["id"] = self.get_id_by_net(subnet)
+        c["type"] = "Subnet"
+        c["label"] = subnet.network
+        c["iconTooltip"] = subnet.arn
+        l = []
+        c["info"] = l
+        for n in self.nodes:
+            if n.subnet_id == subnet.name:
+                c["children"].append(self.issue_dump_nodes(n))
+        return c
+
+    def issue_dump_nodes(self, n: OneNode):
+        c = {}
+        c = {
+            "children": []
+        }
+        c["id"] = self.get_id_by_vm(n)
+        c["type"] = "VM"
+        i = [
+            ("Software", n.os),
+            ("State", n.state),
+            ("Public DNS", n.pubdn),
+            ("Private DNS", n.privdn),
+            ("Public IP", n.pubip),
+            ("Private IP", n.privip),
+            ("Name", n.name)
+        ]
+        c["label"] = self.generate_vm_label(i)
+        c["info"] = [{"icon": n.type, "tooltip": n.name}]
+        return c
+
+    def get_id_by_vm(self, n: OneNode):
+        return f"VM_{n.cloud_id}_{n.id}"
+
+    def get_id_by_sg(self, sg: RuleGroupNG):
+        return f"SG_{sg.cloud_id}_{sg.name}"
+
+    def get_id_by_cloud(self, c: Cloud):
+        return f"C_{c.id}"
+
+    def get_id_by_net(self, n: Subnet):
+        return f"Net_{n.arn}"
+
+    def get_linkid_by_rule(self, r: Rule, id1, id2):
+        return f"rule_{r.id}_src_{id1}_dst_{id2}"
+
+    def is_sg_acl(self, sg: RuleGroupNG):
+        return sg.name.find("acl-") == 0
+
+    def get_subnet_by_id(self, subnet_id):
+        n: Subnet
+        for n in self.subnets:
+            if n.name == subnet_id:
+                return n
+        return None
+
+    def generate_vm_label(self, lav: list):
+        label = ""
+        for (a, v) in lav:
+            label += f"{a}: {v}"
+        return label
