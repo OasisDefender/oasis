@@ -20,13 +20,14 @@ from vm import Nodes
 from links_by_rules import links_by_rules
 from global_settings import DEMO_MODE
 
+
 class Backend(CTX):
     def __init__(self):
         pass
 
     def get_clouds(self):
-        status:int = 200
-        body       = None
+        status: int = 200
+        body = None
         try:
             db = DB(self.get_ctx())
             clouds = db.get_clouds()
@@ -52,7 +53,8 @@ class Backend(CTX):
                         fw = FW_Azure()
                         break
                     status = 500
-                    body = {'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
+                    body = {
+                        'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
             if fw != None:
                 fw.save_ctx(self.get_ctx())
                 context.sync_cloud(cloud.id)
@@ -84,26 +86,26 @@ class Backend(CTX):
             cloud_type = cloud['cloud_type']
             if cloud_type == "AWS":
                 cloud = Cloud(id=-1,
-                            name=cloud['name'],
-                            cloud_type=cloud['cloud_type'],
-                            aws_region=cloud['aws_region'],
-                            aws_key=cloud['aws_key'],
-                            aws_secret_key=cloud['aws_secret_key'],
-                            azure_subscription_id=None,
-                            azure_tenant_id=None,
-                            azure_client_id=None,
-                            azure_client_secret=None)
+                              name=cloud['name'],
+                              cloud_type=cloud['cloud_type'],
+                              aws_region=cloud['aws_region'],
+                              aws_key=cloud['aws_key'],
+                              aws_secret_key=cloud['aws_secret_key'],
+                              azure_subscription_id=None,
+                              azure_tenant_id=None,
+                              azure_client_id=None,
+                              azure_client_secret=None)
             elif cloud_type == "AZURE":
                 cloud = Cloud(id=-1,
-                            name=cloud['name'],
-                            cloud_type=cloud['cloud_type'],
-                            aws_region=None,
-                            aws_key=None,
-                            aws_secret_key=None,
-                            azure_subscription_id=cloud['azure_subscription_id'],
-                            azure_tenant_id=cloud['azure_tenant_id'],
-                            azure_client_id=cloud['azure_client_id'],
-                            azure_client_secret=cloud['azure_client_secret'])
+                              name=cloud['name'],
+                              cloud_type=cloud['cloud_type'],
+                              aws_region=None,
+                              aws_key=None,
+                              aws_secret_key=None,
+                              azure_subscription_id=cloud['azure_subscription_id'],
+                              azure_tenant_id=cloud['azure_tenant_id'],
+                              azure_client_id=cloud['azure_client_id'],
+                              azure_client_secret=cloud['azure_client_secret'])
             else:
                 status = 500
                 body = {'message': "Unsupported cloud type"}
@@ -129,7 +131,8 @@ class Backend(CTX):
                 else:
                     context.delete_cloud(save_cloud_id)
                     status = 500
-                    body = {'message': f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials or permissions?"}
+                    body = {
+                        'message': f"Can't connect to cloud: '{cloud.name}' ({cloud.cloud_type}). Bad credentials or permissions?"}
                     return status, body
         except:
             status = 500
@@ -241,7 +244,8 @@ class Backend(CTX):
                 sas.add_vm_info("<br/>Priv DNS", "privdn")
                 sas.add_vm_info("<br/>Pub DNS", "pubdn")
                 sas.add_vm_info("<br/>Pub IP", "pubip")
-            vms = split_vms(clouds, vpcs, subnets, nodes.nodes, sgs, rules, sas)
+            vms = split_vms(clouds, vpcs, subnets,
+                            nodes.nodes, sgs, rules, sas)
             t = vms.build_vms_tree(sas)
             l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
             l.make_links()
@@ -280,6 +284,62 @@ class Backend(CTX):
         except:
             status = 500
             body = {'message': "Security analysis error"}
+        # return it to frontend
+        return status, body
+
+    def analyze_results1(self):
+        body = None
+        status = 200
+        try:
+            context = DB(self.get_ctx())
+            clouds = context.get_clouds()
+            map = CloudMap()
+            map.save_ctx(self.get_ctx())
+            map.get()
+            vpcs = map.vpcs
+            sgs = get_all_rule_groups(self.get_ctx())
+            rules = get_all_rules(self.get_ctx())
+            nodes = Nodes(context.get_all_nodes_info())
+            s = []
+            for v in vpcs:
+                s = s + v.subnets
+            subnets = [*set(s)]
+            l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
+            l.save_ctx(self.get_ctx())
+            l.make_links()
+            l.analyze_links()
+            body = l.issue_dump1(l.ext_things)
+        except:
+            status = 500
+            body = {'message': "Security analysis visualisation error"}
+        # return it to frontend
+        return status, body
+
+    def analyze_results2(self):
+        body = None
+        status = 200
+        try:
+            context = DB(self.get_ctx())
+            clouds = context.get_clouds()
+            map = CloudMap()
+            map.save_ctx(self.get_ctx())
+            map.get()
+            vpcs = map.vpcs
+            sgs = get_all_rule_groups(self.get_ctx())
+            rules = get_all_rules(self.get_ctx())
+            nodes = Nodes(context.get_all_nodes_info())
+            s = []
+            for v in vpcs:
+                s = s + v.subnets
+            subnets = [*set(s)]
+            l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
+            l.save_ctx(self.get_ctx())
+            l.make_links()
+            l.analyze_links()
+            body = l.issue_dump2(l.ext_things)
+        except:
+            status = 500
+            body = {'message': "Security analysis visualisation error"}
         # return it to frontend
         return status, body
 
