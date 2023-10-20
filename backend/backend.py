@@ -23,11 +23,14 @@ class Backend(CTX):
     def __init__(self):
         pass
 
+    def __db_exist(self, user_id: str = None):
+        return db_exist(user_id)
+
     def get_clouds(self):
         status:int = 200
         body       = None
         try:
-            db = DB(self.get_ctx())
+            db = DB(user_id=self.get_ctx())
             clouds = db.get_clouds()
             body = [c.to_dict() for c in clouds]
         except:
@@ -37,7 +40,7 @@ class Backend(CTX):
 
     def cloud_sync(self, id: int):
         fw = None
-        context = DB(self.get_ctx())
+        context = DB(user_id=self.get_ctx())
         body = None
         status = 200
         cloud: Cloud = None
@@ -45,10 +48,10 @@ class Backend(CTX):
             for cloud in context.get_clouds():
                 if cloud.id == id:
                     if cloud.cloud_type == 'AWS':
-                        fw = FW_AWS()
+                        fw = FW_AWS(_db=context)
                         break
                     if cloud.cloud_type == 'AZURE':
-                        fw = FW_Azure()
+                        fw = FW_Azure(_db=context)
                         break
                     status = 500
                     body = {'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
@@ -77,7 +80,7 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            context = DB(self.get_ctx())
+            context = DB(user_id=self.get_ctx())
             # Sanitize
             cloud["cloud_type"] = cloud["cloud_type"].upper()
             cloud_type = cloud['cloud_type']
@@ -117,9 +120,9 @@ class Backend(CTX):
             save_cloud_id = cloud.id
             fw = None
             if cloud.cloud_type == 'AWS':
-                fw = FW_AWS()
+                fw = FW_AWS(_db=context)
             if cloud.cloud_type == 'AZURE':
-                fw = FW_Azure()
+                fw = FW_Azure(_db=context)
             if fw != None:
                 fw.save_ctx(self.get_ctx())
                 if cloud.id == fw.connect(cloud.id):
@@ -139,11 +142,12 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            map = CloudMap()
+            db:DB = DB(self.get_ctx())
+            map = CloudMap(_db=db)
             map.save_ctx(self.get_ctx())
             map.get()
             vpcs = cloud_map_encoder(map)
-            inodes = InternetNodes()
+            inodes = InternetNodes(_db=db)
             inodes.save_ctx(self.get_ctx())
             inodes.get()
             internetNodes = internet_nodes_encoder(inodes)
@@ -160,10 +164,11 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            l = Links(vm_id)
+            db:DB = DB(self.get_ctx())
+            l = Links(vm_id, _db=db)
             l.save_ctx(self.get_ctx())
             l.get()
-            r = VM_Rules(vm_id)
+            r = VM_Rules(vm_id, _db=db)
             r.save_ctx(self.get_ctx())
             r.get()
             body = {
@@ -180,9 +185,9 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            db = DB(self.get_ctx())
+            db = DB(user_id=self.get_ctx())
             for row in db.get_clouds_short():
-                c = S3_Cloud(id=row[0], name=row[1], type=row[2])
+                c = S3_Cloud(id=row[0], name=row[1], type=row[2], _db=db)
                 c.save_ctx(self.get_ctx())
                 c.get_buckets()
                 clouds.append(c)
@@ -212,14 +217,14 @@ class Backend(CTX):
         status = 200
         try:
             # load cloud data from DB
-            context = DB(self.get_ctx())
+            context = DB(user_id=self.get_ctx())
             clouds = context.get_clouds()
-            map = CloudMap()
+            map = CloudMap(_db=context)
             map.save_ctx(self.get_ctx())
             map.get()
             vpcs = map.vpcs
-            sgs = get_all_rule_groups(self.get_ctx())
-            rules = get_all_rules(self.get_ctx())
+            sgs = get_all_rule_groups(self.get_ctx(), _db=context)
+            rules = get_all_rules(self.get_ctx(), _db=context)
             nodes = Nodes(context.get_all_nodes_info())
             s = []
             for v in vpcs:
@@ -258,14 +263,14 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            context = DB(self.get_ctx())
+            context = DB(user_id=self.get_ctx())
             clouds = context.get_clouds()
-            map = CloudMap()
+            map = CloudMap(_db=context)
             map.save_ctx(self.get_ctx())
             map.get()
             vpcs = map.vpcs
-            sgs = get_all_rule_groups(self.get_ctx())
-            rules = get_all_rules(self.get_ctx())
+            sgs = get_all_rule_groups(self.get_ctx(), _db=context)
+            rules = get_all_rules(self.get_ctx(), _db=context)
             nodes = Nodes(context.get_all_nodes_info())
             s = []
             for v in vpcs:
@@ -283,28 +288,34 @@ class Backend(CTX):
         return status, body
 
     def get_header_info(self):
-        body = None
-        status = 200
-        try:
-            db = DB(self.get_ctx())
-            clouds = db.get_clouds()
-            map = CloudMap()
-            map.save_ctx(self.get_ctx())
-            map.get()
-            vpcs = map.vpcs
-            sgs = get_all_rule_groups(self.get_ctx())
-            rules = get_all_rules(self.get_ctx())
-            nodes = Nodes(db.get_all_nodes_info())
-            s = []
-            for v in vpcs:
-                s = s + v.subnets
-            subnets = [*set(s)]
-            l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
-            l.save_ctx(self.get_ctx())
-            l.make_links()
-            l.analyze_links()
-            body = {"maxSeverity": l.get_max_severity()}
-        except:
-            status = 500
-            body = {'message': "Get header error"}
+        db:DB = None
+        body = {'message': "Get header error"}
+        status = 500
+        is_exist, db_current = self.__db_exist(self.get_ctx())
+        if is_exist == True:
+            try:
+                if db_current == None:
+                    db = DB(user_id=self.get_ctx())
+                else:
+                    db = DB(user_id=self.get_ctx(), _conn=db_current)
+                clouds = db.get_clouds()
+                map = CloudMap(db)
+                map.save_ctx(self.get_ctx())
+                map.get()
+                vpcs = map.vpcs
+                sgs = get_all_rule_groups(user_id=self.get_ctx(), _db=db)
+                rules = get_all_rules(self.get_ctx(), _db=db)
+                nodes = Nodes(db.get_all_nodes_info())
+                s = []
+                for v in vpcs:
+                    s = s + v.subnets
+                subnets = [*set(s)]
+                l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
+                l.save_ctx(self.get_ctx())
+                l.make_links()
+                l.analyze_links()
+                body = {"maxSeverity": l.get_max_severity()}
+                status = 200
+            except:
+                pass
         return status, body
