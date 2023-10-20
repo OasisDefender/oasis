@@ -7,7 +7,7 @@ from network_service import NetworkService
 
 
 class DB:
-    def __init__(self, user_id: str = None):
+    def __init__(self, user_id: str = None, _conn = None):
         if user_id == None:
            self.dbname = 'db.sqlite3'
         else:
@@ -23,7 +23,7 @@ class DB:
             db_path = f"{os.path.expanduser('~')}/.db"
             os.makedirs(db_path, exist_ok=True)
             db_file_name = f"{db_path}/{self.dbname}"
-        print(f"{db_file_name}")
+        #print(f"{db_file_name}")
         self.__database = sqlite3.connect(db_file_name)
         self.create_database_schema()
 
@@ -552,4 +552,21 @@ class DB:
         return cursor.fetchall()
 
 def db_exist(user_id: str = None):
-    return True
+    if user_id == None:
+        dbname = 'db.sqlite3'
+    else:
+        dbname = f"{user_id}.sqlite3"
+    if os.getenv('RUN_IN_DOCKER'):
+        # DB place in-docker-run for
+        db_file_name = f"db/{dbname}"
+    elif os.getenv('RUN_IN_LAMDA'):
+        # DB place in-lambda-run for
+        db_file_name = f"/mnt/efs/{dbname}"
+    else:
+        # host run
+        db_path = f"{os.path.expanduser('~')}/.db"
+        os.makedirs(db_path, exist_ok=True)
+        db_file_name = f"{db_path}/{dbname}"
+    print(f"{db_file_name}")
+    conn = sqlite3.connect(db_file_name)
+    return True, conn
