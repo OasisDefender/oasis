@@ -1,5 +1,5 @@
-from ctx import CTX  # base class for frontend objects
-from db import DB
+from .ctx import CTX  # base class for frontend objects
+from .db import DB
 
 class S3_Bucket(CTX):
     def __init__(self, id: int, name: str, cloud_id: int, _db:DB = None):

@@ -1,5 +1,5 @@
-from ctx import CTX # base class for frontend objects
-from db import DB
+from .ctx import CTX # base class for frontend objects
+from .db import DB
 
 class InternetNodes(CTX):
     def __init__(self, _db:DB = None):

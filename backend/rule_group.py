@@ -1,6 +1,6 @@
-from ctx import CTX  # base class for frontend objects
-from db import DB
-from rule import Rule
+from .ctx import CTX  # base class for frontend objects
+from .db import DB
+from .rule import Rule
 
 
 class RuleGroup(CTX):

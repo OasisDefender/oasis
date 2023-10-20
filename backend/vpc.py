@@ -1,6 +1,6 @@
-from ctx import CTX # base class for frontend objects
-from db import DB
-from subnet import Subnet
+from .ctx import CTX # base class for frontend objects
+from .db import DB
+from .subnet import Subnet
 
 
 class VPC(CTX):

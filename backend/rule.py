@@ -1,7 +1,7 @@
 import sys
 
-from ctx import CTX  # base class for frontend objects
-from db import DB
+from .ctx import CTX  # base class for frontend objects
+from .db import DB
 
 
 class Rule(CTX):

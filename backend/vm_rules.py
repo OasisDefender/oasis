@@ -1,10 +1,10 @@
 from ctx import CTX  # base class for frontend objects
 import sys
 
-from rule import Rule
-from db import DB
-from fw_aws import FW_AWS
-from fw_azure import FW_Azure
+from .rule import Rule
+from .db import DB
+from .fw_aws import FW_AWS
+from .fw_azure import FW_Azure
 
 
 class VM_Rules(CTX):

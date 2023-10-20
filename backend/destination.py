@@ -1,5 +1,5 @@
-from ctx import CTX  # base class for frontend objects
-from db import DB
+from .ctx import CTX  # base class for frontend objects
+from .db import DB
 
 class Destination(CTX):
     def __init__(self, row, type, _db:DB = None):

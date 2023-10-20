@@ -1,10 +1,10 @@
 import sys
 
-from ctx             import CTX  # base class for frontend objects
-from rule            import Rule
-from fw_aws          import FW_AWS
-from fw_azure        import FW_Azure
-from db              import DB
+from .ctx             import CTX  # base class for frontend objects
+from .rule            import Rule
+from .fw_aws          import FW_AWS
+from .fw_azure        import FW_Azure
+from .db              import DB
 from network_service import NetworkService
 
 class FW_Selected(CTX):

@@ -1,6 +1,6 @@
-from ctx import CTX # base class for frontend objects
-from db import DB
-from vm import VM
+from .ctx import CTX # base class for frontend objects
+from .db import DB
+from .vm import VM
 
 
 class Subnet(CTX):

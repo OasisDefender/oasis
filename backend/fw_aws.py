@@ -3,16 +3,16 @@ import botocore.exceptions
 import sys
 import json
 
-from ctx import CTX  # base class for frontend objects
-from db         import DB
-#from cloud      import Cloud
-from vpc        import VPC
-from subnet     import Subnet
-from vm         import VM
-from rule_group import RuleGroup
-from rule       import Rule
-from fw_common  import get_tag_value, unify_state, null_empty_str, make_ports_string
-from s3_bucket  import S3_Bucket
+from .ctx import CTX  # base class for frontend objects
+from .db         import DB
+#from .cloud      import Cloud
+from .vpc        import VPC
+from .subnet     import Subnet
+from .vm         import VM
+from .rule_group import RuleGroup
+from .rule       import Rule
+from .fw_common  import get_tag_value, unify_state, null_empty_str, make_ports_string
+from .s3_bucket  import S3_Bucket
 
 from types  import SimpleNamespace
 

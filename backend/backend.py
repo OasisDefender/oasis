@@ -1,24 +1,23 @@
-from flask import jsonify
 import json
 
-from ctx import CTX  # base class for frontend objects
-from cloud import Cloud
-from db import DB, db_exist
-from cloud_map import CloudMap, cloud_map_encoder
-from internet_nodes import InternetNodes, internet_nodes_encoder
-from links import Links, link_encoder
-from fw_aws import FW_AWS
-from fw_azure import FW_Azure
-from fw import FW_Selected, FW_Selected_encoder
-from vm_rules import VM_Rules
-from s3_bucket import S3_Bucket, S3_Cloud
-from classifiers_list import classifier
-from split_vms import attr_set, split_vms
-from rule_group import RuleGroup, get_all_rule_groups
-from rule import Rule, get_all_rules
-from vm import Nodes
-from links_by_rules import links_by_rules
-from global_settings import DEMO_MODE
+from .ctx import CTX  # base class for frontend objects
+from .cloud import Cloud
+from .db import DB
+from .cloud_map import CloudMap, cloud_map_encoder
+from .internet_nodes import InternetNodes, internet_nodes_encoder
+from .links import Links, link_encoder
+from .fw_aws import FW_AWS
+from .fw_azure import FW_Azure
+from .fw import FW_Selected, FW_Selected_encoder
+from .vm_rules import VM_Rules
+from .s3_bucket import S3_Bucket, S3_Cloud
+from .classifiers_list import classifier
+from .split_vms import attr_set, split_vms
+from .rule_group import RuleGroup, get_all_rule_groups
+from .rule import Rule, get_all_rules
+from .vm import Nodes
+from .links_by_rules import links_by_rules
+from .global_settings import DEMO_MODE
 
 class Backend(CTX):
     def __init__(self):
