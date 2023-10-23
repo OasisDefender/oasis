@@ -2,8 +2,8 @@ import sqlite3
 import sys
 import os
 
-from cloud           import Cloud
-from network_service import NetworkService
+from .cloud           import Cloud
+from .network_service import NetworkService
 
 
 class DB:

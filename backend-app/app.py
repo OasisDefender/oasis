@@ -2,7 +2,10 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_cors import CORS
 import json
 
-from .backend import Backend
+import sys
+sys.path.append('..')
+
+import backend
 
 userid:str = None #'d69ed1c07-e01a-4d6e-8e23-720b15dde116'
 

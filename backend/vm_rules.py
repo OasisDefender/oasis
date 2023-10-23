@@ -1,4 +1,4 @@
-from ctx import CTX  # base class for frontend objects
+from .ctx import CTX  # base class for frontend objects
 import sys
 
 from .rule import Rule

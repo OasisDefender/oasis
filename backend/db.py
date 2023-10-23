@@ -6,6 +6,6 @@
 ######################################################
 import os
 if os.getenv('OD_USE_PG_HOST'):
-    from db_pgsql import DB, db_exist
+    from .db_pgsql import DB, db_exist
 else:
-    from db_sqlite import DB, db_exist
+    from .db_sqlite import DB, db_exist

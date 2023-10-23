@@ -1,4 +1,4 @@
-from db import DB
+from .db import DB
 import sys
 
 class CTX:
