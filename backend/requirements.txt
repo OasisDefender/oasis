@@ -7,6 +7,3 @@ azure-mgmt-network==23.0.0
 azure-mgmt-resource==23.0.0
 azure-mgmt-sql==3.0.1
 boto3==1.26.95
-Flask==2.2.5
-cffi==1.15.1
-flask_cors==3.0.10

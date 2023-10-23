@@ -1,5 +1,5 @@
 import sqlite3
-import sys
+#import sys
 import os
 
 from .cloud           import Cloud
@@ -14,7 +14,7 @@ class DB:
             self.dbname = f"{user_id}.sqlite3"
         if os.getenv('RUN_IN_DOCKER'):
             # DB place in-docker-run for
-            db_file_name = f"db/{self.dbname}"
+            db_file_name = f"/app/db/{self.dbname}"
         elif os.getenv('RUN_IN_LAMDA'):
             # DB place in-lambda-run for
             db_file_name = f"/mnt/efs/{self.dbname}"
@@ -558,7 +558,7 @@ def db_exist(user_id: str = None):
         dbname = f"{user_id}.sqlite3"
     if os.getenv('RUN_IN_DOCKER'):
         # DB place in-docker-run for
-        db_file_name = f"db/{dbname}"
+        db_file_name = f"/app/db/{dbname}"
     elif os.getenv('RUN_IN_LAMDA'):
         # DB place in-lambda-run for
         db_file_name = f"/mnt/efs/{dbname}"

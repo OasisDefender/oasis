@@ -2,8 +2,8 @@ BRANCH=`git symbolic-ref --short HEAD`
 BUILD =`git describe --always`
 
 all:
-	make -C frontend all
-	make -C backend  all
+	make -C frontend    all
+	make -C backend-app all
 	docker save  -o oasis-frontend-$(BRANCH)-$(BUILD).tar oasis-frontend:latest
 	docker save  -o oasis-backend-$(BRANCH)-$(BUILD).tar oasis-backend:latest
 
