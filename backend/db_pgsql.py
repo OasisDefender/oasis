@@ -2,8 +2,8 @@ import psycopg2
 import os
 import sys
 
-from cloud           import Cloud
-from network_service import NetworkService
+from .cloud           import Cloud
+from .network_service import NetworkService
 
 
 class DB:
@@ -119,6 +119,7 @@ class DB:
                     network TEXT,
                     cloud_id integer REFERENCES clouds (id),
                     note    TEXT)''')
+                cursor.execute("CREATE INDEX IF NOT EXISTS vpc_name_idx ON vpcs(name);")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS subnets(
                     id      serial PRIMARY KEY,
@@ -129,6 +130,7 @@ class DB:
                     note    TEXT,
                     vpc_id  text REFERENCES vpcs(name),
                     cloud_id integer REFERENCES clouds(id))''')
+                cursor.execute("CREATE INDEX IF NOT EXISTS subnets_name_idx ON subnets(name);")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS nodes(
                     id        serial PRIMARY KEY,
@@ -147,6 +149,8 @@ class DB:
                     mac       TEXT,
                     if_id     TEXT, -- UNIQUE not null,
                     cloud_id integer REFERENCES clouds(id))''')
+                cursor.execute("CREATE INDEX IF NOT EXISTS nodes_vpc_id_idx    ON nodes(vpc_id);")
+                cursor.execute("CREATE INDEX IF NOT EXISTS nodes_subnet_id_idx ON nodes(subnet_id);")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS rule_groups(
                     id        serial PRIMARY KEY,
@@ -155,6 +159,9 @@ class DB:
                     name      TEXT,
                     type      TEXT,
                     cloud_id  integer REFERENCES clouds(id))''')
+                cursor.execute("CREATE INDEX IF NOT EXISTS rule_groups_if_id_idx     ON rule_groups(if_id);")
+                cursor.execute("CREATE INDEX IF NOT EXISTS rule_groups_subnet_id_idx ON rule_groups(subnet_id);")
+                cursor.execute("CREATE INDEX IF NOT EXISTS rule_groups_name_idx      ON rule_groups(name);")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS rules(
                     id        serial PRIMARY KEY,
@@ -169,6 +176,7 @@ class DB:
                     ports     TEXT,
                     action    TEXT,
                     priority  INTEGER)''')
+                cursor.execute("CREATE INDEX IF NOT EXISTS rules_group_id_idx ON rules(group_id);")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS network_services(
                     id    serial PRIMARY KEY,
@@ -176,6 +184,9 @@ class DB:
                     proto TEXT,
                     port  TEXT)''')
                 self.__import_network_services()
+                cursor.execute("CREATE INDEX IF NOT EXISTS network_services_name_idx  ON network_services(name);")
+                cursor.execute("CREATE INDEX IF NOT EXISTS network_services_proto_idx ON network_services(proto);")
+                cursor.execute("CREATE INDEX IF NOT EXISTS network_services_port_idx  ON network_services(port);")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS s3_buckets(
                     id        serial PRIMARY KEY,

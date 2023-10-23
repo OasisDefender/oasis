@@ -5,7 +5,7 @@ import json
 import sys
 sys.path.append('..')
 
-import backend
+from backend import Backend
 
 userid:str = None #'d69ed1c07-e01a-4d6e-8e23-720b15dde116'
 

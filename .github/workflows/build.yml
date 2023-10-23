@@ -35,6 +35,10 @@ jobs:
           echo "REACT_APP_VERSION=\"`git describe --tags --abbrev=0` (`git symbolic-ref --short HEAD`, `git describe --always`)\"" >> frontend/.env
           echo 'REACT_APP_GTM_ID="G-FZQWZ6HET9"'                       >> frontend/.env
           cd frontend && docker buildx build -f Dockerfile --push --tag ghcr.io/oasisdefender/oasis-frontend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
-          cd ../backend  && docker buildx build -f Dockerfile --push --tag ghcr.io/oasisdefender/oasis-backend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
+          cd ../ && mkdir build
+          cp Dockerfile build/
+          cp -R backend build/
+          cp -R backend-app build/
+          cd ../build && docker buildx build -f Dockerfile --push --tag ghcr.io/oasisdefender/oasis-backend-${GITHUB_REF#refs/heads/}:$LAST_TAG .
 
 
