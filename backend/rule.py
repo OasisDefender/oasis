@@ -1,12 +1,15 @@
 import sys
 
-from ctx import CTX  # base class for frontend objects
-from db import DB
+from .ctx import CTX  # base class for frontend objects
+from .db import DB
 
 
 class Rule(CTX):
     def __init__(self, rule_row: list[str] = None, id: int = 0, group_id: str = '', rule_id: str = '', egress: str = '', proto: str = '',
-                 port_from: str = '', port_to: str = '', naddr: str = '', cloud_id: int = '', ports: str = '', action: str = 'allow', priority: int = 0):
+                 port_from: str = '', port_to: str = '', naddr: str = '', cloud_id: int = '', ports: str = '', action: str = 'allow', priority: int = 0,
+                 _db:DB = None):
+        if _db != None:
+            CTX.db = _db
         if rule_row != None:  # load from DB
             self.id: int = rule_row[0]
             self.group_id: str = rule_row[1]
@@ -88,7 +91,11 @@ class Rule(CTX):
             ports = 'Any'
         if ports[0] == '*':
             ports = 'Any'
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         srvc: str = db.detect_service(self.proto, self.port_from, self.port_to)
         if srvc == '':
             return {
@@ -180,8 +187,12 @@ class Rule(CTX):
         return l
 
 
-def get_all_rules(user_id:str = None) -> list[Rule]:
-    db = DB(user_id)
+def get_all_rules(user_id:str = None, _db:DB = None) -> list[Rule]:
+    db:DB = None
+    if _db != None:
+        db = _db
+    else:
+        db = DB(user_id)
     rules: list[Rule] = []
     for row in db.get_all_rules():
         rule = Rule(row)

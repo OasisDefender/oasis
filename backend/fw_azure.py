@@ -1,7 +1,7 @@
 import sys
 import uuid
 
-from ctx import CTX  # base class for frontend objects
+from .ctx import CTX  # base class for frontend objects
 
 from azure.identity            import *
 from azure.mgmt.resource       import ResourceManagementClient
@@ -11,16 +11,19 @@ from azure.mgmt.sql            import SqlManagementClient
 from azure.mgmt.network.models import SecurityRule
 from azure.core.exceptions     import *
 
-from db         import DB
-from vpc        import VPC
-from subnet     import Subnet
-from vm         import VM
-from rule_group import RuleGroup
-from rule       import Rule
-from fw_common  import make_ports_string
+from .db         import DB
+from .vpc        import VPC
+from .subnet     import Subnet
+from .vm         import VM
+from .rule_group import RuleGroup
+from .rule       import Rule
+from .fw_common  import make_ports_string
 
 class FW_Azure(CTX):
-    def __init__(self):
+    def __init__(self, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
+
         self.__cloud_id        = ""
 
         self.__resource_client = None
@@ -52,7 +55,11 @@ class FW_Azure(CTX):
 
     
     def connect(self, cloud_id: int) -> int:
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         creds = db.get_azure_credentials(cloud_id)
         for cred in creds:
             credential             = ClientSecretCredential(cred[0], cred[1], cred[2])
@@ -72,7 +79,6 @@ class FW_Azure(CTX):
             print(type(inst))
             print(inst.args)
             print(inst)
-            
             self.__cloud_id = 0
 
         return self.__cloud_id
@@ -96,17 +102,20 @@ class FW_Azure(CTX):
 
 
     def get_topology(self, cloud_id: int):
-        db = DB(self.get_ctx())
-
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         # Load VPC's
         vpcs = self.__network_client.virtual_networks.list_all()
         for vpc in vpcs:
-            v = VPC(vpc=None, name=vpc.name, network=vpc.address_space.address_prefixes[0], cloud_id=cloud_id, note=vpc.name)
+            v = VPC(vpc=None, name=vpc.name, network=vpc.address_space.address_prefixes[0], cloud_id=cloud_id, note=vpc.name, _db=db)
             v.id = db.add_vpc(vpc=v.to_sql_values())
             # Load Subnet's
             for subnet in vpc.subnets:
                 s = Subnet(subnet=None, name=subnet.name, arn=subnet.id, network=subnet.address_prefix,
-                                azone='', note=subnet.name, vpc_id=vpc.name, cloud_id=cloud_id)
+                                azone='', note=subnet.name, vpc_id=vpc.name, cloud_id=cloud_id, _db=db)
                 s.id = db.add_subnet(subnet=s.to_sql_values())
                 # Load subnet security group
                 if subnet.network_security_group:
@@ -114,7 +123,7 @@ class FW_Azure(CTX):
                                     subnet_id=subnet.name,
                                     name=subnet.network_security_group.id,
                                     type='NSG',
-                                    cloud_id=cloud_id)
+                                    cloud_id=cloud_id, _db=db)
                     subnet_rg.id = db.add_rule_group(rule_group=subnet_rg.to_sql_values())
                     # Load rules for current rule group
                     self.get_group_rules(cloud_id, subnet.network_security_group.id)
@@ -172,7 +181,8 @@ class FW_Azure(CTX):
                                 if_id=if_id,
                                 name=asg.id,
                                 type='ASG',
-                                cloud_id=cloud_id)
+                                cloud_id=cloud_id,
+                                _db=db)
                     g.id = db.add_rule_group(rule_group=g.to_sql_values())
 
             # Load Network Security Rule Group's
@@ -181,7 +191,8 @@ class FW_Azure(CTX):
                                 if_id=if_id,
                                 name=nic.network_security_group.id,
                                 type='NSG',
-                                cloud_id=cloud_id)
+                                cloud_id=cloud_id,
+                                _db=db)
                 rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                 
                 # Load rules for current rule group
@@ -387,7 +398,11 @@ class FW_Azure(CTX):
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         resource_groups = self.__resource_client.resource_groups.list()
         for rg in resource_groups:
             resource_group_name = rg.id.split('/')[-1]
@@ -407,7 +422,8 @@ class FW_Azure(CTX):
                                         cloud_id=cloud_id,
                                         ports=make_ports_string(rule.destination_port_range, rule.destination_port_range, rule.protocol),
                                         action=rule.access.lower(),
-                                        priority=rule.priority)
+                                        priority=rule.priority,
+                                        _db=db)
                             r.id = db.add_rule(rule=r.to_sql_values())
                         else:
                             for asg in rule.source_application_security_groups:
@@ -426,7 +442,8 @@ class FW_Azure(CTX):
                                              ports=make_ports_string(
                                                  rule.destination_port_range, rule.destination_port_range, rule.protocol),
                                              action=rule.access.lower(),
-                                             priority=rule.priority)
+                                             priority=rule.priority,
+                                             _db=db)
                                     r.id = db.add_rule(rule=r.to_sql_values())
                     else:                           # Outbound rules
                         if rule.destination_application_security_groups == None:
@@ -443,7 +460,8 @@ class FW_Azure(CTX):
                                      ports=make_ports_string(
                                          rule.destination_port_range, rule.destination_port_range, rule.protocol),
                                      action=rule.access.lower(),
-                                     priority=rule.priority)
+                                     priority=rule.priority,
+                                     _db=db)
                             r.id = db.add_rule(rule=r.to_sql_values())
                         else:
                             for asg in rule.destination_application_security_groups:
@@ -462,7 +480,8 @@ class FW_Azure(CTX):
                                              ports=make_ports_string(
                                                  rule.destination_port_range, rule.destination_port_range, rule.protocol),
                                              action=rule.access.lower(),
-                                             priority=rule.priority)
+                                             priority=rule.priority,
+                                             _db=db)
                                     r.id = db.add_rule(rule=r.to_sql_values())
 
             except ResourceNotFoundError:
@@ -568,19 +587,13 @@ class FW_Azure(CTX):
 
     def del_rule(self, rule: Rule) -> bool:
         status: bool = False
-        #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Try delete rule: {rule.to_dict()}")
-
         resource_group_name = rule.group_id.split('/')[4]
         nsg_name            = rule.group_id.split('/')[-1]
         rule_name           = rule.rule_id.split('/')[-1]
-
         result = self.__network_client.security_rules.begin_delete(resource_group_name, nsg_name, rule_name)
         result.wait()
-
         if result.status() == 'Succeeded':
             status = True
         else:
             print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}]: Error while del rule: {rule_name}")
-
         return status
-

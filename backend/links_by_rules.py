@@ -1,12 +1,13 @@
-from ctx import CTX
-from subnet import Subnet
-from vm import OneNode
-from rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
-from rule import Rule
-from classifiers_list import classifier, vminfo
 from ipaddress import ip_network, ip_address
-from cloud import Cloud
-from vpc import VPC
+
+from .ctx import CTX
+from .subnet import Subnet
+from .vm import OneNode
+from .rule_group import RuleGroup, RuleGroupNG, convert_RuleGroup_to_NG
+from .rule import Rule
+from .classifiers_list import classifier, vminfo
+from .cloud import Cloud
+from .vpc import VPC
 
 
 class links_by_rules(CTX):

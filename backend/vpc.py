@@ -1,10 +1,12 @@
-from ctx import CTX # base class for frontend objects
-from db import DB
-from subnet import Subnet
+from .ctx import CTX # base class for frontend objects
+from .db import DB
+from .subnet import Subnet
 
 
 class VPC(CTX):
-    def __init__(self, vpc: list[str], name: str = None, network: str = None, cloud_id: int = None, note: str = None):
+    def __init__(self, vpc: list[str], name: str = None, network: str = None, cloud_id: int = None, note: str = None, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
         #self.db = DB(self.get_ctx())
         if vpc != None:
             # load from DB
@@ -28,9 +30,13 @@ class VPC(CTX):
             self.subnets:  list[Subnet] = []
 
     def get_subnet_info(self):
-        db = DB(self.get_ctx())
+        db:DB = None
+        if CTX.db != None:
+            db = CTX.db
+        else:
+            db = DB(self.get_ctx())
         for subnet_info in db.get_subnets_info(self.vpc_id):
-            s = Subnet(subnet=subnet_info)
+            s = Subnet(subnet=subnet_info, _db=db)
             s.save_ctx(self.get_ctx())
             s.get_vms_info()
             self.subnets.append(s)

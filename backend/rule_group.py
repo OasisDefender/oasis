@@ -1,10 +1,13 @@
-from ctx import CTX  # base class for frontend objects
-from db import DB
-from rule import Rule
+from .ctx import CTX  # base class for frontend objects
+from .db import DB
+from .rule import Rule
 
 
 class RuleGroup(CTX):
-    def __init__(self, rg_row: list[str] = None, id: int = 0, if_id: str = '', subnet_id: str = '', name: str = '', type: str = '', cloud_id: int = 0):
+    def __init__(self, rg_row: list[str] = None, id: int = 0, if_id: str = '', subnet_id: str = '', name: str = '', type: str = '', cloud_id: int = 0, _db:DB = None):
+        if _db != None:
+            CTX.db = _db
+
         if rg_row != None:  # load from DB
             self.id: int = rg_row[0]
             self.if_id: str = rg_row[1]
@@ -31,11 +34,15 @@ class RuleGroup(CTX):
         }
 
 
-def get_all_rule_groups(user_id:str = None) -> list[RuleGroup]:
-    db = DB(user_id)
+def get_all_rule_groups(user_id:str = None, _db:DB = None) -> list[RuleGroup]:
+    db:DB = None
+    if _db != None:
+        db = _db
+    else:
+        db = DB(user_id)
     rgs: list[RuleGroup] = []
     for row in db.get_all_rule_groups():
-        rg = RuleGroup(row)
+        rg = RuleGroup(rg_row=row, _db=db)
         rg.save_ctx(user_id)
         # print(f"rg: {rg.to_sql_values()}")
         rgs.append(rg)
