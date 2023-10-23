@@ -248,13 +248,19 @@ def run_test():
     #    print(vars(n))
     # t = vms.build_vms_tree(sas)
     l = links_by_rules(clouds, nodes.nodes, subnets, sgs, rules)
-    # l.make_links()
+    l.make_links()
     # res = t.dump_tree(l.ext_things)
     # idl = t.get_idlist_by_node()
     # links = l.dump_links(idl)
     l.analyze_links()
     ar = l.dump_analize_rezults()
     print(ar)
+
+    a1 = l.issue_dump1(l.ext_things)
+    a2 = l.issue_dump1(l.ext_things)
+    print(a1)
+    print(a2)
+
     # print(links)
     # print(res)
 

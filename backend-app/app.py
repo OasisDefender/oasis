@@ -12,6 +12,7 @@ userid:str = None #'d69ed1c07-e01a-4d6e-8e23-720b15dde116'
 app = Flask(__name__)
 CORS(app)
 
+
 def create_json_response(statusCode: int, jsonBody: str):
     result = {
         'statusCode': statusCode,
@@ -34,6 +35,7 @@ def api_clouds_get():
     status, body = ctx.get_clouds()
     return json.dumps(body), status
 
+
 @app.route('/api/cloud/<int:id>/sync', methods=['POST'])
 def api_cloud_sync(id: int):
     ctx = Backend()
@@ -41,12 +43,14 @@ def api_cloud_sync(id: int):
     status, body = ctx.cloud_sync(id)
     return json.dumps(body), status
 
+
 @app.route('/api/cloud/<int:id>', methods=['DELETE'])
 def api_cloud_delete(id: int):
     ctx = Backend()
     ctx.save_ctx(userid)
     status, body = ctx.cloud_delete(id)
     return json.dumps(body), status
+
 
 @app.route('/api/cloud', methods=['POST'])
 def api_cloud_add():
@@ -56,12 +60,14 @@ def api_cloud_add():
     status, body = ctx.cloud_add(reqCloud)
     return json.dumps(body), status
 
+
 @app.route('/api/map', methods=['GET'])
 def api_cloud_map():
     ctx = Backend()
     ctx.save_ctx(userid)
     status, body = ctx.cloud_map()
     return json.dumps(body), status
+
 
 @app.route('/api/vm/<int:vm_id>/links')
 def api_get_vm_links(vm_id: int):
@@ -70,12 +76,14 @@ def api_get_vm_links(vm_id: int):
     status, body = ctx.get_vm_links(vm_id)
     return json.dumps(body), status
 
+
 @app.route('/api/storages', methods=['GET'])
 def api_storages_list():
     ctx = Backend()
     ctx.save_ctx(userid)
     status, body = ctx.storages_list()
     return json.dumps(body), status
+
 
 @app.route('/api/classifiers', methods=['GET'])
 def api_classifiers_list():
@@ -94,11 +102,28 @@ def api_classification_build2():
     status, body = ctx.classification_build2(sel)
     return json.dumps(body), status
 
+
 @app.route('/api/analyzation', methods=['GET'])
 def api_analyze_links():
     ctx = Backend()
     ctx.save_ctx(userid)
     status, body = ctx.analyze_links()
+    return json.dumps(body), status
+
+
+@app.route('/api/analyzation/resultsvisualisation1', methods=['GET'])
+def api_visualisation1():
+    ctx = Backend()
+    ctx.save_ctx('db')
+    status, body = ctx.analyze_results1()
+    return json.dumps(body), status
+
+
+@app.route('/api/analyzation/resultsvisualisation2', methods=['GET'])
+def api_visualisation2():
+    ctx = Backend()
+    ctx.save_ctx('db')
+    status, body = ctx.analyze_results2()
     return json.dumps(body), status
 
 
@@ -108,6 +133,7 @@ def api_get_header_info():
     ctx.save_ctx(userid)
     status, body = ctx.get_header_info()
     return json.dumps(body), status
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
