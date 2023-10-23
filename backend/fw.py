@@ -5,7 +5,7 @@ from .rule            import Rule
 from .fw_aws          import FW_AWS
 from .fw_azure        import FW_Azure
 from .db              import DB
-from network_service import NetworkService
+from .network_service import NetworkService
 
 class FW_Selected(CTX):
     def __init__(self, jsn: dict):
