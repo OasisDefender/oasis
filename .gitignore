@@ -10,6 +10,6 @@ db.sqlite3
 ._*
 *.mov
 .*.swp
-
+build
 frontend/.vscode/launch.json
 frontend/package-lock.json
