@@ -1030,7 +1030,7 @@ class links_by_rules(CTX):
         self.issue_linkid_by_rid = {}
         r: Rule
         for r in rules:
-            rid = self.get_id_by_rule
+            rid = self.get_id_by_rule(r)
             severity = rule_severity.get(rid, 0)
             if severity == 0:
                 continue
