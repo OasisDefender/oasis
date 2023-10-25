@@ -1032,6 +1032,8 @@ class links_by_rules(CTX):
         for r in rules:
             rid = self.get_id_by_rule
             severity = rule_severity.get(rid, 0)
+            if severity == 0:
+                continue
             self.issue_linkid_by_rid[r.id] = set()
             sg: RuleGroupNG
             sg = self.sg_by_r(self.sgs_NG, r)
@@ -1117,9 +1119,11 @@ class links_by_rules(CTX):
         c["info"] = l
         max_severity = 0
         for sg in self.sgs_NG:
+            if sg.cloud_id != cloud.id:
+                continue
             severity = sg_severity.get(self.get_id_by_sg(sg), 0)
             if max_severity < severity:
-                severity = max_severity
+                max_severity = severity
             if not self.is_sg_acl(sg) and case == "sg":
                 res, sev = self.issue_dump_sg(sg, severity, node_severity)
                 c["children"].append(res)
@@ -1148,8 +1152,7 @@ class links_by_rules(CTX):
         }
         sgid = self.get_id_by_sg(sg)
         c["id"] = sgid
-        c["type"] = f"Cloud{severity}"
-        c["label"] = "Security Group"
+        c["label"] = sg.name
         c["iconTooltip"] = sg.name
         l = []
         c["info"] = l
@@ -1160,6 +1163,7 @@ class links_by_rules(CTX):
             c["children"].append(self.issue_dump_nodes(n, severity))
             if max_severity < severity:
                 max_severity = severity
+        c["type"] = f"Cloud{max_severity}"
         return c, max_severity
 
     def issue_dump_subnet(self, subnet: Subnet, severity, node_severity: dict):
