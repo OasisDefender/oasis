@@ -5,9 +5,11 @@ import {
     ChildrenInfo,
     LayoutStyle,
     LineInfo,
+    LineStyles,
 } from "./UniversalMap/UniversalMapData";
 
 import { useMantineTheme } from "@mantine/core";
+import { severityToHeaderBGColor, severityToLineColor } from "../core/severity";
 
 interface PolicyMapViewProps {
     data: ChildrenInfo;
@@ -18,21 +20,22 @@ interface PolicyMapViewProps {
 }
 
 const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
-        data,
-        lines,
-        selectedID,
-        toogleChildren,
-        select
+    data,
+    lines,
+    selectedID,
+    toogleChildren,
+    select,
 }) => {
     const theme = useMantineTheme();
     const isDark = theme.colorScheme === "dark";
 
     const styles: ItemStyles = useMemo(() => {
-        return {
-            Cloud0: {
+        const getCloudStyle = (bg: string | undefined) => {
+            return {
                 item: {
                     style: {
                         margin: "2rem",
+                        background: bg,
                     },
                 },
                 header: {
@@ -44,7 +47,7 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
                 layout: {
                     childrenContainerStyle: {
                         border: "1px solid gray",
-                        padding: "1rem",
+                        padding: "1rem",                    
                     },
                 },
                 layoutSelected: {
@@ -54,96 +57,20 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
                         }`,
                     },
                 },
-            },
-            VPC0: {
-                item: {
-                    style: {
-                        margin: "0.5rem",
-                    },
-                },
-                header: {
-                    icon: "IconCloudFilled",
-                },
-                headerSelected: {
-                    textColor: isDark ? theme.colors.blue[6] : "blue",
-                },
-                layout: {
-                    childrenContainerStyle: {
-                        border: "1px solid gray",
-                        padding: "1rem",
-                    },
-                    horizontalGap: "1.5rem",
-                    verticalGap: "1.5rem",
-                },
-                layoutSelected: {
-                    childrenContainerStyle: {
-                        border: `1px solid ${
-                            isDark ? theme.colors.blue[6] : "blue"
-                        }`,
-                    },
-                },
-            },
-            "Availability Zone": {
-                item: {
-                    style: {
-                        margin: "0.5rem",
-                    },
-                },
-                headerSelected: {
-                    textColor: isDark ? theme.colors.blue[6] : "blue",
-                },
-                layout: {
-                    childrenContainerStyle: {
-                        border: "1px solid gray",
-                        padding: "1rem",
-                    },
-                    horizontalGap: "1.5rem",
-                    verticalGap: "1.5rem",
-                },
-                layoutSelected: {
-                    childrenContainerStyle: {
-                        border: `1px solid ${
-                            isDark ? theme.colors.blue[6] : "blue"
-                        }`,
-                    },
-                },
-            },
-            Subnet0: {
-                item: {
-                    style: {
-                        margin: "0.5rem",
-                    },
-                },
-                header: {
-                    icon: "IconGridDots",
-                },
-                headerSelected: {
-                    textColor: isDark ? theme.colors.blue[6] : "blue",
-                },
-                layout: {
-                    childrenContainerStyle: {
-                        border: "1px solid gray",
-                        padding: "1rem",
-                    },
-                    horizontalGap: "3rem",
-                    verticalGap: "3rem",
-                },
-                layoutSelected: {
-                    childrenContainerStyle: {
-                        border: `1px solid ${
-                            isDark ? theme.colors.blue[6] : "blue"
-                        }`,
-                    },
-                },
-            },
-            VM0: {
+            };
+        };
+
+        const getVMStyle = (bg: string | undefined) => {
+            return {
                 item: {
                     style: {
                         border: "1px solid gray",
                         padding: "0.2rem",
-                        background: isDark
-                            ? theme.colors.dark[6]
-                            : theme.colors.blue[3]
+                        background:
+                            bg ??
+                            (isDark
+                                ? theme.colors.dark[6]
+                                : theme.colors.blue[3]),
                     },
                 },
                 itemSelected: {
@@ -152,12 +79,41 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
                     },
                 },
                 header: {
-                    maxLabelWidth: "15rem"
+                    maxLabelWidth: "15rem",
                 },
                 headerSelected: {
                     textColor: isDark ? theme.colors.blue[6] : "blue",
                 },
-            },
+            };
+        };
+
+        return {
+            "Cloud0": getCloudStyle(undefined),
+            "Cloud1": getCloudStyle(severityToHeaderBGColor(1)),
+            "Cloud2": getCloudStyle(severityToHeaderBGColor(2)),
+            "Cloud3": getCloudStyle(severityToHeaderBGColor(3)),
+            "VM0": getVMStyle(undefined),
+            "VM1": getVMStyle(severityToHeaderBGColor(1)),
+            "VM2": getVMStyle(severityToHeaderBGColor(2)),
+            "VM3": getVMStyle(severityToHeaderBGColor(3))
+        };
+    }, [isDark]);
+
+    const lineStyles: LineStyles = useMemo(() => {
+        const getLineStyle = (color: string | undefined) => {
+            return {
+                line: {
+                    stroke: color,
+                    strokeOpacity: 0.6
+                }
+            }
+        };
+
+        return {
+            "line0": getLineStyle(isDark ? "#FFFFFF80" : "#00000040"),
+            "line1": getLineStyle(severityToLineColor(1)),            
+            "line2": getLineStyle(severityToLineColor(2)),
+            "line3": getLineStyle(severityToLineColor(3)),
         };
     }, [isDark]);
 
@@ -169,15 +125,16 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
 
     return (
         <UniversalMap
-                styles={styles}
-                style={style}
-                data={data}
-                lines={lines}
-                selectedID={selectedID}
-                toogleChildren={toogleChildren}
-                select={select}
-            />
+            styles={styles}
+            lineStyles={lineStyles}
+            style={style}
+            data={data}
+            lines={lines}
+            selectedID={selectedID}
+            toogleChildren={toogleChildren}
+            select={select}
+        />
     );
-}
+};
 
 export default AnalyzeViewView;

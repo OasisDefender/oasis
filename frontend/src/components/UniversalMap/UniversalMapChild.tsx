@@ -11,7 +11,7 @@ import {
 } from "./UniversalMapData";
 import UniversalMapContainer from "./UniversalMapContainer";
 import UniversalIcon from "./UniversalIcon";
-import { IconSquareMinus, IconSquarePlus } from "@tabler/icons-react";
+import { IconSquareRoundedMinus, IconSquareRoundedPlus } from "@tabler/icons-react";
 import { useMemo } from "react";
 import React from "react";
 
@@ -85,6 +85,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                         alignItems: "center",
                         justifyContent: "space-between",
                         color: headerStyle?.textColor,
+                        background: headerStyle?.background
                     }}
                 >
                     <div
@@ -138,11 +139,11 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
                         {childrenExist && toogleChildren && (
                             <UnstyledButton lh={0} className="toogle-children">
                                 {data.childrenCollapsed ?? DEFAULT_COLLAPSED ? (
-                                    <IconSquarePlus
+                                    <IconSquareRoundedPlus
                                         color={headerStyle?.textColor}
                                     />
                                 ) : (
-                                    <IconSquareMinus
+                                    <IconSquareRoundedMinus
                                         color={headerStyle?.textColor}
                                     />
                                 )}

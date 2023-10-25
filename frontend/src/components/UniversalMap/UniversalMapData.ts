@@ -19,6 +19,7 @@ export type HeaderStyle = {
     iconColor?: string;
     iconTooltip?: string;
     textColor?: string;
+    background?: string;
     maxLabelWidth?: SystemProp<CSSProperties["maxWidth"]>;
 };
 
