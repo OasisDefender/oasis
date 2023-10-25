@@ -991,12 +991,12 @@ class links_by_rules(CTX):
     def issue_dump1(self, ext_things):
         node_severity, rule_severity, sg_severity = self.issue_dump_colors(
             self.analyzer_cfg)
-        return {"scheme": self.issue_dump_scheme("sg", ext_things, node_severity, sg_severity), "links": self.issue_dump_links("sg", self.rules, ext_things, rule_severity)}
+        return {"scheme": self.issue_dump_scheme("sg", ext_things, node_severity, sg_severity), "lines": {"items": self.issue_dump_links("sg", self.rules, ext_things, rule_severity)}}
 
     def issue_dump2(self, ext_things):
         node_severity, rule_severity, sg_severity = self.issue_dump_colors(
             self.analyzer_cfg)
-        return {"scheme": self.issue_dump_scheme("acl", ext_things, node_severity, sg_severity), "links": self.issue_dump_links("acl", self.rules, ext_things, rule_severity)}
+        return {"scheme": self.issue_dump_scheme("acl", ext_things, node_severity, sg_severity), "lines": {"items": self.issue_dump_links("acl", self.rules, ext_things, rule_severity)}}
 
     def issue_dump_colors(self, cfg_list):
         node_severity = {}
