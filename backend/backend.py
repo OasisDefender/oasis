@@ -2,7 +2,7 @@ import json
 
 from .ctx import CTX  # base class for frontend objects
 from .cloud import Cloud
-from .db import DB
+from .db import DB, db_exist
 from .cloud_map import CloudMap, cloud_map_encoder
 from .internet_nodes import InternetNodes, internet_nodes_encoder
 from .links import Links, link_encoder
