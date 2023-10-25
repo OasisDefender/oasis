@@ -8,13 +8,14 @@ export function severityToColor(severity: number) {
     return "#D0312D";
 }
 
+
 export function severityToHeaderBGColor(severity: number) {
     if (severity === 0) 
-        return "#028A0F80";
+        return "#028A0F";
     if (severity === 1)
-        return "#FDFD9680";
+        return "#FFFF80";
     if (severity === 2)
-        return "#FFBF0080";
+        return "#FFBF00";
     return "#D0312D";
 }
 

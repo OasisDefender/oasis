@@ -35,20 +35,52 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
                 item: {
                     style: {
                         margin: "2rem",
-                        background: bg,
-                    },
+                        border: bg ? `2px solid ${bg}` : undefined
+                    },                    
                 },
                 header: {
-                    icon: "IconCloud",
+                    icon: "IconCloud"                    
                 },
                 headerSelected: {
                     textColor: isDark ? theme.colors.blue[6] : "blue",
                 },
                 layout: {
                     childrenContainerStyle: {
-                        border: "1px solid gray",
+                        border: bg ? undefined : "1px solid gray",
                         padding: "1rem",                    
                     },
+                },
+                layoutSelected: {
+                    childrenContainerStyle: {
+                        border: `1px solid ${
+                            isDark ? theme.colors.blue[6] : "blue"
+                        }`,
+                    },
+                },
+            };
+        };
+
+        const getSubnetStyle = (bg: string | undefined) => {
+            return {
+                item: {
+                    style: {
+                        margin: "0.5rem",
+                        border: bg ? `2px solid ${bg}` : undefined
+                    },
+                },
+                header: {
+                    icon: "IconGridDots",
+                },
+                headerSelected: {
+                    textColor: isDark ? theme.colors.blue[6] : "blue",
+                },
+                layout: {
+                    childrenContainerStyle: {
+                        border: bg ? undefined : "1px solid gray",
+                        padding: "1rem",
+                    },
+                    horizontalGap: "3rem",
+                    verticalGap: "3rem",
                 },
                 layoutSelected: {
                     childrenContainerStyle: {
@@ -64,13 +96,11 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
             return {
                 item: {
                     style: {
-                        border: "1px solid gray",
+                        border: bg ? `2px solid ${bg}` : "2px solid gray",
                         padding: "0.2rem",
-                        background:
-                            bg ??
-                            (isDark
+                        background: isDark
                                 ? theme.colors.dark[6]
-                                : theme.colors.blue[3]),
+                                : theme.colors.blue[3],
                     },
                 },
                 itemSelected: {
@@ -88,11 +118,15 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
         };
 
         return {
-            "Cloud0": getCloudStyle(undefined),
+            "Cloud0": getCloudStyle(severityToHeaderBGColor(0)),
             "Cloud1": getCloudStyle(severityToHeaderBGColor(1)),
             "Cloud2": getCloudStyle(severityToHeaderBGColor(2)),
             "Cloud3": getCloudStyle(severityToHeaderBGColor(3)),
-            "VM0": getVMStyle(undefined),
+            "Subnet0": getSubnetStyle(severityToHeaderBGColor(0)),
+            "Subnet1": getSubnetStyle(severityToHeaderBGColor(1)),
+            "Subnet2": getSubnetStyle(severityToHeaderBGColor(2)),
+            "Subnet3": getSubnetStyle(severityToHeaderBGColor(3)),
+            "VM0": getVMStyle(severityToHeaderBGColor(0)),
             "VM1": getVMStyle(severityToHeaderBGColor(1)),
             "VM2": getVMStyle(severityToHeaderBGColor(2)),
             "VM3": getVMStyle(severityToHeaderBGColor(3))
@@ -110,7 +144,7 @@ const AnalyzeViewView: React.FC<PolicyMapViewProps> = ({
         };
 
         return {
-            "line0": getLineStyle(isDark ? "#FFFFFF80" : "#00000040"),
+            "line0": getLineStyle(severityToLineColor(0)),
             "line1": getLineStyle(severityToLineColor(1)),            
             "line2": getLineStyle(severityToLineColor(2)),
             "line3": getLineStyle(severityToLineColor(3)),
