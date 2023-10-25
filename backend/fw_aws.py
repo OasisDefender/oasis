@@ -178,116 +178,116 @@ class FW_AWS(CTX):
                     cloud_id=cloud_id)
             nat.id = db.add_instance(instance=nat.to_sql_values())
 
-            # Load ELBs. Use nodes table for store
-            elbv2_client = self.__session.client('elbv2')
-            response     = elbv2_client.describe_load_balancers()
-            elbs         = response['LoadBalancers']
-            while 'NextMarker' in response:
-                response = elbv2_client.describe_load_balancers(Marker=response['NextMarker'])
-                elbs.extend(response['LoadBalancers'])
-            for res in elbs:
-                for azone in res["AvailabilityZones"]:
-                    elb_if_id = f"{res['LoadBalancerArn']}-{azone['SubnetId']}-{azone['ZoneName']}"
-                    elb = None
-                    if res['Scheme'] == 'internal':
-                        elb = VM(vm=None, type='ELB',
-                                vpc_id    = res["VpcId"],
-                                azone     = azone["ZoneName"],
-                                subnet_id = azone["SubnetId"],
-                                name      = res["LoadBalancerName"],
-                                privdn    = res["DNSName"],
-                                privip    = '',
-                                pubdn     = '',
-                                pubip     = '',
-                                note      = res["Type"],
-                                os        = '',
-                                state     = res["State"]["Code"],
-                                mac       = '',
-                                if_id     = elb_if_id,
-                                cloud_id  = cloud_id)
-                    else:
-                        elb = VM(vm=None, type='ELB',
-                                vpc_id    = res["VpcId"],
-                                azone     = azone["ZoneName"],
-                                subnet_id = azone["SubnetId"],
-                                name      = res["LoadBalancerName"],
-                                privdn    = '',
-                                privip    = '',
-                                pubdn     = res["DNSName"],
-                                pubip     = '',
-                                note      = res["Type"],
-                                os        = '',
-                                state     = res["State"]["Code"],
-                                mac       = '',
-                                if_id     = elb_if_id,
-                                cloud_id  = cloud_id)
-                    elb.id = db.add_instance(instance=elb.to_sql_values())
-                elb_describe_response = elbv2_client.describe_load_balancers(LoadBalancerArns=[res["LoadBalancerArn"]])
-                lb = elb_describe_response['LoadBalancers'][0]
-                lb_sgs = lb.get('SecurityGroups', [])
-                for lb_sg in lb_sgs:
-                    rg = RuleGroup(id       = None,
-                                   if_id    = elb_if_id,
-                                   name     = lb_sg,
-                                   type     = 'NSG',
-                                   cloud_id = cloud_id,
-                                   _db = db)
-                    rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
-                    # Load rules for current rule group
-                    self.get_group_rules(cloud_id, lb_sg)
+        # Load ELBs. Use nodes table for store
+        elbv2_client = self.__session.client('elbv2')
+        response     = elbv2_client.describe_load_balancers()
+        elbs         = response['LoadBalancers']
+        while 'NextMarker' in response:
+            response = elbv2_client.describe_load_balancers(Marker=response['NextMarker'])
+            elbs.extend(response['LoadBalancers'])
+        for res in elbs:
+            for azone in res["AvailabilityZones"]:
+                elb_if_id = f"{res['LoadBalancerArn']}-{azone['SubnetId']}-{azone['ZoneName']}"
+                elb = None
+                if res['Scheme'] == 'internal':
+                    elb = VM(vm=None, type='ELB',
+                            vpc_id    = res["VpcId"],
+                            azone     = azone["ZoneName"],
+                            subnet_id = azone["SubnetId"],
+                            name      = res["LoadBalancerName"],
+                            privdn    = res["DNSName"],
+                            privip    = '',
+                            pubdn     = '',
+                            pubip     = '',
+                            note      = res["Type"],
+                            os        = '',
+                            state     = res["State"]["Code"],
+                            mac       = '',
+                            if_id     = elb_if_id,
+                            cloud_id  = cloud_id)
+                else:
+                    elb = VM(vm=None, type='ELB',
+                            vpc_id    = res["VpcId"],
+                            azone     = azone["ZoneName"],
+                            subnet_id = azone["SubnetId"],
+                            name      = res["LoadBalancerName"],
+                            privdn    = '',
+                            privip    = '',
+                            pubdn     = res["DNSName"],
+                            pubip     = '',
+                            note      = res["Type"],
+                            os        = '',
+                            state     = res["State"]["Code"],
+                            mac       = '',
+                            if_id     = elb_if_id,
+                            cloud_id  = cloud_id)
+                elb.id = db.add_instance(instance=elb.to_sql_values())
+            elb_describe_response = elbv2_client.describe_load_balancers(LoadBalancerArns=[res["LoadBalancerArn"]])
+            lb = elb_describe_response['LoadBalancers'][0]
+            lb_sgs = lb.get('SecurityGroups', [])
+            for lb_sg in lb_sgs:
+                rg = RuleGroup(id       = None,
+                                if_id    = elb_if_id,
+                                name     = lb_sg,
+                                type     = 'NSG',
+                                cloud_id = cloud_id,
+                                _db = db)
+                rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
+                # Load rules for current rule group
+                self.get_group_rules(cloud_id, lb_sg)
             
-            # Load RDSs. Use nodes table for store
-            rds_client = self.__session.client('rds')
-            response   = rds_client.describe_db_instances()
-            for res in response['DBInstances']:
-                for rds_subnet in res['DBSubnetGroup']['Subnets']:
-                    rds_if_id = f"{rds_subnet['SubnetIdentifier']}-{rds_subnet['SubnetAvailabilityZone']['Name']}"
-                    if res['PubliclyAccessible'] == 'False':
-                        rds = VM(vm=None,
-                                type      = 'RDS',
-                                vpc_id    = res['DBSubnetGroup']['VpcId'],
-                                azone     = res['AvailabilityZone'],
-                                subnet_id = rds_subnet['SubnetIdentifier'],
-                                name      = res['DBInstanceIdentifier'],
-                                privdn    = res['Endpoint']['Address'],
-                                privip    = '',
-                                pubdn     = '',
-                                pubip     = '',
-                                note      = res['DBSubnetGroup']['DBSubnetGroupDescription'],
-                                os        = f"{res['Engine']}: {res['EngineVersion']}",
-                                state     = res['DBInstanceStatus'],
-                                mac       = '',
-                                if_id     = rds_if_id,
-                                cloud_id  = cloud_id)
-                    else:
-                        rds = VM(vm=None,
-                                type      = 'RDS',
-                                vpc_id    = res['DBSubnetGroup']['VpcId'],
-                                azone     = res['AvailabilityZone'],
-                                subnet_id = rds_subnet['SubnetIdentifier'],
-                                name      = res['DBInstanceIdentifier'],
-                                privdn    = '',
-                                privip    = '',
-                                pubdn     = res['Endpoint']['Address'],
-                                pubip     = '',
-                                note      = res['DBSubnetGroup']['DBSubnetGroupDescription'],
-                                os        = f"{res['Engine']}: {res['EngineVersion']}",
-                                state     = res['DBInstanceStatus'],
-                                mac       = '',
-                                if_id     = rds_if_id,
-                                cloud_id  = cloud_id)
-                    rds.id = db.add_instance(instance=rds.to_sql_values())
-                # Load RDS SG
-                for rds_sg in res['VpcSecurityGroups']:
-                    rg = RuleGroup(id       = None,
-                                   if_id    = rds_if_id,
-                                   name     = rds_sg['VpcSecurityGroupId'],
-                                   type     = 'NSG',
-                                   cloud_id = cloud_id,
-                                   _db = db)
-                    rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
-                    # Load rules for current rule group
-                    self.get_group_rules(cloud_id, rds_sg['VpcSecurityGroupId'])
+        # Load RDSs. Use nodes table for store
+        rds_client = self.__session.client('rds')
+        response   = rds_client.describe_db_instances()
+        for res in response['DBInstances']:
+            for rds_subnet in res['DBSubnetGroup']['Subnets']:
+                rds_if_id = f"{rds_subnet['SubnetIdentifier']}-{rds_subnet['SubnetAvailabilityZone']['Name']}"
+                if res['PubliclyAccessible'] == 'False':
+                    rds = VM(vm=None,
+                            type      = 'RDS',
+                            vpc_id    = res['DBSubnetGroup']['VpcId'],
+                            azone     = res['AvailabilityZone'],
+                            subnet_id = rds_subnet['SubnetIdentifier'],
+                            name      = res['DBInstanceIdentifier'],
+                            privdn    = res['Endpoint']['Address'],
+                            privip    = '',
+                            pubdn     = '',
+                            pubip     = '',
+                            note      = res['DBSubnetGroup']['DBSubnetGroupDescription'],
+                            os        = f"{res['Engine']}: {res['EngineVersion']}",
+                            state     = res['DBInstanceStatus'],
+                            mac       = '',
+                            if_id     = rds_if_id,
+                            cloud_id  = cloud_id)
+                else:
+                    rds = VM(vm=None,
+                            type      = 'RDS',
+                            vpc_id    = res['DBSubnetGroup']['VpcId'],
+                            azone     = res['AvailabilityZone'],
+                            subnet_id = rds_subnet['SubnetIdentifier'],
+                            name      = res['DBInstanceIdentifier'],
+                            privdn    = '',
+                            privip    = '',
+                            pubdn     = res['Endpoint']['Address'],
+                            pubip     = '',
+                            note      = res['DBSubnetGroup']['DBSubnetGroupDescription'],
+                            os        = f"{res['Engine']}: {res['EngineVersion']}",
+                            state     = res['DBInstanceStatus'],
+                            mac       = '',
+                            if_id     = rds_if_id,
+                            cloud_id  = cloud_id)
+                rds.id = db.add_instance(instance=rds.to_sql_values())
+            # Load RDS SG
+            for rds_sg in res['VpcSecurityGroups']:
+                rg = RuleGroup(id       = None,
+                                if_id    = rds_if_id,
+                                name     = rds_sg['VpcSecurityGroupId'],
+                                type     = 'NSG',
+                                cloud_id = cloud_id,
+                                _db = db)
+                rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
+                # Load rules for current rule group
+                self.get_group_rules(cloud_id, rds_sg['VpcSecurityGroupId'])
 
         # Load S3 Buckets
         s3_client = self.__session.resource('s3')
