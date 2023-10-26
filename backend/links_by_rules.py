@@ -991,12 +991,12 @@ class links_by_rules(CTX):
     def issue_dump1(self, ext_things):
         node_severity, rule_severity, sg_severity = self.issue_dump_colors(
             self.analyzer_cfg)
-        return {"scheme": self.issue_dump_scheme("sg", ext_things, node_severity, sg_severity), "lines": {"items": self.issue_dump_links("sg", self.rules, ext_things, rule_severity)}}
+        return {"scheme": self.issue_dump_scheme("sg", ext_things, node_severity, sg_severity, rule_severity), "lines": {"items": self.issue_dump_links("sg", self.rules, ext_things, rule_severity)}}
 
     def issue_dump2(self, ext_things):
         node_severity, rule_severity, sg_severity = self.issue_dump_colors(
             self.analyzer_cfg)
-        return {"scheme": self.issue_dump_scheme("acl", ext_things, node_severity, sg_severity), "lines": {"items": self.issue_dump_links("acl", self.rules, ext_things, rule_severity)}}
+        return {"scheme": self.issue_dump_scheme("acl", ext_things, node_severity, sg_severity, rule_severity), "lines": {"items": self.issue_dump_links("acl", self.rules, ext_things, rule_severity)}}
 
     def issue_dump_colors(self, cfg_list):
         node_severity = {}
@@ -1080,7 +1080,7 @@ class links_by_rules(CTX):
         # return list of pairs (id, id)
         return
 
-    def issue_dump_scheme(self, case,  ext_things: set(), node_severity, sg_severity):
+    def issue_dump_scheme(self, case,  ext_things: set(), node_severity, sg_severity, r_severity):
         c = {}
         c = {
             "children": []
@@ -1097,12 +1097,11 @@ class links_by_rules(CTX):
             c["children"].append(i)
         for cloud in self.clouds:
             res = self.issue_dump_cloud(
-                case, cloud, node_severity, sg_severity)
+                case, cloud, node_severity, sg_severity, r_severity)
             c["children"].append(res)
         return c
 
-    def issue_dump_cloud(self, case, cloud: Cloud, node_severity, sg_severity):
-        c = {}
+    def issue_dump_cloud(self, case, cloud: Cloud, node_severity, sg_severity, r_severity):
         c = {
             "children": []
         }
@@ -1124,15 +1123,19 @@ class links_by_rules(CTX):
             if sg.cloud_id != cloud.id:
                 continue
             severity = sg_severity.get(self.get_id_by_sg(sg), 0)
-            if max_severity < severity:
-                max_severity = severity
+            for r in sg.rules:
+                severity = max(severity, r_severity.get(
+                    self.get_id_by_rule(r), 0))
+            max_severity = max(max_severity, severity)
             if not self.is_sg_acl(sg) and case == "sg":
-                res, sev = self.issue_dump_sg(sg, severity, node_severity)
+                res, sev = self.issue_dump_sg(
+                    sg, severity, node_severity)
                 c["children"].append(res)
                 if max_severity < sev:
                     max_severity = sev
             elif self.is_sg_acl(sg) and case == "acl":
                 sg: RuleGroupNG
+
                 netlist = []
                 for sn_id in sg.subnet_ids:
                     netlist.append(self.get_subnet_by_id(sn_id))
@@ -1158,12 +1161,11 @@ class links_by_rules(CTX):
         l = []
         c["info"] = l
         nlist = self.nodes_by_sg[sg]
-        max_severity = 0
+        max_severity = severity
         for n in nlist:
             severity = node_severity.get(self.get_id_by_vm(n), 0)
             c["children"].append(self.issue_dump_nodes(n, severity))
-            if max_severity < severity:
-                max_severity = severity
+            max_severity = max(max_severity, severity)
         c["type"] = f"Cloud{max_severity}"
         return c, max_severity
 
@@ -1177,7 +1179,7 @@ class links_by_rules(CTX):
         c["iconTooltip"] = subnet.arn
         l = []
         c["info"] = l
-        max_severity = 0
+        max_severity = severity
         for n in self.nodes:
             if n.subnet_id == subnet.name:
                 severity = node_severity.get(self.get_id_by_vm(n), 0)
