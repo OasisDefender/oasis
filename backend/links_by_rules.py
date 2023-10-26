@@ -66,7 +66,7 @@ class links_by_rules(CTX):
                 "dump_fn": self.dump_ALL_IP_rules,
                 "data": self.all_to_ip_rules_sg,
                 "datatype": "rules",
-                "severity": 1
+                "severity": 3
             },
             {
                 "label": "Ingress subdirectory NACLs with ANY IPs",
@@ -166,7 +166,7 @@ class links_by_rules(CTX):
                 "dump_fn": self.dump_PORTS_rules,
                 "datatype": "rules",
                 "data": self.port_tcp80,
-                "severity": 1
+                "severity": 3
             },
             {
                 "label": "Using unsafe protocols: FTP (command)",
@@ -1037,23 +1037,23 @@ class links_by_rules(CTX):
             self.issue_linkid_by_rid[r.id] = set()
             sg: RuleGroupNG
             sg = self.sg_by_r(self.sgs_NG, r)
-            id1_list = []
+            id1_list = set()
             if case == 'sg' and not self.is_sg_acl(sg):
                 id1_list = [self.get_id_by_sg(sg)]
             elif case == 'acl' and self.is_sg_acl(sg):
                 for subnet_id in sg.subnet_ids:
-                    id1_list.append(self.get_id_by_net(
+                    id1_list.add(self.get_id_by_net(
                         self.get_subnet_by_id(subnet_id)))
             else:
                 # BUG
                 None
             nlist = []
-            id2_list = []
+            id2_list = set()
             ext_id = None
-            if self.is_known_address(r, self.nodes):
+            if not r.is_any_addr() and self.is_known_address(r, self.nodes):
                 nlist = self.filter_by_addr(r, self.nodes)
                 for n in nlist:
-                    id2_list.append(self.get_id_by_vm(n))
+                    id2_list.add(self.get_id_by_vm(n))
             else:
                 for (ext_id, ip) in ext_things:
                     if ip == r.naddr:
@@ -1061,10 +1061,12 @@ class links_by_rules(CTX):
                 if ext_id == None:
                     # BUG
                     None
-                id2_list = [ext_id]
+                id2_list.add(ext_id)
             for id1 in id1_list:
                 for id2 in id2_list:
                     link_id = self.get_linkid_by_rule(r, id1, id2)
+                    if self.linkid_in_res(res, link_id):
+                        continue
                     self.issue_linkid_by_rid[r.id].add(link_id)
                     if r.egress == "True":
                         res.append({"id": link_id, "type": f"line{severity}", "dst": id1, "src": id2,
@@ -1140,7 +1142,6 @@ class links_by_rules(CTX):
                     c["children"].append(res)
                     if max_severity < sev:
                         max_severity = sev
-
         c["type"] = f"Cloud{max_severity}"
 
         return c
@@ -1172,7 +1173,6 @@ class links_by_rules(CTX):
             "children": []
         }
         c["id"] = self.get_id_by_net(subnet)
-        c["type"] = f"Subnet{severity}"
         c["label"] = subnet.network
         c["iconTooltip"] = subnet.arn
         l = []
@@ -1184,7 +1184,7 @@ class links_by_rules(CTX):
                 c["children"].append(self.issue_dump_nodes(n, severity))
                 if max_severity < severity:
                     max_severity = severity
-
+        c["type"] = f"Subnet{max_severity}"
         return c, max_severity
 
     def issue_dump_nodes(self, n: OneNode, severity):
@@ -1217,7 +1217,7 @@ class links_by_rules(CTX):
         return f"C_{c.id}"
 
     def get_id_by_net(self, n: Subnet):
-        return f"Net_{n.arn}"
+        return f"Net_{n.name}"
 
     def get_id_by_rule(self, r: Rule):
         return f"Rule_{r.rule_id}"
@@ -1240,3 +1240,9 @@ class links_by_rules(CTX):
         for (a, v) in lav:
             label += f"{a}: {v}"
         return label
+
+    def linkid_in_res(self, res, link_id):
+        for i in res:
+            if i['id'] == link_id:
+                return True
+        return False
