@@ -93,7 +93,7 @@ function App({ logout }: AppProps) {
             link: "",
             label: (
                 <>
-                    {maxSeverity && (
+                    {(maxSeverity !== undefined) && (
                         <IconCircle
                             size="12px"
                             stroke="0.05rem"
