@@ -1,29 +1,8 @@
 export function severityToColor(severity: number) {
     if (severity === 0) 
-        return "#028A0F";
+        return "#FFFFFF";
     if (severity === 1)
-        return "#FDFD96";
-    if (severity === 2)
-        return "#FFBF00";
-    return "#D0312D";
-}
-
-
-export function severityToHeaderBGColor(severity: number) {
-    if (severity === 0) 
-        return "#028A0F";
-    if (severity === 1)
-        return "#FFFF80";
-    if (severity === 2)
-        return "#FFBF00";
-    return "#D0312D";
-}
-
-export function severityToLineColor(severity: number) {
-    if (severity === 0) 
-        return "#028A0F";
-    if (severity === 1)
-        return "#FDFD96";
+        return "#34BC41";
     if (severity === 2)
         return "#FFBF00";
     return "#D0312D";

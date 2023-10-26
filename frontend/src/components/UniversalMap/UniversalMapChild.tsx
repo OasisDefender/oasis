@@ -73,6 +73,19 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
         const headerIconColor = data.iconColor ?? headerStyle?.iconColor;
         const headerIconTooltip = data.iconTooltip ?? headerStyle?.iconTooltip;
 
+        let headerDivStyle = {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: headerStyle?.textColor
+        };
+        if (headerStyle?.style) {
+            headerDivStyle = {
+                ...headerDivStyle,
+                ...headerStyle?.style
+            };
+        }
+
         const childrenExist = data.children && data.children.length > 0;
         const childrenShow =
             childrenExist && !(data.childrenCollapsed ?? DEFAULT_COLLAPSED);
@@ -80,13 +93,7 @@ const UniversalMapChild: React.FC<UniversalMapChildProps> = ({
             <div className="um-item" id={data.id} style={itemStyle?.style}>
                 <div
                     className="um-header"
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        color: headerStyle?.textColor,
-                        background: headerStyle?.background
-                    }}
+                    style={headerDivStyle}
                 >
                     <div
                         style={{
