@@ -989,14 +989,24 @@ class links_by_rules(CTX):
         return True
 
     def issue_dump1(self, ext_things):
+        self.vm_count = {}
         node_severity, rule_severity, sg_severity = self.issue_dump_colors(
             self.analyzer_cfg)
-        return {"scheme": self.issue_dump_scheme("sg", ext_things, node_severity, sg_severity, rule_severity), "lines": {"items": self.issue_dump_links("sg", self.rules, ext_things, rule_severity)}}
+        scheme = self.issue_dump_scheme(
+            "sg", ext_things, node_severity, sg_severity, rule_severity)
+        lines = self.issue_dump_links(
+            "sg", self.rules, ext_things, rule_severity)
+        return {"scheme": scheme, "lines": {"items": lines}}
 
     def issue_dump2(self, ext_things):
+        self.vm_count = {}
         node_severity, rule_severity, sg_severity = self.issue_dump_colors(
             self.analyzer_cfg)
-        return {"scheme": self.issue_dump_scheme("acl", ext_things, node_severity, sg_severity, rule_severity), "lines": {"items": self.issue_dump_links("acl", self.rules, ext_things, rule_severity)}}
+        scheme = self.issue_dump_scheme(
+            "acl", ext_things, node_severity, sg_severity, rule_severity)
+        lines = self.issue_dump_links(
+            "acl", self.rules, ext_things, rule_severity)
+        return {"scheme": scheme, "lines": {"items": lines}}
 
     def issue_dump_colors(self, cfg_list):
         node_severity = {}
@@ -1008,7 +1018,10 @@ class links_by_rules(CTX):
             severity = cfg['severity']
             if datatype == 'nodes':
                 for n in d:
-                    node_severity[self.get_id_by_vm(n)] = severity
+                    cur_severity = node_severity.get(
+                        self.get_common_id_by_vm(n), 0)
+                    node_severity[self.get_common_id_by_vm(
+                        n)] = max(severity, cur_severity)
             elif datatype == 'rules':
                 for r in d:
                     rule_severity[self.get_id_by_rule(r)] = severity
@@ -1053,7 +1066,7 @@ class links_by_rules(CTX):
             if not r.is_any_addr() and self.is_known_address(r, self.nodes):
                 nlist = self.filter_by_addr(r, self.nodes)
                 for n in nlist:
-                    id2_list.add(self.get_id_by_vm(n))
+                    id2_list.update(self.get_all_id_by_vm(n))
             else:
                 for (ext_id, ip) in ext_things:
                     if ip == r.naddr:
@@ -1066,6 +1079,8 @@ class links_by_rules(CTX):
                 for id2 in id2_list:
                     link_id = self.get_linkid_by_rule(r, id1, id2)
                     if self.linkid_in_res(res, link_id):
+                        continue
+                    if self.same_link_exist(res, id1, id2, severity):
                         continue
                     self.issue_linkid_by_rid[r.id].add(link_id)
                     if r.egress == "True":
@@ -1126,16 +1141,12 @@ class links_by_rules(CTX):
             for r in sg.rules:
                 severity = max(severity, r_severity.get(
                     self.get_id_by_rule(r), 0))
-            max_severity = max(max_severity, severity)
             if not self.is_sg_acl(sg) and case == "sg":
                 res, sev = self.issue_dump_sg(
                     sg, severity, node_severity)
                 c["children"].append(res)
-                if max_severity < sev:
-                    max_severity = sev
+                max_severity = max(sev, max_severity)
             elif self.is_sg_acl(sg) and case == "acl":
-                sg: RuleGroupNG
-
                 netlist = []
                 for sn_id in sg.subnet_ids:
                     netlist.append(self.get_subnet_by_id(sn_id))
@@ -1143,8 +1154,7 @@ class links_by_rules(CTX):
                     res, sev = self.issue_dump_subnet(
                         s, severity, node_severity)
                     c["children"].append(res)
-                    if max_severity < sev:
-                        max_severity = sev
+                    max_severity = max(sev, max_severity)
         c["type"] = f"Cloud{max_severity}"
 
         return c
@@ -1156,21 +1166,20 @@ class links_by_rules(CTX):
         }
         sgid = self.get_id_by_sg(sg)
         c["id"] = sgid
-        c["label"] = sg.name
+        c["label"] = self.trim_ms_name(sg.name)
         c["iconTooltip"] = sg.name
         l = []
         c["info"] = l
         nlist = self.nodes_by_sg[sg]
         max_severity = severity
         for n in nlist:
-            severity = node_severity.get(self.get_id_by_vm(n), 0)
+            severity = node_severity.get(self.get_common_id_by_vm(n), 0)
             c["children"].append(self.issue_dump_nodes(n, severity))
             max_severity = max(max_severity, severity)
         c["type"] = f"Cloud{max_severity}"
         return c, max_severity
 
     def issue_dump_subnet(self, subnet: Subnet, severity, node_severity: dict):
-        c = {}
         c = {
             "children": []
         }
@@ -1182,10 +1191,9 @@ class links_by_rules(CTX):
         max_severity = severity
         for n in self.nodes:
             if n.subnet_id == subnet.name:
-                severity = node_severity.get(self.get_id_by_vm(n), 0)
+                severity = node_severity.get(self.get_common_id_by_vm(n), 0)
                 c["children"].append(self.issue_dump_nodes(n, severity))
-                if max_severity < severity:
-                    max_severity = severity
+                max_severity = max(severity, max_severity)
         c["type"] = f"Subnet{max_severity}"
         return c, max_severity
 
@@ -1194,7 +1202,7 @@ class links_by_rules(CTX):
         c = {
             "children": []
         }
-        c["id"] = self.get_id_by_vm(n)
+        c["id"] = self.get_next_id_by_vm(n)
         c["type"] = f"VM{severity}"
         i = [
             ("Software", n.os),
@@ -1209,7 +1217,23 @@ class links_by_rules(CTX):
         c["info"] = [{"icon": n.type, "tooltip": n.name}]
         return c
 
-    def get_id_by_vm(self, n: OneNode):
+    def get_next_id_by_vm(self, n: OneNode):
+        if self.vm_count.get(f"{n.cloud_id}_{n.id}", None) == None:
+            self.vm_count[f"{n.cloud_id}_{n.id}"] = 0
+        self.vm_count[f"{n.cloud_id}_{n.id}"] += 1
+        cnt = self.vm_count[f"{n.cloud_id}_{n.id}"]
+        return f"VM_{n.cloud_id}_{n.id}_{cnt}"
+
+    def get_all_id_by_vm(self, n: OneNode):
+        res = []
+        if self.vm_count.get(f"{n.cloud_id}_{n.id}", None) == None:
+            return []
+        cnt = self.vm_count[f"{n.cloud_id}_{n.id}"]
+        for c in range(1, cnt + 1):
+            res.append(f"VM_{n.cloud_id}_{n.id}_{c}")
+        return res
+
+    def get_common_id_by_vm(self, n: OneNode):
         return f"VM_{n.cloud_id}_{n.id}"
 
     def get_id_by_sg(self, sg: RuleGroupNG):
@@ -1248,3 +1272,15 @@ class links_by_rules(CTX):
             if i['id'] == link_id:
                 return True
         return False
+
+    def same_link_exist(self, res, id1, id2, severity):
+        for i in res:
+            if i['type'] != f"line{severity}":
+                continue
+            if set([id1, id2]) != set([i['src'], i['dst']]):
+                continue
+            return True
+        return False
+
+    def trim_ms_name(self, n: str):
+        return n.split("/")[-1]
