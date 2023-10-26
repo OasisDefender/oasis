@@ -104,14 +104,14 @@ function App({ logout }: AppProps) {
                 </>
             ),
             children: [
-                { link: "/analyze", label: "List" },
+                { link: "/analyze", label: "Findings" },
                 {
                     link: "/analyze-view/resultsvisualisation1",
-                    label: "Graphic view 1",
+                    label: "Security group Issues",
                 },
                 {
                     link: "/analyze-view/resultsvisualisation2",
-                    label: "Graphic view 2",
+                    label: "Subnet NACL Issues",
                 },
             ],            
         },

@@ -2,7 +2,7 @@ export function severityToColor(severity: number) {
     if (severity === 0) 
         return "#B4FFB4";
     if (severity === 1)
-        return "#FFCD28";
+        return "#FFD26E";
     if (severity === 2)
         return "#FF6B6B";
     return "#FF0000";
