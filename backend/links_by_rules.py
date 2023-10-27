@@ -1294,8 +1294,12 @@ class links_by_rules(CTX):
 
     def generate_vm_label(self, lav: list):
         label = ""
+        linefeed = ""
         for (a, v) in lav:
-            label += f"{a}: {v}"
+            if v == "" or v == None:
+                continue
+            label += f"{linefeed}{a}: {v}"
+            linefeed = "<br/>"
         return label
 
     def linkid_in_res(self, res, link_id):
