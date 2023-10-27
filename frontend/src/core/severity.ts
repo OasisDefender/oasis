@@ -1,11 +1,11 @@
 export function severityToColor(severity: number) {
     if (severity === 0) 
-        return "#028A0F";
+        return "#B4FFB4";
     if (severity === 1)
-        return "#FDFD96";
+        return "#FFD26E";
     if (severity === 2)
-        return "#FFBF00";
-    return "#D0312D";
+        return "#FF6937";
+    return "#FF0000";
 }
 
 export function severityToText(severity: number) {

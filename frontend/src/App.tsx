@@ -26,7 +26,7 @@ import { severityToColor } from "./core/severity";
 import { IconCircle } from "@tabler/icons-react";
 import { useHeaderInfo } from "./core/hooks/headerInfo";
 import { useInterval } from "@mantine/hooks";
-import { Auth } from "aws-amplify";
+import { AnalyzeView } from "./pages/AnalyzeView";
 
 interface AppProps {
     logout?: () => void;
@@ -90,10 +90,10 @@ function App({ logout }: AppProps) {
             label: "Policy Map",
         },
         {
-            link: "/analyze",
+            link: "",
             label: (
                 <>
-                    {maxSeverity && (
+                    {(maxSeverity !== undefined) && (
                         <IconCircle
                             size="12px"
                             stroke="0.05rem"
@@ -103,6 +103,17 @@ function App({ logout }: AppProps) {
                     {" Security Analysis"}
                 </>
             ),
+            children: [
+                { link: "/analyze", label: "Findings" },
+                {
+                    link: "/analyze-view/resultsvisualisation1",
+                    label: "Security group Issues",
+                },
+                {
+                    link: "/analyze-view/resultsvisualisation2",
+                    label: "Subnet NACL Issues",
+                },
+            ],            
         },
     ];
 
@@ -125,6 +136,7 @@ function App({ logout }: AppProps) {
                             <Route path="/storages" element={<StoragesMap />} />
                             <Route path="/policy" element={<PolicyMap />} />
                             <Route path="/analyze" element={<Analyze />} />
+                            <Route path="/analyze-view/:viewName" element={<AnalyzeView />} />
                             <Route
                                 path="/"
                                 element={<Navigate replace to="/clouds" />}

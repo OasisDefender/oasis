@@ -18,8 +18,9 @@ export type HeaderStyle = {
     icon?: string;
     iconColor?: string;
     iconTooltip?: string;
-    textColor?: string;
+    textColor?: string;    
     maxLabelWidth?: SystemProp<CSSProperties["maxWidth"]>;
+    style?: CSSProperties;
 };
 
 export type TypedStyle = {
