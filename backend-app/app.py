@@ -7,7 +7,7 @@ sys.path.append('..')
 
 from backend import Backend
 
-userid:str = None #'d69ed1c07-e01a-4d6e-8e23-720b15dde116'
+userid:str = None
 
 app = Flask(__name__)
 CORS(app)

@@ -7,3 +7,4 @@ azure-mgmt-network==23.0.0
 azure-mgmt-resource==23.0.0
 azure-mgmt-sql==3.0.1
 boto3==1.26.95
+psycopg2-binary==2.9.9
