@@ -97,7 +97,7 @@ export function CloudTableRow({
                     )}
                     {cloud.last_successful_sync && (
                         <Text>
-                            <b>Last successful sync:</b> {cloud.sync_stop}
+                            <b>Last successful sync:</b> {cloud.last_successful_sync}
                         </Text>
                     )}
                     {cloud.sync_state == SyncState.InSync &&
