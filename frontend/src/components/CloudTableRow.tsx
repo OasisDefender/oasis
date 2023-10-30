@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 
-import { Button, Group, Text } from "@mantine/core";
+import { Button, Group, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconCloudMinus, IconDatabase } from "@tabler/icons-react";
 
-import { ICloudView } from "../core/models/ICloud";
+import { ICloudView, SyncState } from "../core/models/ICloud";
 
 interface CloudTableRowProps {
     cloud: ICloudView;
     makeSync?: (cloud: ICloudView) => Promise<void>;
     makeDelete?: (cloud: ICloudView) => Promise<void>;
+    onRefresh?: () => Promise<void>;    
     infoShowed: boolean;
 }
 
@@ -17,6 +18,7 @@ export function CloudTableRow({
     cloud,
     makeSync,
     makeDelete,
+    onRefresh,
     infoShowed,
 }: CloudTableRowProps) {
     const [syncLoading, setSyncLoading] = useState(false);
@@ -27,6 +29,7 @@ export function CloudTableRow({
             setSyncLoading(true);
             await makeSync(cloud);
             setSyncLoading(false);
+            onRefresh?.();
         }
     };
 
@@ -84,18 +87,39 @@ export function CloudTableRow({
                     </>
                 )}
             </td>
-
             <td>
-                <Group spacing="xs">
+                <Stack spacing="xs">
+                    {cloud.sync_stop && (
+                        <Text>
+                            <b>Last sync was at:</b> {cloud.sync_stop}
+                        </Text>
+                    )}
+                    {cloud.sync_state == SyncState.InSync &&
+                        cloud.sync_start && (
+                            <Text>
+                                <b>Sync was started at:</b> {cloud.sync_start}
+                            </Text>
+                        )}
+                    {cloud.sync_state == SyncState.Synced && cloud.sync_msg && (
+                        <Text color="red">
+                            <b>Sync error:</b> {cloud.sync_msg}
+                        </Text>
+                    )}
                     <Button
                         leftIcon={<IconDatabase size="1.125rem" />}
                         color="green"
-                        loading={syncLoading}
+                        loading={
+                            cloud.sync_state == SyncState.InSync || syncLoading
+                        }
                         disabled={deleteLoading}
                         onClick={onSyncInternal}
                     >
                         Sync
                     </Button>
+                </Stack>
+            </td>
+            <td>
+                <Group spacing="xs">
                     <Button
                         leftIcon={<IconCloudMinus size="1.125rem" />}
                         color="red"
