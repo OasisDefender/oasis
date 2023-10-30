@@ -106,12 +106,37 @@ class DB:
                         azure_tenant_id TEXT,      -- Azure tenant-id
                         azure_client_id TEXT,      -- Azure client-id
                         azure_client_secret TEXT,  -- Azure client-secret
-                        azure_subscription_id TEXT -- Azure only subscription-id
+                        azure_subscription_id TEXT, -- Azure only subscription-id
+                        sync_state integer not null default 0, -- 0 - synced, 1 - in sync
+                        sync_start timestamptz, -- write current_timestamp on sync start
+                        sync_stop  timestamptz, -- write current_timestamp on sync complite
+                        sync_msg  text          -- error messge or ''
                     )''')
                 cursor.execute(
                     "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_aws_index ON clouds(aws_region, aws_key, aws_secret_key)")
                 cursor.execute(
                     "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_azure_index ON clouds(azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id)")
+                
+                cursor.execute('''
+                    CREATE or replace FUNCTION on_sync_tg_function() RETURNS trigger AS $on_sync_tg_function$
+                        BEGIN
+                            IF NEW.sync_state = 1 THEN
+                                IF OLD.sync_state = 1 THEN
+                                    RAISE EXCEPTION 'Sync allready in progress...';
+                                END IF;
+                                NEW.sync_start := current_timestamp;
+                                NEW.sync_stop := NULL;
+                            ELSE
+                                IF OLD.sync_state = 1 THEN
+                                    NEW.sync_stop := current_timestamp;
+                                END IF;
+                            END IF;
+                            RETURN NEW;
+                        END;
+                    $on_sync_tg_function$ LANGUAGE plpgsql;''')
+                print("on_sync_tg_function() - created")
+                cursor.execute("CREATE or replace TRIGGER on_sync_tg BEFORE UPDATE ON clouds FOR EACH ROW EXECUTE FUNCTION on_sync_tg_function();")
+                print("on_sync_tg() - created")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS vpcs(
                     id      serial PRIMARY KEY,
@@ -274,7 +299,11 @@ class DB:
             cursor.execute("""
                 SELECT id, name, cloud_type,
                     aws_region, aws_key, aws_secret_key, 
-                    azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id
+                    azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id,
+                    sync_state,
+                    case when sync_start is null then null else TO_CHAR(sync_start, 'YYYY/MM/DD HH12:MM:SS') end as sync_start,
+                    case when sync_stop  is null then null else TO_CHAR(sync_stop,  'YYYY/MM/DD HH12:MM:SS') end as sync_stop,
+                    sync_msg
                 FROM clouds ORDER by name
             """)
             rows = cursor.fetchall()
@@ -288,7 +317,11 @@ class DB:
                   azure_tenant_id=r[6],
                   azure_client_id=r[7],
                   azure_client_secret=r[8],
-                  azure_subscription_id=r[9]) for r in rows
+                  azure_subscription_id=r[9],
+                  sync_state=r[10],
+                  sync_start=r[11],
+                  sync_stop=r[12],
+                  synk_msg=r[13]) for r in rows
         ]
 
     def get_clouds_short(self) -> list[Cloud]:
@@ -580,37 +613,12 @@ class DB:
             cursor.execute(sql)
             row_count = cursor.fetchall()
             if row_count[0][0] == 0:
-                filename:  str = '/etc/services'
-                dict_data: dict = {}
-                with open(filename) as fhandle:
-                    for line in fhandle:
-                        line = line.strip()
-                        if line == '':
-                            continue
-                        if line[0] == '#':
-                            continue
-                        line = line.split('#')[0]
-                        line = line.replace('\t', '*')
-                        line = line.replace(' ', '*')
-
-                        new_line = ''
-                        while True:
-                            new_line = line.replace('**', '*')
-                            if new_line == line:
-                                break
-                            line = new_line
-
-                        line_array = line.split('*')
-                        try:
-                            service = line_array[0].replace('\t', ' ').strip()
-                            port = line_array[1].split(
-                                '/')[0].replace('\t', ' ').strip()
-                            proto = line_array[1].split(
-                                '/')[1].replace('\t', ' ').strip()
-                            sql = f"insert into network_services(name, proto, port) values('{service}', '{proto}', '{port}')"
-                            cursor.execute(sql)
-                        except IndexError:
-                            pass
+                sql = f"insert into network_services(name, proto, port) values('http', 'tcp', '80')"
+                sql = f"insert into network_services(name, proto, port) values('https', 'tcp', '443')"
+                sql = f"insert into network_services(name, proto, port) values('smtp', 'tcp', '25')"
+                sql = f"insert into network_services(name, proto, port) values('postgresql', 'tcp', '5432')"
+                sql = f"insert into network_services(name, proto, port) values('dns', 'udp', '54')"
+                cursor.execute(sql)
                 self.__database.commit()
         return
 
