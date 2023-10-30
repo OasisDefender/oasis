@@ -12,9 +12,9 @@ class Cloud:
                  azure_client_id: str,
                  azure_client_secret: str,
                  sync_state:int = 0,
-                 sync_start:str = '',
-                 sync_stop:str  = '',
-                 synk_msg:str   = ''):
+                 sync_start:str = None,
+                 sync_stop:str  = None,
+                 synk_msg:str   = None):
         self.id = id
         self.name = name
         self.cloud_type = cloud_type.upper()
