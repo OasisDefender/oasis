@@ -10,7 +10,7 @@ interface CloudTableRowProps {
     cloud: ICloudView;
     makeSync?: (cloud: ICloudView) => Promise<void>;
     makeDelete?: (cloud: ICloudView) => Promise<void>;
-    onRefresh?: () => Promise<void>;    
+    onRefresh?: () => Promise<void>;
     infoShowed: boolean;
 }
 
@@ -60,11 +60,11 @@ export function CloudTableRow({
     return (
         <tr key={cloud.id}>
             <td>{cloud.name}</td>
-            <td>{cloud.cloud_type}</td>
             <td>
+                <b>Cloud type:</b> {cloud.cloud_type} <br />
                 {cloud.cloud_type === "AWS" && (
                     <>
-                        <b>aws_region:</b> {cloud.aws_region} <br />
+                        <b>Region:</b> {cloud.aws_region} <br />
                         {infoShowed && (
                             <>
                                 <b>aws_key:</b> {cloud.aws_key}
@@ -76,7 +76,7 @@ export function CloudTableRow({
                     <>
                         {infoShowed && (
                             <>
-                                <b>azure_subscription_id:</b>{" "}
+                                <b>Subscription ID:</b>{" "}
                                 {cloud.azure_subscription_id}
                                 <br />
                                 <b>azure_tenant_id:</b> {cloud.azure_tenant_id}
@@ -89,22 +89,38 @@ export function CloudTableRow({
             </td>
             <td>
                 <Stack spacing="xs">
-                    {cloud.sync_stop && (
+                    {cloud.sync_state == SyncState.InSync && (
                         <Text>
-                            <b>Last sync was at:</b> {cloud.sync_stop}
+                            Sync in progress. Press "Refresh" to update the
+                            status. <br />
+                        </Text>
+                    )}
+                    {cloud.last_successful_sync && (
+                        <Text>
+                            <b>Last successful sync:</b> {cloud.sync_stop}
                         </Text>
                     )}
                     {cloud.sync_state == SyncState.InSync &&
                         cloud.sync_start && (
                             <Text>
-                                <b>Sync was started at:</b> {cloud.sync_start}
+                                <b>The sync was started at:</b>{" "}
+                                {cloud.sync_start}
                             </Text>
                         )}
+                    {cloud.sync_stop && (
+                        <Text>
+                            <b>The sync was finished at:</b> {cloud.sync_stop}
+                        </Text>
+                    )}
                     {cloud.sync_state == SyncState.Synced && cloud.sync_msg && (
                         <Text color="red">
                             <b>Sync error:</b> {cloud.sync_msg}
                         </Text>
                     )}
+                </Stack>
+            </td>
+            <td>
+                <Group spacing="xs">
                     <Button
                         leftIcon={<IconDatabase size="1.125rem" />}
                         color="green"
@@ -116,10 +132,6 @@ export function CloudTableRow({
                     >
                         Sync
                     </Button>
-                </Stack>
-            </td>
-            <td>
-                <Group spacing="xs">
                     <Button
                         leftIcon={<IconCloudMinus size="1.125rem" />}
                         color="red"

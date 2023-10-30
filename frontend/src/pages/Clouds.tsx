@@ -148,9 +148,8 @@ export function Clouds() {
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Cloud type</th>
-                                <th>Additional information</th>
-                                <th>Sync</th>
+                                <th>Details</th>
+                                <th>Sync state</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
