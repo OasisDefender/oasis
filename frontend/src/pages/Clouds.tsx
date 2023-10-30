@@ -148,7 +148,7 @@ export function Clouds() {
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Cloud information</th>
+                                <th>Details</th>
                                 <th>Sync state</th>
                                 <th>Actions</th>
                             </tr>

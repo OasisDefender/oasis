@@ -89,6 +89,12 @@ export function CloudTableRow({
             </td>
             <td>
                 <Stack spacing="xs">
+                    {cloud.sync_state == SyncState.InSync && (
+                        <Text>
+                            Sync in progress. Press "Refresh" to update the
+                            status. <br />
+                        </Text>
+                    )}
                     {cloud.last_successful_sync && (
                         <Text>
                             <b>Last successful sync:</b> {cloud.sync_stop}
@@ -97,7 +103,8 @@ export function CloudTableRow({
                     {cloud.sync_state == SyncState.InSync &&
                         cloud.sync_start && (
                             <Text>
-                                <b>The sync was started at:</b> {cloud.sync_start}
+                                <b>The sync was started at:</b>{" "}
+                                {cloud.sync_start}
                             </Text>
                         )}
                     {cloud.sync_stop && (
