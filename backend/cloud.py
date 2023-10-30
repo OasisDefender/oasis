@@ -13,7 +13,8 @@ class Cloud:
                  azure_client_secret: str,
                  sync_state:int = 0,
                  sync_start:str = '',
-                 sync_stop:str  = ''):
+                 sync_stop:str  = '',
+                 synk_msg:str   = ''):
         self.id = id
         self.name = name
         self.cloud_type = cloud_type.upper()
@@ -27,6 +28,7 @@ class Cloud:
         self.sync_state = sync_state
         self.sync_start = sync_start
         self.sync_stop  = sync_stop
+        self.sync_msg   = synk_msg
 
         
     def to_dict(self) -> dict:
@@ -42,5 +44,5 @@ class Cloud:
               'sync_state': self.sync_state,
               'sync_start': self.sync_start,
               'sync_stop': self.sync_stop,
+              'sync_msg': self.sync_msg
             }
-
