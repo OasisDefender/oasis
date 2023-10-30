@@ -110,7 +110,8 @@ class DB:
                         sync_state integer not null default 0, -- 0 - synced, 1 - in sync
                         sync_start timestamptz, -- write current_timestamp on sync start
                         sync_stop  timestamptz, -- write current_timestamp on sync complite
-                        sync_msg  text          -- error messge or ''
+                        sync_msg  text,         -- error messge or null
+                        last_successful_sync timestamptz -- actual cloud state date
                     )''')
                 cursor.execute(
                     "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_aws_index ON clouds(aws_region, aws_key, aws_secret_key)")
@@ -126,9 +127,16 @@ class DB:
                                 END IF;
                                 NEW.sync_start := current_timestamp;
                                 NEW.sync_stop := NULL;
+                                NEW.sync_msg := NULL;
                             ELSE
                                 IF OLD.sync_state = 1 THEN
-                                    NEW.sync_stop := current_timestamp;
+                                    IF NEW.sync_msg is NULL THEN
+                                        OLD.sync_msg := NULL;
+                                        NEW.sync_stop := current_timestamp;
+                                        NEW.last_successful_sync := NEW.sync_stop;
+                                    ELSE
+                                        NEW.sync_stop := current_timestamp;
+                                    END IF;
                                 END IF;
                             END IF;
                             RETURN NEW;
@@ -303,7 +311,8 @@ class DB:
                     sync_state,
                     case when sync_start is null then null else TO_CHAR(sync_start, 'YYYY/MM/DD HH12:MM:SS') end as sync_start,
                     case when sync_stop  is null then null else TO_CHAR(sync_stop,  'YYYY/MM/DD HH12:MM:SS') end as sync_stop,
-                    sync_msg
+                    sync_msg,
+                    case when last_successful_sync is null then null else TO_CHAR(last_successful_sync, 'YYYY/MM/DD HH12:MM:SS') end as last_successful_sync
                 FROM clouds ORDER by name
             """)
             rows = cursor.fetchall()
@@ -321,7 +330,8 @@ class DB:
                   sync_state=r[10],
                   sync_start=r[11],
                   sync_stop=r[12],
-                  synk_msg=r[13]) for r in rows
+                  synk_msg=r[13],
+                  last_successful_sync=r[14]) for r in rows
         ]
 
     def get_clouds_short(self) -> list[Cloud]:
@@ -641,6 +651,38 @@ class DB:
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()
+
+    def lock_sync_cloud(self, cloud_id):
+        status:int = 0
+        msg:str    = None
+        try:
+            with self.__database.cursor() as cursor:
+                sql = f"update clouds set sync_state=1 where id = {cloud_id}"
+                cursor.execute(sql)
+                self.__database.commit()
+        except psycopg2.Error as e:
+            print(f"DB error: {e}")
+            status = 1
+            msg = e
+        return status, msg
+
+    def unlock_sync_cloud(self, cloud_id, msg:str = None):
+        status:int = 0
+        msg:str    = None
+        sql:str    = None
+        try:
+            with self.__database.cursor() as cursor:
+                if msg == None:
+                    sql = f"update clouds set sync_state=0 where id = {cloud_id}"
+                else:
+                    sql = f"update clouds set sync_state=0, last_successful_sync={msg} where id = {cloud_id}"
+                cursor.execute(sql)
+                self.__database.commit()
+        except psycopg2.Error as e:
+            print(f"DB error: {e}")
+            status = 1
+            msg = e
+        return status, msg
 
 def mk_user_name(_userid: str = None):
     ret = _userid

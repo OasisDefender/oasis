@@ -14,7 +14,8 @@ class Cloud:
                  sync_state:int = 0,
                  sync_start:str = None,
                  sync_stop:str  = None,
-                 synk_msg:str   = None):
+                 synk_msg:str   = None,
+                 last_successful_sync:str = None):
         self.id = id
         self.name = name
         self.cloud_type = cloud_type.upper()
@@ -29,6 +30,7 @@ class Cloud:
         self.sync_start = sync_start
         self.sync_stop  = sync_stop
         self.sync_msg   = synk_msg
+        self.last_successful_sync = last_successful_sync
 
         
     def to_dict(self) -> dict:
@@ -44,5 +46,6 @@ class Cloud:
               'sync_state': self.sync_state,
               'sync_start': self.sync_start,
               'sync_stop': self.sync_stop,
-              'sync_msg': self.sync_msg
+              'sync_msg': self.sync_msg,
+              'last_successful_sync': self.last_successful_sync
             }
