@@ -49,7 +49,7 @@ export function Clouds() {
         }
     };
 
-    const onRefresh = () => {
+    const onRefresh = async () => {
         fetchClouds();
     };
 
@@ -93,6 +93,7 @@ export function Clouds() {
             cloud={cloud}
             makeSync={makeSync}
             makeDelete={makeDelete}
+            onRefresh={onRefresh}
             infoShowed={infoShowed}
         />
     ));
@@ -147,8 +148,8 @@ export function Clouds() {
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Cloud type</th>
-                                <th>Additional information</th>
+                                <th>Details</th>
+                                <th>Sync state</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

@@ -45,6 +45,8 @@ class Backend(CTX):
         body = None
         status = 200
         cloud: Cloud = None
+        lock_status:int = 0
+        lock_msg:str = 0
         try:
             for cloud in context.get_clouds():
                 if cloud.id == id:
@@ -55,14 +57,19 @@ class Backend(CTX):
                         fw = FW_Azure(_db=context)
                         break
                     status = 500
-                    body = {
-                        'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
+                    body = {'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
             if fw != None:
-                fw.save_ctx(self.get_ctx())
-                context.sync_cloud(cloud.id)
-                fw.connect(cloud.id)
-                fw.get_topology(cloud.id)
+                lock_status, lock_msg = context.lock_sync_cloud(cloud.id)
+                if lock_status == 0:
+                    fw.save_ctx(self.get_ctx())
+                    context.sync_cloud(cloud.id)
+                    fw.connect(cloud.id)
+                    fw.get_topology(cloud.id)
+                    lock_status, lock_msg = context.unlock_sync_cloud(cloud.id)
+                else:
+                    pass #body = {'message': lock_msg}
         except:
+            lock_status, lock_msg = context.unlock_sync_cloud(cloud.id, "Cloud sync error")
             status = 500
             body = {'message': "Cloud sync error"}
         return status, body
@@ -128,7 +135,7 @@ class Backend(CTX):
             if fw != None:
                 fw.save_ctx(self.get_ctx())
                 if cloud.id == fw.connect(cloud.id):
-                    fw.get_topology(cloud.id)
+                    #fw.get_topology(cloud.id)
                     body = cloud.to_dict()
                 else:
                     context.delete_cloud(save_cloud_id)

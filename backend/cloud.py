@@ -10,7 +10,12 @@ class Cloud:
                  azure_subscription_id: str,
                  azure_tenant_id: str,
                  azure_client_id: str,
-                 azure_client_secret: str):
+                 azure_client_secret: str,
+                 sync_state:int = 0,
+                 sync_start:str = None,
+                 sync_stop:str  = None,
+                 synk_msg:str   = None,
+                 last_successful_sync:str = None):
         self.id = id
         self.name = name
         self.cloud_type = cloud_type.upper()
@@ -21,6 +26,12 @@ class Cloud:
         self.azure_tenant_id = azure_tenant_id
         self.azure_client_id = azure_client_id
         self.azure_client_secret = azure_client_secret
+        self.sync_state = sync_state
+        self.sync_start = sync_start
+        self.sync_stop  = sync_stop
+        self.sync_msg   = synk_msg
+        self.last_successful_sync = last_successful_sync
+
         
     def to_dict(self) -> dict:
         return { 
@@ -31,6 +42,10 @@ class Cloud:
               'aws_key': self.aws_key,               
               'azure_tenant_id': self.azure_tenant_id,
               'azure_client_id': self.azure_client_id,
-              'azure_subscription_id': self.azure_subscription_id
+              'azure_subscription_id': self.azure_subscription_id,
+              'sync_state': self.sync_state,
+              'sync_start': self.sync_start,
+              'sync_stop': self.sync_stop,
+              'sync_msg': self.sync_msg,
+              'last_successful_sync': self.last_successful_sync
             }
-
