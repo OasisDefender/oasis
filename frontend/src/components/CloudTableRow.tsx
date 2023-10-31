@@ -135,7 +135,9 @@ export function CloudTableRow({
                     <Button
                         leftIcon={<IconCloudMinus size="1.125rem" />}
                         color="red"
-                        loading={deleteLoading}
+                        loading={
+                            cloud.sync_state == SyncState.InSync || deleteLoading
+                        }
                         disabled={syncLoading}
                         onClick={onDeleteInternal}
                     >
