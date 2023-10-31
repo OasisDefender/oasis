@@ -135,7 +135,7 @@ class Backend(CTX):
             if fw != None:
                 fw.save_ctx(self.get_ctx())
                 if cloud.id == fw.connect(cloud.id):
-                    fw.get_topology(cloud.id)
+                    #fw.get_topology(cloud.id)
                     body = cloud.to_dict()
                 else:
                     context.delete_cloud(save_cloud_id)
