@@ -97,7 +97,8 @@ export function CloudTableRow({
                     )}
                     {cloud.last_successful_sync && (
                         <Text>
-                            <b>Last successful sync:</b> {cloud.last_successful_sync}
+                            <b>Last successful sync:</b>{" "}
+                            {cloud.last_successful_sync}
                         </Text>
                     )}
                     {cloud.sync_state == SyncState.InSync &&
@@ -136,7 +137,9 @@ export function CloudTableRow({
                         leftIcon={<IconCloudMinus size="1.125rem" />}
                         color="red"
                         loading={deleteLoading}
-                        disabled={syncLoading}
+                        disabled={
+                            cloud.sync_state == SyncState.InSync || syncLoading
+                        }
                         onClick={onDeleteInternal}
                     >
                         Delete
