@@ -146,9 +146,7 @@ class DB:
                             RETURN NEW;
                         END;
                     $on_sync_tg_function$ LANGUAGE plpgsql;''')
-                print("on_sync_tg_function() - created")
                 cursor.execute("CREATE or replace TRIGGER on_sync_tg BEFORE UPDATE ON clouds FOR EACH ROW EXECUTE FUNCTION on_sync_tg_function();")
-                print("on_sync_tg() - created")
 
                 cursor.execute('''CREATE TABLE IF NOT EXISTS vpcs(
                     id      serial PRIMARY KEY,
