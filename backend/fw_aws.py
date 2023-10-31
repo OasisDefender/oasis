@@ -161,6 +161,14 @@ class FW_AWS(CTX):
                 desc = "none"
             except IndexError:
                 desc = "none"
+            
+            # Pub IP allocated handler
+            allocated_pubip = ''
+            try:
+                allocated_pubip = res["NatGatewayAddresses"][0]["PublicIp"]
+            except KeyError:
+                print(f"Public IP not allocated for NAT: {res['NatGatewayId']}")
+
             nat = VM(vm=None, type='NAT',
                     vpc_id=res["VpcId"],
                     azone='',
@@ -169,7 +177,7 @@ class FW_AWS(CTX):
                     privdn='',
                     privip=res["NatGatewayAddresses"][0]["PrivateIp"],
                     pubdn='',
-                    pubip=res["NatGatewayAddresses"][0]["PublicIp"],
+                    pubip=allocated_pubip,
                     note=desc,
                     os='',
                     state=res["State"],
