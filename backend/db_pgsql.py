@@ -123,7 +123,11 @@ class DB:
                         BEGIN
                             IF NEW.sync_state = 1 THEN
                                 IF OLD.sync_state = 1 THEN
-                                    RAISE EXCEPTION 'Sync allready in progress...';
+                                    IF EXTRACT(epoch from current_timestamp-OLD.sync_start)::int < 960 THEN
+                                        RAISE EXCEPTION 'Sync allready in progress...';
+                                    ELSE
+                                        RAISE NOTICE 'Dead sync found, sync restart allowed';
+                                    END IF;
                                 END IF;
                                 NEW.sync_start := current_timestamp;
                                 NEW.sync_stop := NULL;
@@ -308,11 +312,11 @@ class DB:
                 SELECT id, name, cloud_type,
                     aws_region, aws_key, aws_secret_key, 
                     azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id,
-                    sync_state,
-                    case when sync_start is null then null else TO_CHAR(sync_start, 'YYYY/MM/DD HH12:MM:SS') end as sync_start,
-                    case when sync_stop  is null then null else TO_CHAR(sync_stop,  'YYYY/MM/DD HH12:MM:SS') end as sync_stop,
-                    sync_msg,
-                    case when last_successful_sync is null then null else TO_CHAR(last_successful_sync, 'YYYY/MM/DD HH12:MM:SS') end as last_successful_sync
+                    case when sync_state=0 then 0 else case when EXTRACT(epoch from current_timestamp-sync_start)::int > 960 then 0 else 1 end end as sync_state,
+                    case when sync_start is null then null else sync_start::text end as sync_start,
+                    case when sync_stop is null then (case when EXTRACT(epoch from current_timestamp-sync_start)::int > 960 then (sync_start+interval '960 second')::text else null end) else sync_stop::text end as sync_stop,
+                    case when sync_state=0 then sync_msg else (case when EXTRACT(epoch from current_timestamp-sync_start)::int > 960 then 'Error: dead sync job' else sync_msg end) end as sync_msg,
+                    case when last_successful_sync is null then null else last_successful_sync::text end as last_successful_sync
                 FROM clouds ORDER by name
             """)
             rows = cursor.fetchall()
