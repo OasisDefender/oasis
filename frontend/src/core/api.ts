@@ -15,11 +15,12 @@ if (global.config.authType === "COGNITO") {
         try {
             const session = await Auth.currentSession();
             const jwtToken = session.getIdToken().getJwtToken();
-
+            
             req.headers.Authorization = jwtToken;
         } catch (error) {
             console.error("Failed to get the Cognito token:", error);
         }
+        req.headers.Domain = window.location.hostname;
 
         return req;
     });
