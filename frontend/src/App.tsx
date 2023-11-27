@@ -27,12 +27,13 @@ import { IconCircle } from "@tabler/icons-react";
 import { useHeaderInfo } from "./core/hooks/headerInfo";
 import { useInterval } from "@mantine/hooks";
 import { AnalyzeView } from "./pages/AnalyzeView";
+import { Account } from "./components/Account";
 
 interface AppProps {
-    logout?: () => void;
+    username?: string;
 }
 
-function App({ logout }: AppProps) {
+function App({ username }: AppProps) {
     const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
     const toggleColorScheme = (value?: ColorScheme) => {
         setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
@@ -129,7 +130,7 @@ function App({ logout }: AppProps) {
                     withNormalizeCSS
                 >
                     <ModalsProvider>
-                        <Header links={headerLinks} logout={logout} />
+                        <Header links={headerLinks} username={username} />
                         <Routes>
                             <Route path="/clouds" element={<Clouds />} />
                             <Route path="/map" element={<CloudMap />} />
@@ -137,6 +138,7 @@ function App({ logout }: AppProps) {
                             <Route path="/policy" element={<PolicyMap />} />
                             <Route path="/analyze" element={<Analyze />} />
                             <Route path="/analyze-view/:viewName" element={<AnalyzeView />} />
+                            <Route path="/account" element={<Account />} />
                             <Route
                                 path="/"
                                 element={<Navigate replace to="/clouds" />}

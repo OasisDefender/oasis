@@ -19,10 +19,12 @@ import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
 import {
     IconChevronDown,
-    IconLogout,
+    IconInfoCircle,
     IconMoonStars,
     IconSun,
+    IconUser,
 } from "@tabler/icons-react";
+
 export const HEADER_HEIGHT = rem(60);
 
 type LinkItem = {
@@ -109,7 +111,6 @@ const useStyles = createStyles((theme) => ({
                 : theme.colors.gray[7],
         fontSize: theme.fontSizes.sm,
         fontWeight: 500,
-
     },
 
     linkActive: {
@@ -142,7 +143,7 @@ interface DropdownMenuProps {
 }
 
 const DropdownMenu: React.FC<DropdownMenuProps> = ({
-    active, 
+    active,
     link,
     label,
     items,
@@ -153,18 +154,17 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
     const { classes, cx } = useStyles();
 
     return (
-        <Menu            
-            trigger="hover"
-            width="target"
-            offset={0}
-            withArrow            
-        >
+        <Menu trigger="hover" width="target" offset={0} withArrow>
             <Menu.Target>
-                <div className={cx(classes.link, {
-                    [classes.linkActive]: items.some(item => matchPath(active, item.link)),
-                })}>
+                <div
+                    className={cx(classes.link, {
+                        [classes.linkActive]: items.some((item) =>
+                            matchPath(active, item.link)
+                        ),
+                    })}
+                >
                     {label}
-                    <IconChevronDown size="0.75rem"  />
+                    <IconChevronDown size="0.75rem" />
                 </div>
             </Menu.Target>
             <Menu.Dropdown>
@@ -173,12 +173,12 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
                         key={item.link}
                         className={cx(classes.menuLink, {
                             [classes.linkActive]: matchPath(active, item.link),
-                        })}                       
+                        })}
                         onClick={() => {
                             navigate(item.link);
                             setActive(item.link);
                             setTimeout(close, 100);
-                        }}                        
+                        }}
                     >
                         {item.label}
                     </Menu.Item>
@@ -190,10 +190,10 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
 interface HeaderResponsiveProps {
     links: LinkItem[];
-    logout?: () => void;
+    username?: string;
 }
 
-export function HeaderResponsive({ links, logout }: HeaderResponsiveProps) {
+export function HeaderResponsive({ links, username }: HeaderResponsiveProps) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === "dark";
 
@@ -262,15 +262,21 @@ export function HeaderResponsive({ links, logout }: HeaderResponsiveProps) {
                         )}
                     </ActionIcon>
 
-                    {logout && (
+                    <Link
+                        to="account"
+                        onClick={(event) => {
+                            setActive("account");
+                            close();
+                        }}
+                    >
                         <ActionIcon
                             color={dark ? "yellow" : "blue"}
-                            onClick={logout}
-                            title="Logout"
+                            title={username ?? "About"}
+                            className={matchPath(active, "/account") ? classes.linkActive : undefined}
                         >
-                            <IconLogout size="1.1rem" />
+                            {username !== undefined ? <IconUser size="1.1rem" /> : <IconInfoCircle size="1.1rem"/>}
                         </ActionIcon>
-                    )}
+                    </Link>
 
                     <Burger
                         opened={opened}

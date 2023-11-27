@@ -1,9 +1,6 @@
 import { Auth } from "aws-amplify";
 import axios, {
     AxiosError,
-    AxiosInstance,
-    AxiosRequestConfig,
-    AxiosResponse,
 } from "axios";
 
 const api = axios.create({
