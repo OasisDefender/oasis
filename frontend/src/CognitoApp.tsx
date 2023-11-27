@@ -36,7 +36,7 @@ function CognitoApp() {
             {({ signOut, user }) => {
                 console.log("signOut", signOut);
                 console.log("user", user);
-                return <App username={user?.username}/>;
+                return <App username={user?.attributes?.email}/>;
             }}
         </Authenticator>
     );
