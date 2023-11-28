@@ -6,6 +6,10 @@ import { AxiosError } from "axios";
 let zIndex : number = 1000;
 
 export function OasisDecodeError(error : AxiosError) : string {
+    if (!error) {
+        return "Unknown error";
+    }
+
     console.log(error);
     if (error.response && error.response.status === 500 && error.response.data as string) {
         return error.response.data as string;
