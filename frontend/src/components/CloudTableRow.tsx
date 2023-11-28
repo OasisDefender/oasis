@@ -34,7 +34,7 @@ export function CloudTableRow({
     };
 
     const onDeleteInternal = async () => {
-        if (makeDelete) {
+        if (makeDelete) {            
             modals.openConfirmModal({
                 title: "Delete your cloud",
                 centered: true,
@@ -89,7 +89,7 @@ export function CloudTableRow({
             </td>
             <td>
                 <Stack spacing="xs">
-                    {cloud.sync_state == SyncState.InSync && (
+                    {cloud.sync_state === SyncState.InSync && (
                         <Text>
                             Sync in progress. Press "Refresh" to update the
                             status. <br />
@@ -101,7 +101,7 @@ export function CloudTableRow({
                             {cloud.last_successful_sync}
                         </Text>
                     )}
-                    {cloud.sync_state == SyncState.InSync &&
+                    {cloud.sync_state === SyncState.InSync &&
                         cloud.sync_start && (
                             <Text>
                                 <b>The sync was started at:</b>{" "}
@@ -113,7 +113,7 @@ export function CloudTableRow({
                             <b>The sync was finished at:</b> {cloud.sync_stop}
                         </Text>
                     )}
-                    {cloud.sync_state == SyncState.Synced && cloud.sync_msg && (
+                    {cloud.sync_state === SyncState.Synced && cloud.sync_msg && (
                         <Text color="red">
                             <b>Sync error:</b> {cloud.sync_msg}
                         </Text>
@@ -126,7 +126,7 @@ export function CloudTableRow({
                         leftIcon={<IconDatabase size="1.125rem" />}
                         color="green"
                         loading={
-                            cloud.sync_state == SyncState.InSync || syncLoading
+                            cloud.sync_state === SyncState.InSync || syncLoading
                         }
                         disabled={deleteLoading}
                         onClick={onSyncInternal}
@@ -138,7 +138,7 @@ export function CloudTableRow({
                         color="red"
                         loading={deleteLoading}
                         disabled={
-                            cloud.sync_state == SyncState.InSync || syncLoading
+                            cloud.sync_state === SyncState.InSync || syncLoading
                         }
                         onClick={onDeleteInternal}
                     >
