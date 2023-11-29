@@ -42,6 +42,31 @@ class DB:
                                     azure_client_secret TEXT,  -- Azure client-secret
                                     azure_subscription_id TEXT -- Azure only subscription-id
                                 )''')
+        try:
+            cursor.execute("alter table clouds add column sync_state integer not null default 0")
+            cursor.execute("alter table clouds add column sync_start TEXT")
+            cursor.execute("alter table clouds add column sync_stop TEXT")
+            cursor.execute("alter table clouds add column sync_msg TEXT")
+            cursor.execute("alter table clouds add column last_successful_sync TEXT")
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
+
+        try:
+            cursor.execute("drop TRIGGER before_update_on_sync_tg")
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
+        try:
+            cursor.execute('''CREATE TRIGGER before_update_on_sync_tg
+                BEFORE UPDATE ON clouds 
+                FOR EACH ROW 
+                WHEN new.sync_state = 1 AND old.sync_state = 1 AND (strftime('%s','now') - strftime('%s', old.sync_start)) < 960
+                BEGIN
+                    SELECT RAISE(ROLLBACK, 'Sync already in progress...');
+                END;
+                ''')
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
+
         cursor.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS clouds_test_unique_aws_index ON clouds(aws_region, aws_key, aws_secret_key)")
         cursor.execute(
@@ -187,10 +212,43 @@ class DB:
     def get_clouds(self) -> list[Cloud]:
         cursor = self.__database.cursor()
         cursor.execute("""
-            SELECT id, name, cloud_type,
-                   aws_region, aws_key, aws_secret_key, 
-                   azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id
-            FROM clouds ORDER by name
+            SELECT 
+                id, name, cloud_type,
+                aws_region, aws_key, aws_secret_key,
+                azure_tenant_id, azure_client_id, azure_client_secret, azure_subscription_id,
+                CASE 
+                    WHEN sync_state = 0 THEN 0 
+                    ELSE 
+                        CASE WHEN (strftime('%s','now') - strftime('%s',sync_start)) > 960 THEN 0 
+                        ELSE 1 
+                        END 
+                END AS sync_state,
+                CASE 
+                    WHEN sync_start IS NULL THEN NULL 
+                    ELSE datetime(sync_start) 
+                END AS sync_start,
+                CASE 
+                    WHEN sync_stop IS NULL THEN 
+                        CASE 
+                            WHEN (strftime('%s','now') - strftime('%s',sync_start)) > 960 THEN datetime(sync_start, '+960 seconds') 
+                            ELSE NULL 
+                        END 
+                    ELSE datetime(sync_stop) 
+                END AS sync_stop,
+                CASE 
+                    WHEN sync_state = 0 THEN sync_msg 
+                    ELSE 
+                        CASE 
+                            WHEN (strftime('%s','now') - strftime('%s',sync_start)) > 960 THEN 'Error: dead sync job' 
+                            ELSE sync_msg 
+                        END 
+                END AS sync_msg,
+                CASE 
+                    WHEN last_successful_sync IS NULL THEN NULL 
+                    ELSE datetime(last_successful_sync) 
+                END AS last_successful_sync
+            FROM clouds 
+            ORDER BY name
         """)
         rows = cursor.fetchall()
         return [
@@ -203,7 +261,12 @@ class DB:
                   azure_tenant_id=r[6],
                   azure_client_id=r[7],
                   azure_client_secret=r[8],
-                  azure_subscription_id=r[9]) for r in rows
+                  azure_subscription_id=r[9],
+                  sync_state=r[10],
+                  sync_start=r[11],
+                  sync_stop=r[12],
+                  synk_msg=r[13],
+                  last_successful_sync=r[14]) for r in rows
         ]
 
     def get_clouds_short(self) -> list[Cloud]:
@@ -550,6 +613,38 @@ class DB:
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return cursor.fetchall()
+
+    def lock_sync_cloud(self, cloud_id):
+        status:int = 0
+        msg:str    = None
+        try:
+            cursor = self.__database.cursor()
+            sql = f"update clouds set sync_state=1, sync_start=datetime('now'), sync_stop=NULL, sync_msg=NULL where id = {cloud_id}"
+            cursor.execute(sql)
+            self.__database.commit()
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
+            status = 1
+            msg = e
+        return status, msg
+
+    def unlock_sync_cloud(self, cloud_id, msg:str = None):
+        status:int = 0
+        msg:str    = None
+        sql:str    = None
+        try:
+            cursor = self.__database.cursor()
+            if msg == None:
+                sql = f"update clouds set sync_state=0, sync_stop=datetime('now'), last_successful_sync=datetime('now'), sync_msg=NULL where id = {cloud_id}"
+            else:
+                sql = f"update clouds set sync_state=0, sync_stop=datetime('now'), sync_msg={msg} where id = {cloud_id}"
+            cursor.execute(sql)
+            self.__database.commit()
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
+            status = 1
+            msg = e
+        return status, msg
 
 def db_exist(user_id: str = None):
     if user_id == None:

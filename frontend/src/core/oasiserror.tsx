@@ -6,6 +6,10 @@ import { AxiosError } from "axios";
 let zIndex : number = 1000;
 
 export function OasisDecodeError(error : AxiosError) : string {
+    if (!error) {
+        return "Unknown error";
+    }
+
     console.log(error);
     if (error.response && error.response.status === 500 && error.response.data as string) {
         return error.response.data as string;
@@ -14,8 +18,17 @@ export function OasisDecodeError(error : AxiosError) : string {
 }
 
 
-export function ShowModalError(title: string, error: AxiosError) {
-    const message = OasisDecodeError(error);
+export function ShowModalError(title: string, error: unknown) {
+    let msg = "Unknown error";
+    if (typeof error === "string") {
+        msg = error;
+    }
+    else if (error instanceof AxiosError) {
+        msg = OasisDecodeError(error);
+    }
+    else if (error instanceof Error) {
+        msg = error.message;
+    }
     modals.open({
         title: title,
         centered: true,
@@ -25,7 +38,7 @@ export function ShowModalError(title: string, error: AxiosError) {
         zIndex: zIndex,
         children: (
             <Text mt={"xs"}>
-                    {message}
+                    {msg}
             </Text>
         )        
     });

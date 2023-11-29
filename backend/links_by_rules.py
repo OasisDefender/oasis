@@ -71,7 +71,7 @@ class links_by_rules(CTX):
                 "dump_fn": self.dump_ALL_IP_rules,
                 "data": self.all_to_ip_rules_sg,
                 "datatype": "rules",
-                "severity": 2
+                "severity": 3
             },
             {
                 "label": "Ingress subdirectory NACLs with ANY IPs",
