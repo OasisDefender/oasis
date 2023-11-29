@@ -4,7 +4,7 @@ from .rule import Rule
 
 
 class RuleGroup(CTX):
-    def __init__(self, rg_row: list[str] = None, id: int = 0, if_id: str = '', subnet_id: str = '', name: str = '', type: str = '', cloud_id: int = 0, _db:DB = None):
+    def __init__(self, rg_row: list[str] = None, id: int = 0, if_id: str = '', subnet_id: str = '', name: str = '', type: str = '', cloud_id: int = 0, _db: DB = None):
         if _db != None:
             CTX.db = _db
 
@@ -34,8 +34,8 @@ class RuleGroup(CTX):
         }
 
 
-def get_all_rule_groups(user_id:str = None, _db:DB = None) -> list[RuleGroup]:
-    db:DB = None
+def get_all_rule_groups(user_id: str = None, _db: DB = None) -> list[RuleGroup]:
+    db: DB = None
     if _db != None:
         db = _db
     else:
@@ -48,6 +48,8 @@ def get_all_rule_groups(user_id:str = None, _db:DB = None) -> list[RuleGroup]:
         rgs.append(rg)
     return rgs
 
+def rules_get_prio(r: Rule):
+        return r.priority
 
 class RuleGroupNG(CTX):
     def __init__(self, sg_id: int, if_ids: list[str], subnet_ids: list[str], name: str, type: str, cloud_id: int, rules: list[Rule]):
@@ -64,6 +66,9 @@ class RuleGroupNG(CTX):
         #    if t.rule_id == r.rule_id:
         #        return
         self.rules.append(r)
+
+    def sort_rules(self):
+        self.rules.sort(key=rules_get_prio)
 
     def add_if(self, if_id: str):
         self.if_ids.append(if_id)
@@ -92,3 +97,44 @@ def convert_RuleGroup_to_NG(sgs: list[RuleGroup], rules: list[Rule]):
             sgs_NG[key].add_subnet(sg.subnet_id)
 
     return list(sgs_NG.values())
+
+
+def convert_RuleGroup_to_sgNG(sgs: list[RuleGroup], rules: list[Rule]):
+    sgs_NG = {}
+    for sg in sgs:
+        # exclude NACL
+        if sg.if_id == '' or sg.if_id == None:
+            continue
+        key = (sg.cloud_id, sg.name)
+        if sgs_NG.get(key, None) == None:
+            sg_NG = RuleGroupNG(sg.id, [], [], sg.name,
+                                sg.type, sg.cloud_id, [])
+            for r in rules:
+                if r.cloud_id == sg.cloud_id and r.group_id == sg.name:
+                    sg_NG.add_rule(r)
+            sgs_NG[key] = sg_NG
+            sgs_NG[key].add_if(sg.if_id)
+
+    return list(sgs_NG.values())
+
+def convert_RuleGroup_to_naclNG(sgs: list[RuleGroup], rules: list[Rule]):
+    nacls_NG = {}
+    for sg in sgs:
+        # exclude SG
+        if sg.subnet_id == None or sg.subnet_id == "":
+            continue
+        key = (sg.cloud_id, sg.name)
+        if nacls_NG.get(key, None) == None:
+            nacl_NG = RuleGroupNG(sg.id, [], [], sg.name,
+                                  sg.type, sg.cloud_id, [])
+            for r in rules:
+                if r.cloud_id == sg.cloud_id and r.group_id == sg.name:
+                    nacl_NG.add_rule(r)
+            nacls_NG[key] = nacl_NG
+            nacls_NG[key].add_subnet(sg.subnet_id)
+
+    nacls_NG_list = list(nacls_NG.values())
+    for k in nacls_NG_list:
+        k.sort_rules()        
+
+    return nacls_NG_list
