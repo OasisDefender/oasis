@@ -17,7 +17,18 @@ export function OasisDecodeError(error : AxiosError) : string {
     return error.message;
 }
 
-export function ShowModalErrorMessage(title: string, message: string) {
+
+export function ShowModalError(title: string, error: unknown) {
+    let msg = "Unknown error";
+    if (typeof error === "string") {
+        msg = error;
+    }
+    else if (error instanceof AxiosError) {
+        msg = OasisDecodeError(error);
+    }
+    else if (error instanceof Error) {
+        msg = error.message;
+    }
     modals.open({
         title: title,
         centered: true,
@@ -27,14 +38,9 @@ export function ShowModalErrorMessage(title: string, message: string) {
         zIndex: zIndex,
         children: (
             <Text mt={"xs"}>
-                    {message}
+                    {msg}
             </Text>
         )        
     });
     zIndex += 10;
-}
-
-export function ShowModalError(title: string, error: AxiosError) {
-    const message = OasisDecodeError(error);
-    ShowModalErrorMessage(title, message);
 }
