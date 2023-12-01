@@ -28,6 +28,7 @@ import { useHeaderInfo } from "./core/hooks/headerInfo";
 import { useInterval } from "@mantine/hooks";
 import { AnalyzeView } from "./pages/AnalyzeView";
 import { Account } from "./components/Account";
+import { GlobalMessage } from "./components/GlobalMessage";
 
 interface AppProps {
     username?: string;
@@ -94,7 +95,7 @@ function App({ username }: AppProps) {
             link: "",
             label: (
                 <>
-                    {(maxSeverity !== undefined) && (
+                    {maxSeverity !== undefined && (
                         <IconCircle
                             size="12px"
                             stroke="0.05rem"
@@ -114,7 +115,7 @@ function App({ username }: AppProps) {
                     link: "/analyze-view/resultsvisualisation2",
                     label: "Subnet NACL Issues",
                 },
-            ],            
+            ],
         },
     ];
 
@@ -137,13 +138,17 @@ function App({ username }: AppProps) {
                             <Route path="/storages" element={<StoragesMap />} />
                             <Route path="/policy" element={<PolicyMap />} />
                             <Route path="/analyze" element={<Analyze />} />
-                            <Route path="/analyze-view/:viewName" element={<AnalyzeView />} />
+                            <Route
+                                path="/analyze-view/:viewName"
+                                element={<AnalyzeView />}
+                            />
                             <Route path="/account" element={<Account />} />
                             <Route
                                 path="/"
                                 element={<Navigate replace to="/clouds" />}
                             />
                         </Routes>
+                        <GlobalMessage />
                     </ModalsProvider>
                 </MantineProvider>
             </ColorSchemeProvider>
