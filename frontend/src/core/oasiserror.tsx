@@ -10,8 +10,6 @@ export function OasisDecodeError(error: AxiosError): string {
         return "Unknown error";
     }
 
-    console.log(error);
-
     if (error.response && [401, 500].includes(error.response.status)) {
         const responseData = error.response.data;
 
