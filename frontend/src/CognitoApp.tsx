@@ -1,6 +1,6 @@
 import { Amplify } from "aws-amplify";
 
-import { Authenticator } from "@aws-amplify/ui-react";
+import { Authenticator, CheckboxField, useAuthenticator } from "@aws-amplify/ui-react";
 import { Flex, Text } from "@mantine/core";
 
 import "@aws-amplify/ui-react/styles.css";
@@ -25,6 +25,30 @@ function CognitoApp() {
                 <Text>&copy; All Rights Reserved</Text>
             </Flex>
         ),
+        SignUp: {
+            FormFields() {
+                const { validationErrors } = useAuthenticator();
+
+                return (
+                    <>
+                        <Authenticator.SignUp.FormFields />
+                        <CheckboxField
+                            errorMessage={validationErrors.acknowledgement as string}
+                            hasError={!!validationErrors.acknowledgement}
+                            name="acknowledgement"
+                            value="yes"
+                            label={
+                                <>
+                                    I agree with the 
+                                    <a href="/static/terms.html" target="_blank" rel="noopener noreferrer"> Terms of Service</a>
+                                </>
+                            }
+                        />
+                    </>
+                );
+            },
+        },
+
     };
 
     return (
@@ -32,6 +56,15 @@ function CognitoApp() {
             loginMechanisms={["email"]}
             variation="modal"
             components={components}
+            services={{
+                async validateCustomSignUp(formData) {
+                    if (!formData.acknowledgement) {
+                        return {
+                            acknowledgement: 'You must agree to the Terms of Service',
+                        };
+                    }
+                },
+            }}
         >
             {({ signOut, user }) => {
                 console.log("signOut", signOut);
