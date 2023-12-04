@@ -1,6 +1,10 @@
 import { Amplify } from "aws-amplify";
 
-import { Authenticator, CheckboxField, useAuthenticator } from "@aws-amplify/ui-react";
+import {
+    Authenticator,
+    CheckboxField,
+    useAuthenticator,
+} from "@aws-amplify/ui-react";
 import { Flex, Text } from "@mantine/core";
 
 import "@aws-amplify/ui-react/styles.css";
@@ -33,14 +37,22 @@ function CognitoApp() {
                     <>
                         <Authenticator.SignUp.FormFields />
                         <CheckboxField
-                            errorMessage={validationErrors.acknowledgement as string}
+                            errorMessage={
+                                validationErrors.acknowledgement as string
+                            }
                             hasError={!!validationErrors.acknowledgement}
                             name="acknowledgement"
                             value="yes"
                             label={
                                 <>
-                                    I agree with the 
-                                    <a href="/static/terms.html" target="_blank" rel="noopener noreferrer"> Terms of Service</a>
+                                    I agree with the{" "}
+                                    <a
+                                        href="/static/terms.html"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Terms of Service
+                                    </a>
                                 </>
                             }
                         />
@@ -48,7 +60,6 @@ function CognitoApp() {
                 );
             },
         },
-
     };
 
     return (
@@ -60,7 +71,8 @@ function CognitoApp() {
                 async validateCustomSignUp(formData) {
                     if (!formData.acknowledgement) {
                         return {
-                            acknowledgement: 'You must agree to the Terms of Service',
+                            acknowledgement:
+                                "You must agree to the Terms of Service",
                         };
                     }
                 },
@@ -69,7 +81,7 @@ function CognitoApp() {
             {({ signOut, user }) => {
                 console.log("signOut", signOut);
                 console.log("user", user);
-                return <App username={user?.attributes?.email}/>;
+                return <App username={user?.attributes?.email} />;
             }}
         </Authenticator>
     );
