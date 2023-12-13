@@ -10,6 +10,8 @@ from azure.mgmt.network        import NetworkManagementClient
 from azure.mgmt.sql            import SqlManagementClient
 from azure.mgmt.network.models import SecurityRule
 from azure.core.exceptions     import *
+from azure.mgmt.storage import StorageManagementClient
+from azure.storage.blob import BlobServiceClient
 
 from .db         import DB
 from .vpc        import VPC
@@ -18,6 +20,7 @@ from .vm         import VM
 from .rule_group import RuleGroup
 from .rule       import Rule
 from .fw_common  import make_ports_string
+from .s3_bucket  import S3_Bucket
 
 class FW_Azure(CTX):
     def __init__(self, _db:DB = None):
@@ -30,6 +33,7 @@ class FW_Azure(CTX):
         self.__compute_client  = None
         self.__network_client  = None
         self.__sql_client      = None
+        self.__storage_mgmt_client = None
 
 
     def __get_unique_priority(self, resource_group_name, nsg_name) -> int:
@@ -62,11 +66,12 @@ class FW_Azure(CTX):
             db = DB(self.get_ctx())
         creds = db.get_azure_credentials(cloud_id)
         for cred in creds:
-            credential             = ClientSecretCredential(cred[0], cred[1], cred[2])
-            self.__resource_client = ResourceManagementClient(credential, cred[3])
-            self.__compute_client  = ComputeManagementClient (credential, cred[3])
-            self.__network_client  = NetworkManagementClient (credential, cred[3])
-            self.__sql_client      = SqlManagementClient(credential, cred[3], api_version='2023-07-01-preview')
+            self.__credential      = ClientSecretCredential(cred[0], cred[1], cred[2])
+            self.__resource_client = ResourceManagementClient(self.__credential, cred[3])
+            self.__compute_client  = ComputeManagementClient (self.__credential, cred[3])
+            self.__network_client  = NetworkManagementClient (self.__credential, cred[3])
+            self.__sql_client      = SqlManagementClient(self.__credential, cred[3], api_version='2023-07-01-preview')
+            self.__storage_mgmt_client = StorageManagementClient(self.__credential, cred[3])
             self.__cloud_id        = cloud_id
             break
 
@@ -391,7 +396,18 @@ class FW_Azure(CTX):
                                     cloud_id  = cloud_id)
                         i.id = db.add_instance(instance=i.to_sql_values())
 
-        # TODO: Load Amazon Blob Storage
+        # Load Amazon Blob Storage
+        storage_accounts = self.__storage_mgmt_client.storage_accounts.list()
+        for account in storage_accounts:
+            account_url:str = f"https://{account.name}.blob.core.windows.net/"
+            blob_service_client = BlobServiceClient(account_url=account_url, credential=self.__credential)
+            containers = blob_service_client.list_containers()
+            for container in containers:
+                bucket = S3_Bucket(id    = None,
+                                name     = f"{account.name}/{container.name}",
+                                cloud_id = cloud_id,
+                                _db = db)
+                bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
 
         return 0
 
