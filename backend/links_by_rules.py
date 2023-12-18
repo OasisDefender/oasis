@@ -272,7 +272,7 @@ class links_by_rules(CTX):
     def is_srv_nacl_compatible(self, nacl, cn_ip, srv_r: Rule):
         proto = srv_r.proto
         port_list = srv_r.get_port_list()
-        if not self.is_allow_in(nacl, cn_ip, proto, port_list):
+        if not self.is_link_allow_in(nacl, cn_ip, proto, port_list):
             return False
         if proto == 'TCP' and not self.is_link_allow_out(nacl, cn_ip, proto, port_list):
             return False
