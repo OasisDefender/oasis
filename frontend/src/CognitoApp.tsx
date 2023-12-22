@@ -12,11 +12,25 @@ import "./styles/cognitoStyles.css";
 
 import App from "./App";
 import { Icon } from "./components/Icon";
+import { useEffect } from "react";
+import TagManager from "react-gtm-module";
 
 function CognitoApp() {
     Amplify.configure({
         Auth: global.config.cognitoSettings,
     });
+
+    useEffect(() => {
+        if (global.config.GMTId) {
+            console.log("GTM_ID", global.config.GMTId);
+
+            const tagManagerArgs = {
+                gtmId: global.config.GMTId,
+            };
+
+            TagManager.initialize(tagManagerArgs);
+        }
+    }, []);
 
     const components = {
         Header: () => (

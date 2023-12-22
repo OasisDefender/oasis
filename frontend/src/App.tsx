@@ -61,6 +61,9 @@ function App({ username }: AppProps) {
 
             const tagManagerArgs = {
                 gtmId: global.config.GMTId,
+                dataLayer: {
+                    userId: username
+                }            
             };
 
             TagManager.initialize(tagManagerArgs);
