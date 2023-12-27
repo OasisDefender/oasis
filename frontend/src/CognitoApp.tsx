@@ -26,6 +26,10 @@ function CognitoApp() {
 
             const tagManagerArgs = {
                 gtmId: global.config.GMTId,
+                dataLayer: {
+                    js: new Date(),
+                    page_path: window.location.pathname
+                }
             };
 
             TagManager.initialize(tagManagerArgs);
