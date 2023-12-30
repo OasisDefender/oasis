@@ -82,6 +82,7 @@ function CognitoApp() {
 
     return (
         <Authenticator
+            initialState="signUp"
             loginMechanisms={["email"]}
             variation="modal"
             components={components}
