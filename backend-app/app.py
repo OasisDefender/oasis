@@ -27,6 +27,12 @@ def create_json_response(statusCode: int, jsonBody: str):
 
 
 # API
+@app.route('/api/init', methods=['GET'])
+def api_init():
+    ctx = Backend()
+    ctx.save_ctx(userid)
+    status, body = ctx.init_backend()
+    return json.dumps(body), status
 
 @app.route('/api/clouds', methods=['GET'])
 def api_clouds_get():
