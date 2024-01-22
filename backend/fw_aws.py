@@ -1,7 +1,9 @@
 import boto3
+from   botocore.config import Config
 import botocore.exceptions
 import sys
-import json
+import os
+import threading
 
 from .ctx import CTX  # base class for frontend objects
 from .db         import DB
@@ -306,8 +308,95 @@ class FW_AWS(CTX):
                             _db = db)
             bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
 
+        # Load Lambda Functions
+        get_lambda_thread = threading.Thread(target=self.get_lambda_functions)
+        get_lambda_thread.start()
+
         return 0
     
+    def get_lambda_functions(self):
+        db:DB   = None
+        user_id = None
+        lambda_os:str = ''
+        if os.getenv('RUN_IN_LAMDA'):
+            user_id = self.get_ctx()
+        db = DB(user_id=user_id)
+
+        #if os.getenv('RUN_IN_LAMDA') and os.getenv('OD_USE_PG_HOST'):
+        lmbd_cln_cfg  = Config(connect_timeout=10, read_timeout=30)
+        lambda_client = self.__session.client('lambda', config=lmbd_cln_cfg)
+        functions     = lambda_client.list_functions()
+        lam_obj:VM    = None
+        for function in functions['Functions']:
+            print(f"\n\tfunction: {function}")
+            fun_name = function['FunctionName']
+            print(f"\tfun_name: {fun_name}")
+            try:
+                fun_conf = lambda_client.get_function_configuration(FunctionName=fun_name)
+            except:
+                fun_conf = 'except'
+            print(f"\tfun_conf: {fun_conf}")
+
+            if 'FunctionName' in fun_conf:
+                if fun_conf['PackageType'] == 'Zip':
+                    lambda_os = f"{fun_conf['PackageType']}/{fun_conf['Runtime']}"
+                else:
+                    lambda_os = fun_conf['PackageType']
+
+                if 'VpcConfig' in fun_conf:
+                    for subnet_name in fun_conf['VpcConfig']['SubnetIds']:
+                        lam_obj = VM(vm=None,
+                                type      = 'LAMBDA',
+                                vpc_id    = fun_conf['VpcConfig']['VpcId'],
+                                azone     = fun_conf['FunctionArn'].split(':')[3],
+                                subnet_id = subnet_name,
+                                name      = fun_name,
+                                privdn    = '',
+                                privip    = '',
+                                pubdn     = '',
+                                pubip     = '',
+                                note      = fun_name,
+                                os        = lambda_os,
+                                state     = fun_conf['State'],
+                                mac       = '',
+                                if_id     = fun_conf['FunctionArn'],
+                                cloud_id  = self.__cloud_id)
+                        print(f"\t{lam_obj.to_sql_values()}")
+                        lam_obj.id = db.add_instance(instance=lam_obj.to_sql_values())
+
+                    for sg_name in fun_conf['VpcConfig']['SecurityGroupIds']:
+                        rg = RuleGroup(id    = None,
+                                    if_id    = fun_conf['FunctionArn'],
+                                    name     = sg_name,
+                                    type     = 'NSG',
+                                    cloud_id = self.__cloud_id,
+                                    _db      = db)
+                        print(f"\t\t{rg.to_sql_values()}")
+                        rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
+                        self.get_group_rules(self.__cloud_id, sg_name)
+                else:
+                    lam_obj = VM(vm=None,
+                            type      = 'LAMBDA',
+                            vpc_id    = '',
+                            azone     = fun_conf['FunctionArn'].split(':')[3],
+                            subnet_id = '',
+                            name      = fun_name,
+                            privdn    = '',
+                            privip    = '',
+                            pubdn     = '',
+                            pubip     = '',
+                            note      = fun_name,
+                            os        = lambda_os,
+                            state     = fun_conf['State'],
+                            mac       = '',
+                            if_id     = fun_conf['FunctionArn'],
+                            cloud_id  = self.__cloud_id)
+                    print(f"\t{lam_obj.to_sql_values()}")
+                    lam_obj.id = db.add_instance(instance=lam_obj.to_sql_values())
+            else:
+                print(f"\tGet lambda conf error: {fun_conf}")
+        return
+
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
