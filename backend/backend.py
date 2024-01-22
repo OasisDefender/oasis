@@ -1,4 +1,6 @@
-import json
+import hashlib
+import hmac
+import os
 
 from .ctx import CTX  # base class for frontend objects
 from .cloud import Cloud
@@ -27,6 +29,27 @@ class Backend(CTX):
     def __db_exist(self, user_id: str = None):
         return db_exist(user_id)
 
+    def init_backend(self, email: str = None):
+        status: int = 200
+
+        intercomSettings = None        
+        if os.getenv('OD_INTERCOM_APP_ID'):
+            intercomSettings = {
+                'appID': os.getenv('OD_INTERCOM_APP_ID'),
+                **({'apiBase': os.getenv('OD_INTERCOM_API_BASE')} if os.getenv('OD_INTERCOM_API_BASE') is not None else {}),
+                **({'email': email} if email is not None else {}),
+                **({'userHash': hmac.new(
+                    bytes(os.getenv('OD_INTERCOM_SECRET_KEY'), encoding='utf-8'),
+                    bytes(email, encoding='utf-8'),
+                    digestmod=hashlib.sha256
+                ).hexdigest()} if email is not None and os.getenv('OD_INTERCOM_SECRET_KEY') else {}),
+            }
+
+        body = {
+            'intercomSettings': intercomSettings
+        }
+        return status, body
+
     def get_clouds(self):
         status: int = 200
         body = None
@@ -45,8 +68,8 @@ class Backend(CTX):
         body = None
         status = 200
         cloud: Cloud = None
-        lock_status:int = 0
-        lock_msg:str = 0
+        lock_status: int = 0
+        lock_msg: str = 0
         try:
             for cloud in context.get_clouds():
                 if cloud.id == id:
@@ -57,7 +80,8 @@ class Backend(CTX):
                         fw = FW_Azure(_db=context)
                         break
                     status = 500
-                    body = {'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
+                    body = {
+                        'message': f"Cloud Type: '{cloud.cloud_type}' - not supported!"}
             if fw != None:
                 lock_status, lock_msg = context.lock_sync_cloud(cloud.id)
                 if lock_status == 0:
@@ -67,9 +91,10 @@ class Backend(CTX):
                     fw.get_topology(cloud.id)
                     lock_status, lock_msg = context.unlock_sync_cloud(cloud.id)
                 else:
-                    pass #body = {'message': lock_msg}
+                    pass  # body = {'message': lock_msg}
         except:
-            lock_status, lock_msg = context.unlock_sync_cloud(cloud.id, "Cloud sync error")
+            lock_status, lock_msg = context.unlock_sync_cloud(
+                cloud.id, "Cloud sync error")
             status = 500
             body = {'message': "Cloud sync error"}
         return status, body
@@ -135,7 +160,7 @@ class Backend(CTX):
             if fw != None:
                 fw.save_ctx(self.get_ctx())
                 if cloud.id == fw.connect(cloud.id):
-                    #fw.get_topology(cloud.id)
+                    # fw.get_topology(cloud.id)
                     body = cloud.to_dict()
                 else:
                     context.delete_cloud(save_cloud_id)
@@ -152,7 +177,7 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            db:DB = DB(self.get_ctx())
+            db: DB = DB(self.get_ctx())
             map = CloudMap(_db=db)
             map.save_ctx(self.get_ctx())
             map.get()
@@ -174,7 +199,7 @@ class Backend(CTX):
         body = None
         status = 200
         try:
-            db:DB = DB(self.get_ctx())
+            db: DB = DB(self.get_ctx())
             l = Links(vm_id, _db=db)
             l.save_ctx(self.get_ctx())
             l.get()
@@ -355,7 +380,7 @@ class Backend(CTX):
         return status, body
 
     def get_header_info(self):
-        db:DB = None
+        db: DB = None
         body = {'message': "Get header error"}
         status = 500
         is_exist, db_current = self.__db_exist(self.get_ctx())

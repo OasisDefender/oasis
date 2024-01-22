@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import {
     BrowserRouter as Router,
@@ -29,6 +29,8 @@ import { useInterval } from "@mantine/hooks";
 import { AnalyzeView } from "./pages/AnalyzeView";
 import { Account } from "./components/Account";
 import { GlobalMessage } from "./components/GlobalMessage";
+import InitSettingsContext from "./core/initsettings/InitSettingsContext";
+import { IntercomProvider } from "react-use-intercom";
 
 interface AppProps {
     username?: string;
@@ -41,6 +43,7 @@ function App({ username }: AppProps) {
     };
     const { fetch, maxSeverity } = useHeaderInfo();
     const headerInfoUpdate = useInterval(fetch, 60000);
+    const { intercomSettings } = useContext(InitSettingsContext);
 
     useEffect(() => {
         console.log("App started");
@@ -62,13 +65,13 @@ function App({ username }: AppProps) {
             const tagManagerArgs = {
                 gtmId: global.config.GMTId,
                 dataLayer: {
-                    userId: username
-                }            
+                    userId: username,
+                },
             };
 
             TagManager.initialize(tagManagerArgs);
         }
-    }, []);
+    }, [username]);
 
     useEffect(() => {
         headerInfoUpdate.start();
@@ -122,7 +125,7 @@ function App({ username }: AppProps) {
         },
     ];
 
-    return (
+    const router = (
         <Router>
             <ColorSchemeProvider
                 colorScheme={colorScheme}
@@ -157,6 +160,24 @@ function App({ username }: AppProps) {
             </ColorSchemeProvider>
         </Router>
     );
+
+    if (intercomSettings && intercomSettings?.appID) {
+        return (
+            <IntercomProvider
+                appId={intercomSettings?.appID}
+                apiBase={intercomSettings.apiBase}
+                autoBootProps={{
+                    email: intercomSettings.email,
+                    userHash: intercomSettings.userHash,
+                }}
+                autoBoot
+            >
+                {router}
+            </IntercomProvider>
+        );
+    }
+
+    return router;
 }
 
 export default App;
