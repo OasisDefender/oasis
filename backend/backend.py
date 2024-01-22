@@ -46,7 +46,7 @@ class Backend(CTX):
         status = 200
         cloud: Cloud = None
         lock_status:int = 0
-        lock_msg:str = 0
+        lock_msg:str = ''
         try:
             for cloud in context.get_clouds():
                 if cloud.id == id:
