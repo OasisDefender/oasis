@@ -9,6 +9,13 @@ const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
 );
 
-const app = global.config.authType === "COGNITO" ? <CognitoApp /> : <App />;
+const app =
+    global.config.authType === "COGNITO" ? (
+        <CognitoApp />
+    ) : (
+        <InitSettingsProvider>
+            <App />
+        </InitSettingsProvider>
+    );
 
-root.render(<InitSettingsProvider>{app}</InitSettingsProvider>);
+root.render(app);
