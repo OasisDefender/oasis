@@ -14,6 +14,7 @@ import App from "./App";
 import { Icon } from "./components/Icon";
 import { useEffect } from "react";
 import TagManager from "react-gtm-module";
+import InitSettingsProvider from "./core/initsettings/InitSettingsProvider";
 
 function CognitoApp() {
     Amplify.configure({
@@ -28,8 +29,8 @@ function CognitoApp() {
                 gtmId: global.config.GMTId,
                 dataLayer: {
                     js: new Date(),
-                    page_path: window.location.pathname
-                }
+                    page_path: window.location.pathname,
+                },
             };
 
             TagManager.initialize(tagManagerArgs);
@@ -100,7 +101,11 @@ function CognitoApp() {
             {({ signOut, user }) => {
                 console.log("signOut", signOut);
                 console.log("user", user);
-                return <App username={user?.attributes?.email} />;
+                return (
+                    <InitSettingsProvider>
+                        <App username={user?.attributes?.email} />
+                    </InitSettingsProvider>
+                );
             }}
         </Authenticator>
     );

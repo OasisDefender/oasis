@@ -1,1 +1,1 @@
-DEMO_MODE = True
+DEMO_MODE = False
