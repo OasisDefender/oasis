@@ -386,9 +386,9 @@ class FW_AWS(CTX):
                         lam_obj.id = db.add_instance(instance=lam_obj.to_sql_values())
                 else:
                     print(f"\tGet lambda conf error: {fun_conf}")
-            else:
-                # non lambda run
-                print("Error: non lambda run")
+        else:
+            # non lambda run
+            print("Error: non lambda run")
         return
 
 
