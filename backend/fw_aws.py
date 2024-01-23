@@ -311,6 +311,7 @@ class FW_AWS(CTX):
 
         return 0
     
+
     def get_lambda_functions(self):
         # do anything only in amazon lambda
         if os.getenv('ENV'):
@@ -325,15 +326,11 @@ class FW_AWS(CTX):
             functions     = lambda_client.list_functions()
             lam_obj:VM    = None
             for function in functions['Functions']:
-                print(f"\n\tfunction: {function}")
                 fun_name = function['FunctionName']
-                print(f"\tfun_name: {fun_name}")
                 try:
                     fun_conf = lambda_client.get_function_configuration(FunctionName=fun_name)
                 except:
                     fun_conf = 'except'
-                print(f"\tfun_conf: {fun_conf}")
-
                 if 'FunctionName' in fun_conf:
                     if fun_conf['PackageType'] == 'Zip':
                         lambda_os = f"{fun_conf['PackageType']}/{fun_conf['Runtime']}"
@@ -358,7 +355,6 @@ class FW_AWS(CTX):
                                     mac       = '',
                                     if_id     = fun_conf['FunctionArn'],
                                     cloud_id  = self.__cloud_id)
-                            print(f"\t{lam_obj.to_sql_values()}")
                             lam_obj.id = db.add_instance(instance=lam_obj.to_sql_values())
 
                         for sg_name in fun_conf['VpcConfig']['SecurityGroupIds']:
@@ -368,7 +364,6 @@ class FW_AWS(CTX):
                                         type     = 'NSG',
                                         cloud_id = self.__cloud_id,
                                         _db      = db)
-                            print(f"\t\t{rg.to_sql_values()}")
                             rg.id = db.add_rule_group(rule_group=rg.to_sql_values())
                             self.get_group_rules(self.__cloud_id, sg_name)
                     else:
@@ -388,15 +383,13 @@ class FW_AWS(CTX):
                                 mac       = '',
                                 if_id     = fun_conf['FunctionArn'],
                                 cloud_id  = self.__cloud_id)
-                        print(f"\t{lam_obj.to_sql_values()}")
                         lam_obj.id = db.add_instance(instance=lam_obj.to_sql_values())
                 else:
                     print(f"\tGet lambda conf error: {fun_conf}")
             else:
                 # non lambda run
-                pass
+                print("Error: non lambda run")
         return
-
 
 
     def get_group_rules(self, cloud_id: int, group_id: str):
