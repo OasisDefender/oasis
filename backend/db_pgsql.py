@@ -26,6 +26,7 @@ class DB:
                         user=mk_user_name(self.user_id),
                         password=self.user_id,
                         connect_timeout=3)
+                    self.__upgrade_database_schema()
                     #print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Connected to existent database: {mk_db_name(self.user_id)}")
                 except psycopg2.Error as e:
                     print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
@@ -251,6 +252,17 @@ class DB:
         except:
             print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Unknown error while create new database schema: {mk_db_name(self.user_id)}")
             raise Exception(f"Unknown error while create new database schema: {mk_db_name(self.user_id)}")
+    
+
+    def __upgrade_database_schema(self):
+        try:
+            with self.__database.cursor() as cursor:
+                cursor.execute("alter table s3_buckets add column IF NOT EXISTS public_access_block_enabled TEXT;")
+                cursor.execute("alter table s3_buckets add column IF NOT EXISTS acl_enabled TEXT;")
+        except psycopg2.Error as e:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e} - ignored while upgrade database schema")
+        except:
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Unknown error while upgrade database schema")
 
 
     def add_cloud(self, cloud: Cloud) -> int:
