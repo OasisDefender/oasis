@@ -140,6 +140,11 @@ class DB:
             id        INTEGER PRIMARY KEY,
             name      TEXT,
             cloud_id  REFERENCES clouds(id))''')
+        try:
+            cursor.execute("alter table s3_buckets add column public_access_block_enabled TEXT")
+            cursor.execute("alter table s3_buckets add column acl_enabled TEXT")
+        except sqlite3.Error as e:
+            print(f"DB error: {e}")
 
         # Not used now
         # cursor.execute('''CREATE TABLE IF NOT EXISTS routes(
@@ -595,15 +600,15 @@ class DB:
         return
 
     def add_s3_bucket(self, bucket: dict) -> int:
-        sql = f"INSERT INTO s3_buckets(name, cloud_id) \
-                   VALUES ('{bucket['name']}', {bucket['cloud_id']})"
+        sql = f"INSERT INTO s3_buckets(name, cloud_id, public_access_block_enabled, acl_enabled) \
+                   VALUES ('{bucket['name']}', {bucket['cloud_id']}, '{bucket['public_access_block_enabled']}', '{bucket['acl_enabled']}')"
         cursor = self.__database.cursor()
         cursor.execute(sql)
         self.__database.commit()
         return cursor.lastrowid
 
     def get_s3_buckets(self, cloud_id: int) -> list[str]:
-        sql = f"select id, name, cloud_id from s3_buckets where cloud_id = {cloud_id} order by name"
+        sql = f"select id, name, cloud_id, public_access_block_enabled, acl_enabled from s3_buckets where cloud_id = {cloud_id} order by name"
         cursor = self.__database.cursor()
         cursor.execute(sql)
         return cursor.fetchall()

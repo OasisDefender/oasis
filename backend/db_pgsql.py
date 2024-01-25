@@ -227,6 +227,11 @@ class DB:
                     id        serial PRIMARY KEY,
                     name      TEXT,
                     cloud_id  integer REFERENCES clouds(id));''')
+                try:
+                    cursor.execute("alter table s3_buckets add column public_access_block_enabled TEXT")
+                    cursor.execute("alter table s3_buckets add column acl_enabled TEXT")
+                except psycopg2.Error as e:
+                    print(f"DB error: {e}")
                 self.__database.commit()
 
                 # Not used now
@@ -635,15 +640,15 @@ class DB:
         return
 
     def add_s3_bucket(self, bucket: dict) -> int:
-        sql = f"INSERT INTO s3_buckets(name, cloud_id) \
-                   VALUES ('{bucket['name']}', {bucket['cloud_id']})"
+        sql = f"INSERT INTO s3_buckets(name, cloud_id, public_access_block_enabled, acl_enabled) \
+            VALUES ('{bucket['name']}', {bucket['cloud_id']}, '{bucket['public_access_block_enabled']}', '{bucket['acl_enabled']}')"
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             self.__database.commit()
         return cursor.lastrowid
 
     def get_s3_buckets(self, cloud_id: int) -> list[str]:
-        sql = f"select id, name, cloud_id from s3_buckets where cloud_id = {cloud_id} order by name"
+        sql = f"select id, name, cloud_id, public_access_block_enabled, acl_enabled from s3_buckets where cloud_id = {cloud_id} order by name"
         with self.__database.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()

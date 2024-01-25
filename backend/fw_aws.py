@@ -48,6 +48,7 @@ class FW_AWS(CTX):
 
 
     def get_topology(self, cloud_id: int):
+        print("get_topology()")
         db:DB = None
         if CTX.db != None:
             db = CTX.db
@@ -298,13 +299,28 @@ class FW_AWS(CTX):
                 self.get_group_rules(cloud_id, rds_sg['VpcSecurityGroupId'])
 
         # Load S3 Buckets
+        block_public_access:str = 'True'
+        acl_enabled:str         = 'False'
         s3_client = self.__session.resource('s3')
         for bucket in s3_client.buckets.all():
-            bucket = S3_Bucket(id    = None,
-                            name     = bucket.name,
-                            cloud_id = cloud_id,
-                            _db = db)
-            bucket.id = db.add_s3_bucket(bucket=bucket.to_sql_values())
+            try:
+                block_public_access = f"{s3_client.meta.client.get_public_access_block(Bucket=bucket.name)['PublicAccessBlockConfiguration']['BlockPublicAcls']}"
+            except s3_client.meta.client.exceptions.NoSuchPublicAccessBlockConfiguration:
+                block_public_access = "False"
+            acl = s3_client.meta.client.get_bucket_acl(Bucket=bucket.name)
+            grants = acl['Grants']
+            acl_enabled = 'False'
+            for grant in grants:
+                if grant['Grantee']['Type'] != 'CanonicalUser' or grant['Permission'] != 'FULL_CONTROL':
+                    acl_enabled = 'True'
+                    break
+            b = S3_Bucket(id       = None,
+                          name     = bucket.name,
+                          cloud_id = cloud_id,
+                          public_access_block_enabled = block_public_access,
+                          acl_enabled                 = acl_enabled,
+                          _db = db)
+            b.id = db.add_s3_bucket(bucket=b.to_sql_values())
 
         # Load Lambda Functions
         self.get_lambda_functions()
