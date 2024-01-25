@@ -44,6 +44,18 @@ export function StoragesMap() {
             header: {
                 maxLabelWidth: "100rem"
             },
+        },
+        BucketRed: {
+            item: {
+                style: {
+                    border: "1px solid gray",
+                    padding: "0.2rem",
+                    background: isDark ? '#960A0A' : theme.colors.red[3]
+                }
+            },
+            header: {
+                maxLabelWidth: "100rem"
+            },
         }
     };
 
