@@ -46,6 +46,7 @@ class DB:
                 print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Error: Database host (OD_USE_PG_HOST) not set")
                 raise Exception("Error: Database host (OD_USE_PG_HOST) not set")
 
+
     def __create_database_user(self):
         dbpass = os.getenv('OD_PG_SU_PASS')
         if dbpass == None:
@@ -227,6 +228,8 @@ class DB:
                 cursor.execute('''CREATE TABLE IF NOT EXISTS s3_buckets(
                     id        serial PRIMARY KEY,
                     name      TEXT,
+                    public_access_block_enabled TEXT,
+                    acl_enabled                 TEXT,
                     cloud_id  integer REFERENCES clouds(id));''')
                 try:
                     cursor.execute("alter table s3_buckets add column public_access_block_enabled TEXT")
@@ -257,10 +260,18 @@ class DB:
     def __upgrade_database_schema(self):
         try:
             with self.__database.cursor() as cursor:
-                cursor.execute("alter table s3_buckets add column IF NOT EXISTS public_access_block_enabled TEXT;")
-                cursor.execute("alter table s3_buckets add column IF NOT EXISTS acl_enabled TEXT;")
+                # Check new column at s3_buckets table
+                try:
+                    cursor.execute('select public_access_block_enabled, acl_enabled from s3_buckets where cloud_id = 0')
+                except psycopg2.Error as e:
+                    print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: '{e}' - s3_buckets Need Upgrade")
+                    self.__database.rollback()
+                    cursor.execute("alter table s3_buckets add column IF NOT EXISTS public_access_block_enabled TEXT;")
+                    cursor.execute("alter table s3_buckets add column IF NOT EXISTS acl_enabled TEXT;")
+                    print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] s3_buckets - Upgrade Complete")
+            self.__database.commit()
         except psycopg2.Error as e:
-            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e} - ignored while upgrade database schema")
+            print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] DB error: {e}")
         except:
             print(f"[{__file__}:{sys._getframe().f_code.co_name}:{sys._getframe().f_lineno}] Unknown error while upgrade database schema")
 
