@@ -231,6 +231,11 @@ class DB:
                     public_access_block_enabled TEXT,
                     acl_enabled                 TEXT,
                     cloud_id  integer REFERENCES clouds(id));''')
+                try:
+                    cursor.execute("alter table s3_buckets add column public_access_block_enabled TEXT")
+                    cursor.execute("alter table s3_buckets add column acl_enabled TEXT")
+                except psycopg2.Error as e:
+                    print(f"DB error: {e}")
                 self.__database.commit()
 
                 # Not used now
