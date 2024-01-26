@@ -32,6 +32,13 @@ class Backend(CTX):
     def init_backend(self, email: str = None):
         status: int = 200
 
+        try:
+            db = DB(user_id=self.get_ctx())
+        except:
+            status = 500
+            body = {'message': "Database error"}
+            return status, body
+
         intercomSettings = None        
         if os.getenv('OD_INTERCOM_APP_ID'):
             intercomSettings = {
@@ -48,6 +55,7 @@ class Backend(CTX):
         body = {
             'intercomSettings': intercomSettings
         }
+
         return status, body
 
     def get_clouds(self):
